@@ -1,0 +1,9 @@
+list ( APPEND RAY_TRACER_RENDERER_SOURCES 
+		${CMAKE_CURRENT_LIST_DIR}/transport.cpp
+	)
+	
+list ( APPEND RAY_TRACER_WORKER_SOURCES 
+		${CMAKE_CURRENT_LIST_DIR}/transport.cpp
+	)
+	
+

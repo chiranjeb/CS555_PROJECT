@@ -1,0 +1,6 @@
+if (TARGET_NAME STREQUAL worker)
+	list(APPEND RAY_TRACER_SOURCES
+		${CMAKE_CURRENT_LIST_DIR}/worker_main.cpp
+	)
+endif(TARGET_NAME STREQUAL worker)
+
