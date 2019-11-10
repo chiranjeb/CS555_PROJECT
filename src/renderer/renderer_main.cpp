@@ -1,7 +1,8 @@
 #include <iostream>
-#include "transport/transport_mgr.hpp"
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
+#include "transport/transport_mgr.hpp"
+#include "renderer/renderer_scheduler.hpp"
 
 using namespace std;
 class TestLis : public Listener
@@ -23,7 +24,7 @@ int main()
    // TraceLogger.Instance().SetTraceLevel(TraceLogger.LEVEL_ALWAYS);
 
    // Start the Renderer Scheduler.
-   //RendererScheduler.Instance().Start();
+   RendererScheduler::Instance().Start();
 
    // Start a server
    TransportMgr::Instance().CreateTCPServer(8080, 40 /*PEER_SERVER_LISTENING_Q_DEPTH*/, testLis);

@@ -1,5 +1,7 @@
 #pragma once
-#include "tcp_server.hpp"
+#include "tcp_io_server.hpp"
+#include "tcp_io_connection.hpp"
+#include <list>
 
 class TransportMgr
 {
@@ -16,4 +18,10 @@ class TransportMgr
     }
 
     void CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler);
+
+    void ServiceNewConnection(TCPIOConnection *p_connection);
+
+    Listener *m_lis;
+
+    std::list<std::shared_ptr<TCPIOConnection>> m_Connections;
 };

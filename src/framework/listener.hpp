@@ -1,6 +1,6 @@
 #pragma once
 #include "message.hpp"
-
+#include <memory>
 class Listener
 {
 public:
