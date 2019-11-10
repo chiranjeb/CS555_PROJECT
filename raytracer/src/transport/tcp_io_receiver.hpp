@@ -1,4 +1,5 @@
 #pragma once
+#include<iostream>
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 

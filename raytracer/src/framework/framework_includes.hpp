@@ -1,5 +1,3 @@
 #pragma once
-#include "framework/listener.hpp"
-#include "framework/message.hpp"
-#include "framework/thread.hpp"
+#include "framework/messaging_framework.hpp"
 
