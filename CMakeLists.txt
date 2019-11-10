@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(raytracer)
 
 include_directories(includes)
+include_directories(src)
 
 find_package (Threads)
 
