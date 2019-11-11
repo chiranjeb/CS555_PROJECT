@@ -1,10 +1,51 @@
-#include "include/wiremsg.h"
-#include <iostream>
+#include "wire_msg.hpp"
 
-void WireMsg()
+///////////////////////////////////////////////////////////////////////////////////////
+///  Returns true if a response is expected in response to sending
+///  this message otherwise false.
+///////////////////////////////////////////////////////////////////////////////////////
+bool WireMsg::ExpectingRecvRecvResponse()
 {
-	cout <<  "Hello I am the wire message" << endl;
+   if (GetAppTag() != 0)
+   {
+      return true;
+   }
+
+   return false;
 }
-	
+
+///////////////////////////////////////////////////////////////////////////////////////
+/// Return a serialized version of the message
+/// @return byte array and size pair
+///////////////////////////////////////////////////////////////////////////////////////
+std::pair<char *, int> WireMsg::GetPackedBytes(char *pre_allocated_buffer, int size)
+{
+   PreAllocatedStreamBuffer streambuff(pre_allocated_buffer, size);
+   std::ostream ostrm(&streambuff);
+   Pack(ostrm);
+   return std::pair<char *, int>(pre_allocated_buffer, streambuff.Tellp());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+/// Custom Message serializer
+/// @param ostrm Output stream where the message is being
+///            serialized to
+////////////////////////////////////////////////////////////////////////////////////////
+void WireMsg::Pack(std::ostream ostrm)
+{
+   Msg::Pack(ostr);
+   ostrm << m_ApplicationTag;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+/// Custom message deserializer
+/// @param istr Input stream from which the message is being
+///           deserialized.
+///////////////////////////////////////////////////////////////////////////////////////
+void WireMsg::Unpack(std::istream istr) throws IOException
+{
+   Msg::Unpack(ostr);
+   istr >> m_ApplicationTag;
+}
 
 

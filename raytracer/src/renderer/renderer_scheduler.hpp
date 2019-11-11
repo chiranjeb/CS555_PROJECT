@@ -2,10 +2,10 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 
-class RendererScheduler : public Thread
+class RendererScheduler : public MsgQThread
 {
 public:
-   RendererScheduler()
+   RendererScheduler() : MsgQThread("RendererScheduler")
    {
    }
    // Get the Renderer scheduler

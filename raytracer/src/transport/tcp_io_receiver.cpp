@@ -23,6 +23,9 @@ void TCPIOReceiver::Run()
          break;
       }
 
+       WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(m_MsgBuffer[0], numOfBytesReceived);
+       m_Connection.ProcessReceivedMsg(wireMessage);
+
       // We have a message now. Need to construct it and send it upper layer.
       //publishClientMsg(*client, msg, numOfBytesReceived);
    }

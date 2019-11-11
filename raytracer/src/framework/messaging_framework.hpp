@@ -112,6 +112,11 @@ public:
       return m_ThrdLis;
    }
 
+   MsgQEntry TakeNext()
+   {
+      return m_RequestQ.get()->Take();
+   }
+
    /// Unhandled message
    void ProcessUnHandledMsg(MsgPtr msg);
 

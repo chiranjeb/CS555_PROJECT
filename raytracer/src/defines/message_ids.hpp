@@ -2,5 +2,7 @@
 
 enum MsgIds
 {
+   MsgIdWorkerRegistrationRequest,
+
    MsgIdServerConstructResponse,
 };
