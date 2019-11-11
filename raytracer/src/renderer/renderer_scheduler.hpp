@@ -5,7 +5,7 @@
 class RendererScheduler : public MsgQThread
 {
 public:
-   RendererScheduler() : MsgQThread("RendererScheduler")
+   RendererScheduler() : MsgQThread("RendererScheduler", 128)
    {
    }
    // Get the Renderer scheduler

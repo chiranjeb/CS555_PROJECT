@@ -2,7 +2,11 @@
 
 enum MsgIds
 {
-   MsgIdWorkerRegistrationRequest,
+    MsgIdWorkerRegistrationRequest,
 
-   MsgIdServerConstructResponse,
+    MsgIdTCPSend,
+    MsgIdTCPRecv,
+    MsgIdXmitStatus,
+    MsgIdTCPShutDownSender,
+    MsgIdServerConstructResponse,
 };

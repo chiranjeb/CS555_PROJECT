@@ -14,7 +14,7 @@ void RendererScheduler::Run()
       }
       else
       {
-         switch (msgQEntry.m_Msg.get()->GetMsgId())
+         switch (msgQEntry.m_Msg.get()->GetId())
          {
             default:
                break;

@@ -8,7 +8,7 @@ class PreAllocatedStreamArrayBuffer : public std::streambuf
 {
 public:
    // PreAllocatedStreamArrayBuffer
-   PreAllocatedStreamBuffer()
+   PreAllocatedStreamArrayBuffer()
    {
       // set std::basic_streambuf
       std::streambuf::setp(m_buffer.begin(), m_buffer.end());

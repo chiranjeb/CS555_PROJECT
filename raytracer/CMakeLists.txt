@@ -7,7 +7,6 @@ include_directories(src)
 find_package (Threads)
 
 set(CMAKE_CXX_STANDARD 11)
-#SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -pthread")
 SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
 
 include(src/framework/CMakeLists.txt)
@@ -15,6 +14,8 @@ include(src/transport/CMakeLists.txt)
 include(src/renderer/CMakeLists.txt)
 include(src/transport/CMakeLists.txt)
 include(src/worker/CMakeLists.txt)
+include(src/wiremsg/CMakeLists.txt)
+
 
 
 set(TARGET_NAME renderer)

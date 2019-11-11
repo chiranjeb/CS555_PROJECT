@@ -1,8 +1,12 @@
 #pragma once
-
 #include <iostream>
 #include <memory>
 #include <string>
+#include <queue>
+#include <map>
+#include "defines/defines_includes.hpp"
+#include "framework/framework_includes.hpp"
+#include "wiremsg/wire_msg.hpp"
 
 class TCPIOSender;
 class TCPIOReceiver;
@@ -10,56 +14,48 @@ class TCPIOReceiver;
 class TCPIOConnection
 {
 public:
-   std::string m_ip;
-   static const int TCP_SEND_Q_DEPTH = 16;
+    static const int TCP_SEND_Q_DEPTH = 16;
 
 public:
-   /** 
-   * Constructor 
-   */
-   TCPIOConnection(int socket, std::string clientIpAddress);
-   
+    /// Constructor
+    TCPIOConnection(int socket, std::string clientIpAddress);
 
-   std::string GetRemoteAddress()
-   {
-      return m_ip;
-   }
+    /// Return the remote address.
+    std::string GetRemoteAddress()
+    {
+        return m_ip;
+    }
 
+    /// Send message
+    void SendMsg(WireMsgPtr wireMsg, Listener *p_lis);
 
-   void Start();
+    /// Process received message
+    void ProcessReceivedMsg(WireMsgPtr wireMsg);
 
-   /** 
-   * Returns the socket asscociated with this connection.
-   * @return Socket
-   *  
-   */
+    /// Start the receiver
+    void Start();
 
-   int GetSocket()
-   {
-      return m_Socket;
-   }
-
-
+    /// Returns the socket asscociated with this connection.
+    int GetSocket()
+    {
+        return m_Socket;
+    }
 private:
-   /** 
-   * Asscociated socket with this TCP connection
-   */
-   int m_Socket;
+    /// remote ip connected to this machine.
+    std::string m_ip;
 
-   /** 
-   * Associated sender thread with this TCP connection
-   */
-   TCPIOSender  *m_pIOSender;
+    /// Asscociated socket with this TCP connection
+    int m_Socket;
 
-   /** 
-   * Associated receiver thread with this TCP connection
-   */
-   TCPIOReceiver  *m_pIOReceiver;
+    /// Associated sender thread with this TCP connection
+    TCPIOSender  *m_pIOSender;
 
-   //bool m_WeInitiatedClose;
+    /// Associated receiver thread with this TCP connection
+    TCPIOReceiver  *m_pIOReceiver;
 
-   /** 
-   * SendQ asscociated with this TCP connection
-   */
-   //BlockingQueue<MsgQEntry> m_SendQ;
+    //bool m_WeInitiatedClose;
+
+    std::queue<int> m_AppTagQ;
+    std::map<int, Listener *> m_ClientRespRoutingMap;
+    BlockingQueue<MsgPtr> m_SendQ;
 };

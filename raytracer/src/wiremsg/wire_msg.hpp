@@ -1,15 +1,14 @@
 #pragma once
-#include "transport/tcp_io_connection.hpp"
-#include "framework/message.hpp"
-
+#include<memory>
+#include "framework/framework_includes.hpp"
+#include "defines/defines_includes.hpp"
 /**
  * Base class for all wire message.
- * 
  *  
  */
-public class WireMsg : public Msg
+class TCPIOConnection;
+class WireMsg : public Msg
 {
-
 public:
     /// Message constructor
     WireMsg(int msgId) : Msg(msgId)
@@ -33,29 +32,28 @@ public:
     bool ExpectingRecvRecvResponse();
 
     ///  Return a serialized version of the message
-    byte[] GetPackedBytes();
+    std::pair<char *, int> GetPackedBytes(char *pre_allocated_buffer, int size);
 
     ///  Custom Message serializer
-    void Pack(DataOutputStream out);
+    void Pack(std::ostream &ostrm);
 
     ///  Custom message deserializer
-    void Unpack(DataInputStream in) ;
+    void Unpack(std::istream &istrm);
 
-    //// Set TCP connection associated with this wire message
-    void SetConnection(TCPConnectionPtr connection)
+    /// Set TCP connection associated with this wire message
+    void SetConnection(TCPIOConnection *p_connection)
     {
-        m_TCPConnection = connection;
+        m_p_tcp_connection = p_connection;
     }
 
-    ///  Return TCP connection associated with this wire message
-    TCPConnectionPtr GetConnection()
+    /// Return TCP connection associated with this wire message
+    TCPIOConnection* GetConnection()
     {
-        return m_TCPConnectionPtr;
+        return m_p_tcp_connection;
     }
 
-
-    int m_ApplicationTag;               //<< Application tag associated with this message
-    TCPConnectionPtr m_TCPConnectionPtr;      //<< TCP IP connection associated with the message
-}
+    int m_ApplicationTag;                  //<< Application tag associated with this message
+    TCPIOConnection *m_p_tcp_connection;     //<< TCP IP connection associated with the message
+};
 
 typedef std::shared_ptr<WireMsg> WireMsgPtr;

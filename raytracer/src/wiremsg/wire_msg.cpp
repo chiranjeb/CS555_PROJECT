@@ -31,9 +31,9 @@ std::pair<char *, int> WireMsg::GetPackedBytes(char *pre_allocated_buffer, int s
 /// @param ostrm Output stream where the message is being
 ///            serialized to
 ////////////////////////////////////////////////////////////////////////////////////////
-void WireMsg::Pack(std::ostream ostrm)
+void WireMsg::Pack(std::ostream &ostrm)
 {
-   Msg::Pack(ostr);
+   Msg::Pack(ostrm);
    ostrm << m_ApplicationTag;
 }
 
@@ -42,10 +42,10 @@ void WireMsg::Pack(std::ostream ostrm)
 /// @param istr Input stream from which the message is being
 ///           deserialized.
 ///////////////////////////////////////////////////////////////////////////////////////
-void WireMsg::Unpack(std::istream istr) throws IOException
+void WireMsg::Unpack(std::istream &istrm)
 {
-   Msg::Unpack(ostr);
-   istr >> m_ApplicationTag;
+   Msg::Unpack(istrm);
+   istrm >> m_ApplicationTag;
 }
 
 

@@ -19,22 +19,17 @@ class WorkerRegistrationMsg : public WireMsg
       m_Test2 = 0;
    }
 
-   WorkerRegistrationMsg() : WireMsg(MsgIdWorkerRegistrationRequest)
-   {
-   }
-
    /**
    *  Custom Message serializer
    *  @throws IOException if an I/O error occurs.
    *  @param out Output stream where the message is being
    *             serialized to
    */
-   void Pack(std::ostream out)
+   void Pack(std::ostream &ostrm)
    {
-      WireMsg::Pack(out);
-      out << m_Test1;
-      out << m_Test2;
-      //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "WorkerRegistrationMsg:Pack -  GUID: " + m_GUID.toString()+   ", m_TCPServerId: " + m_TCPServerId.toString());
+      WireMsg::Pack(ostrm);
+      ostrm << m_Test1;
+      ostrm << m_Test2;
    }
 
    /**
@@ -43,19 +38,16 @@ class WorkerRegistrationMsg : public WireMsg
    *  @param in Input stream from which the message is being
    *            deserialized.
    */
-   void Unpack(std::istream in)throws IOException
+   void Unpack(std::istream &istrm)
    {
-      super.Unpack(in);
-      m_GUID = new GUID("");
-      m_GUID.Unpack(in);
-      m_TCPServerId = new UniqueTCPServerId();
-      m_TCPServerId.Unpack(in);
+      WireMsg::Unpack(istrm);
+      istrm >> m_Test1 >> m_Test2;
 
-      TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "WorkerRegistrationMsg:UnPack -  GUID:" + m_GUID.toString()+   "m_TCPServerId:" + m_TCPServerId.toString());
+      //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "WorkerRegistrationMsg:UnPack -  GUID:" + m_GUID.toString()+   "m_TCPServerId:" + m_TCPServerId.toString());
    }
 
 
    int m_Test1;   // GUID / server identifier
    int m_Test2;   // TCP server info. IP and port.
-}
+};
 

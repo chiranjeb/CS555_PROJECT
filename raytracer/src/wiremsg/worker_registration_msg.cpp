@@ -1,10 +1,4 @@
-#include "include/wiremsg.h"
-#include <iostream>
+#include "worker_registration_msg.hpp"
 
-void WireMsg()
-{
-	cout <<  "Hello I am the wire message" << endl;
-}
-	
 
 

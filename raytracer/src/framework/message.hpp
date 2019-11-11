@@ -27,7 +27,7 @@ protected:
    ///
    /// @param istrm Input stream from the message is being recreated.
    ///
-   virtual void Unpack(std::ostream istrm)
+   virtual void Unpack(std::istream &istrm)
    {
       // This has been unpacked very first to identify the message id
    }
@@ -36,9 +36,9 @@ protected:
    /// @param ostrm Output stream where the message is being packed
    ///            to.
    ///
-   void Pack(DataOutputStream ostrm)  throws IOException
+   void Pack(std::ostream &ostrm)
    {
-      out << m_Id;
+      ostrm << m_id;
    }
 
    int m_id;
