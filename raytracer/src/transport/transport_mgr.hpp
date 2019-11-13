@@ -23,6 +23,10 @@ public:
     /// Service new connection
     void ServiceNewConnection(TCPIOConnection *p_connection);
 
+
+    /// Establish connection to a server
+    void EstablishNewConnection(std::string &serverIP, int serverPort, Listener *p_lis, bool retryUntillConnected);
+
 protected:
     /// Asscociated TCP Server
     TCPIOServer *m_perver;
@@ -31,5 +35,5 @@ protected:
     Listener *m_lis;
 
     /// Connection list
-    std::list<TCPIOConnection *> m_Connections;
+    std::map<std::string, TCPIOConnection *> m_Connections;
 };

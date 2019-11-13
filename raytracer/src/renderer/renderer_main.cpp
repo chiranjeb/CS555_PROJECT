@@ -16,7 +16,7 @@ class TestLis : public Listener
    }
 };
 
-
+static const int SERVER_LISTENING_Q_DEPTH = 40;
 
 int main()
 {
@@ -27,11 +27,13 @@ int main()
    RendererScheduler::Instance().Start();
 
    // Start a server
-   TransportMgr::Instance().CreateTCPServer(8080, 40 /*PEER_SERVER_LISTENING_Q_DEPTH*/, testLis);
+   TransportMgr::Instance().CreateTCPServer(8050, 40, *RendererScheduler::Instance().GetThrdListener());
 
 
    while (1)
-   {}
+   {
+
+   }
    // Submit jobs
    //RendererCli.Instance().Start();
 

@@ -8,7 +8,7 @@ Command::Command(MsgQThread *thread)
 
 Listener* Command::GetHandlerThrdListener()
 {
-   return m_pHandlerThreadPtr->GetThrdListener().get();
+   return m_pHandlerThreadPtr->GetThrdListener();
 }
 
 void Command::Notify(MsgPtr msg)

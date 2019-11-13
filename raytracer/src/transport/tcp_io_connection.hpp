@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <netinet/in.h>
 #include "defines/defines_includes.hpp"
 #include "framework/framework_includes.hpp"
 #include "wiremsg/wire_msg.hpp"
@@ -14,48 +15,61 @@ class TCPIOReceiver;
 class TCPIOConnection
 {
 public:
-    static const int TCP_SEND_Q_DEPTH = 16;
+   static const int TCP_SEND_Q_DEPTH = 16;
 
 public:
-    /// Constructor
-    TCPIOConnection(int socket, std::string clientIpAddress);
+   /// Constructor
+   TCPIOConnection(int socket, std::string clientIpAddress);
 
-    /// Return the remote address.
-    std::string GetRemoteAddress()
-    {
-        return m_ip;
-    }
+   TCPIOConnection();
 
-    /// Send message
-    void SendMsg(WireMsgPtr wireMsg, Listener *p_lis);
+   /// Return the remote address.
+   std::string GetRemoteAddress()
+   {
+      return m_ip;
+   }
 
-    /// Process received message
-    void ProcessReceivedMsg(WireMsgPtr wireMsg);
+   /// Send message
+   void SendMsg(WireMsgPtr wireMsg, Listener *p_lis);
 
-    /// Start the receiver
-    void Start();
+   /// Process received message
+   void ProcessReceivedMsg(WireMsgPtr wireMsg);
 
-    /// Returns the socket asscociated with this connection.
-    int GetSocket()
-    {
-        return m_Socket;
-    }
+   /// Connection is already established. Start the sender and receiver
+   void Start();
+
+
+   /// Establish connection and then start
+   bool Start(std::string& serverName, int port, bool retryUntillConnected);
+
+
+   /// Returns the socket asscociated with this connection.
+   int GetSocket()
+   {
+      return m_socket;
+   }
 private:
-    /// remote ip connected to this machine.
-    std::string m_ip;
 
-    /// Asscociated socket with this TCP connection
-    int m_Socket;
+   /// make connection
+   int MakeConnection(std::string& server, int serverPort, bool retryUntilConnected);
 
-    /// Associated sender thread with this TCP connection
-    TCPIOSender  *m_pIOSender;
+   /// remote ip connected to this machine.
+   std::string m_ip;
 
-    /// Associated receiver thread with this TCP connection
-    TCPIOReceiver  *m_pIOReceiver;
+   /// Asscociated socket with this TCP connection
+   int m_socket;
 
-    //bool m_WeInitiatedClose;
+   /// Associated sender thread with this TCP connection
+   TCPIOSender  *m_pIOSender;
 
-    std::queue<int> m_AppTagQ;
-    std::map<int, Listener *> m_ClientRespRoutingMap;
-    BlockingQueue<MsgPtr> m_SendQ;
+   /// Associated receiver thread with this TCP connection
+   TCPIOReceiver  *m_pIOReceiver;
+
+   //bool m_WeInitiatedClose;
+
+   std::queue<int> m_AppTagQ;
+   std::map<int, Listener *> m_ClientRespRoutingMap;
+   BlockingQueue<MsgPtr> m_SendQ;
+
+   struct sockaddr_in m_server;
 };

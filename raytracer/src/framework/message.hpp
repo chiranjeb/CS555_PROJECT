@@ -52,6 +52,12 @@ public:
    StatusMsg(int msgId, ErrorCode_t errorCode) : Msg(msgId), m_errorCode(errorCode)
    {
    }
+
+   ErrorCode_t GetErrorCode()
+   {
+      return m_errorCode;
+   }
+
    ErrorCode_t m_errorCode;
 };
 

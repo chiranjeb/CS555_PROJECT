@@ -1,9 +1,9 @@
 #include <iostream>
-#include "renderer_scheduler.hpp"
+#include "worker.hpp"
 
-void RendererScheduler::Run()
+void Worker::Run()
 {
-   std::cerr << "Started Renderer Scheduler thread" << std::endl;
+   std::cerr << "Started Worker thread" << std::endl;
    while (1)
    {
       MsgQEntry msgQEntry = TakeNext();
@@ -16,8 +16,8 @@ void RendererScheduler::Run()
       {
          switch (msgQEntry.m_Msg.get()->GetId())
          {
-            case MsgIdServerConstructResponse:
-               std::cerr << "Server Started" <<  std::endl;
+            case MsgIdConnectionEstablishmentResponse:
+               OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
                break; 
 
             default:
@@ -27,4 +27,9 @@ void RendererScheduler::Run()
    }
 }
 
+
+void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
+{
+   std::cerr << "Successfully established connection" << std::endl;
+}
 

@@ -107,9 +107,9 @@ public:
    void Send(MsgQEntry msgQEntry);
 
    /// Get the thread listener
-   ListenerPtr GetThrdListener()
+   Listener* GetThrdListener()
    {
-      return m_ThrdLis;
+      return m_ThrdLis.get();
    }
 
    MsgQEntry TakeNext()
