@@ -41,11 +41,6 @@ public:
       return int(std::streambuf::pptr() - m_buffer);
    }
 
-   void Setg(int index)
-   {
-      setg(m_buffer,m_buffer, m_buffer+index);
-   }
-
 private:
    char *m_buffer;
    int m_size;

@@ -2,7 +2,7 @@
 
 enum MsgIds
 {
-   MsgIdWorkerRegistrationRequest,
+   MsgIdWorkerRegistrationRequest = 30,
 
    MsgIdConnectionEstablishmentResponse,
    MsgIdTCPSend,

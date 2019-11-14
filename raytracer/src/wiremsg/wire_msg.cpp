@@ -33,8 +33,9 @@ std::pair<char *, int> WireMsg::GetPackedBytes(char *pre_allocated_buffer, int s
 ////////////////////////////////////////////////////////////////////////////////////////
 void WireMsg::Pack(std::ostream &ostrm)
 {
+   std::cerr << "WireMsg:Pack" << std::endl;
    Msg::Pack(ostrm);
-   ostrm << m_ApplicationTag;
+   ostrm << m_ApplicationTag << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

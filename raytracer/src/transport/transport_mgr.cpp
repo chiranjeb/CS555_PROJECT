@@ -25,6 +25,8 @@ void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listen
 void TransportMgr::ProcessUnsolicitedMsg(TCPIOConnection *p_connection, WireMsgPtr wireMsgPtr)
 {
    //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,  "Received WireMsg(MsgId:" + wireMsgPtr.get()->GetId()+ ")");
+
+   std::cerr << "Notifying upper layer" << wireMsgPtr.get()->GetId() << std::endl;
    m_lis->Notify(MsgPtr(new TCPRecvMsg(p_connection, wireMsgPtr)));
 }
 

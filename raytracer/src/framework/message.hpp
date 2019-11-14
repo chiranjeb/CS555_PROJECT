@@ -1,8 +1,10 @@
 #pragma once
-#include "defines/error_codes.hpp"
+#include<iostream>
 #include<memory>
 #include<ostream>
 #include<istream>
+#include "defines/error_codes.hpp"
+
 
 class Msg
 {
@@ -36,9 +38,11 @@ protected:
    /// @param ostrm Output stream where the message is being packed
    ///            to.
    ///
-   void Pack(std::ostream &ostrm)
+   virtual void Pack(std::ostream &ostrm)
    {
-      ostrm << m_id;
+
+      std::cerr << "Msg:Pack" << std::endl;
+      ostrm << m_id <<" ";
    }
 
    int m_id;

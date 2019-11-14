@@ -13,10 +13,13 @@ class WorkerRegistrationMsg : public WireMsg
    * WorkerRegistrationMsg message constructor
    *  
    */
-   WorkerRegistrationMsg(): WireMsg(MsgIdWorkerRegistrationRequest)
+   WorkerRegistrationMsg(std::string ipAddress, int port): 
+      WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(ipAddress), m_Port(port)
    {
-      m_Test1 = 1;
-      m_Test2 = 0;
+   }
+
+   WorkerRegistrationMsg(): WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(""), m_Port(0)
+   {
    }
 
    /**
@@ -27,9 +30,10 @@ class WorkerRegistrationMsg : public WireMsg
    */
    void Pack(std::ostream &ostrm)
    {
+      std::cerr << "WorkerRegistrationMsg:Pack" << std::endl;
       WireMsg::Pack(ostrm);
-      ostrm << m_Test1;
-      ostrm << m_Test2;
+      ostrm << m_IPAddress << " ";
+      ostrm << m_Port << " ";
    }
 
    /**
@@ -41,13 +45,21 @@ class WorkerRegistrationMsg : public WireMsg
    void Unpack(std::istream &istrm)
    {
       WireMsg::Unpack(istrm);
-      istrm >> m_Test1 >> m_Test2;
+      istrm >> m_IPAddress >> m_Port;
 
       //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "WorkerRegistrationMsg:UnPack -  GUID:" + m_GUID.toString()+   "m_TCPServerId:" + m_TCPServerId.toString());
    }
 
+   void Dump()
+   {
+      std::cerr << "WorkerRegistrationMsg: " << "IPAddress:" << m_IPAddress << "Port" << m_Port << std::endl;
+   }
 
-   int m_Test1;   // GUID / server identifier
-   int m_Test2;   // TCP server info. IP and port.
+
+   std::string m_IPAddress;   // GUID / server identifier
+   int m_Port;   // TCP server info. IP and port.
 };
 
+
+
+typedef std::shared_ptr<WorkerRegistrationMsg> WorkerRegistrationMsgPtr;

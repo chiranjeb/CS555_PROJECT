@@ -25,4 +25,7 @@ public:
    // Actual Scheduler thread
    void Run();
 
+
+   void OnTCPRecvMsg(MsgPtr msg);
+
 };

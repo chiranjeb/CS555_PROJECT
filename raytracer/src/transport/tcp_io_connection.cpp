@@ -59,6 +59,7 @@ void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, Listener *p_lis)
    MsgPtr msg(nullptr);
    //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,
    //                               " Sending TCP IP message(MsgId=" + wireMsg.get()->GetId() + ") to:" + m_Socket + "AppTag:" +  wireMsg.get()->GetAppTag());
+   std::cerr <<  "Sending TCP IP message" << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag() << std::endl;
    if ((p_lis != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
    {
       m_ClientRespRoutingMap.insert(std::pair<int, Listener *>(wireMsg.get()->GetAppTag(), p_lis));
@@ -74,6 +75,7 @@ void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
 {
    WireMsg *pWireMsg = wireMsgPtr.get();
    pWireMsg->SetConnection(this);
+   std::cerr << "Received a wire message:" << wireMsgPtr.get()->GetId() << std::endl;
    if (m_ClientRespRoutingMap.find(pWireMsg->GetAppTag()) != m_ClientRespRoutingMap.end())
    {
       // Give this to tag based handler

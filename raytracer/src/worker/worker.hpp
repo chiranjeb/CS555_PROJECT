@@ -3,6 +3,7 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 
+class TCPIOConnection;
 class Worker : public MsgQThread
 {
 public:
@@ -30,4 +31,6 @@ protected:
 
    /// Connection establishment response msg
    void OnConnectionEstablishmentResponseMsg(MsgPtr msg);
+
+   TCPIOConnection *m_p_TCPIOConnection;
 };

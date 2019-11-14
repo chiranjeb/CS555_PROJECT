@@ -11,11 +11,16 @@ void TCPIOReceiver::Run()
     while (true)
     {
         int numOfBytesReceived = recv(m_socket, m_MsgLengthBuff, MAX_PACKET_SIZE_LENGTH, 0);
+
+        std::cerr << "TCPIOReceiver::rev something" << std::endl;
         if (numOfBytesReceived < 1)
         {
             HandleException();
             break;
         }
+
+
+        std::cerr <<  "Successfully received the data length" << numOfBytesReceived <<  std::endl;
 
         // We received the message length. Now, Compute the message size and transfer the actual message.
         int messageLength = m_MsgLengthBuff[3] << 24 | m_MsgLengthBuff[2] << 16 | m_MsgLengthBuff[1] << 8 | m_MsgLengthBuff[0];
@@ -25,6 +30,9 @@ void TCPIOReceiver::Run()
             HandleException();
             break;
         }
+
+
+        std::cerr <<  "Successfully receivedall the data" << numOfBytesReceived <<  std::endl;
 
         // Construct the message and send it to the upper layer.
         WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(&m_MsgBuffer[0], numOfBytesReceived);

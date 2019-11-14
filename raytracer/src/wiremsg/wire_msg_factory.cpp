@@ -16,10 +16,13 @@ WireMsgPtr WireMsgFactory::ConstructMsg(char *buffer, int dataLength)
     WireMsgPtr wireMsg(nullptr);
 
     PreAllocatedStreamBuffer streambuffer(buffer, dataLength);
+    streambuffer.Setg(dataLength);
     std::istream istrm(&streambuffer);
 
     int msgId;
     istrm >> msgId;
+
+    std::cerr << "WireMsgFactory::ReceivedMsg:" <<  msgId << std::endl;
 
     switch (msgId)
     {

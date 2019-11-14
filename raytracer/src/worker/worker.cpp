@@ -1,5 +1,8 @@
 #include <iostream>
 #include "worker.hpp"
+#include "transport/transport_msgs.hpp"
+#include "transport/tcp_io_connection.hpp"
+#include "wiremsg/worker_registration_msg.hpp"
 
 void Worker::Run()
 {
@@ -31,5 +34,9 @@ void Worker::Run()
 void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
 {
    std::cerr << "Successfully established connection" << std::endl;
+   TCPConnectionEstablishRespMsg *p_responseMsg =  static_cast<TCPConnectionEstablishRespMsg *>(msg.get());
+   m_p_TCPIOConnection = p_responseMsg->GetConnection();
+   WorkerRegistrationMsgPtr reigstrationMsgPtr =  WorkerRegistrationMsgPtr(new WorkerRegistrationMsg("Worker1", 40));
+   //reigstrationMsgPtr.get()->SetAppTag(m_p_TCPIOConnection->AllocateAppTag());
+   m_p_TCPIOConnection->SendMsg(reigstrationMsgPtr, nullptr);
 }
-

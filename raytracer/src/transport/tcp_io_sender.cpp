@@ -24,6 +24,7 @@ void TCPIOSender::Run()
             //Wait for a message
             MsgPtr msgPtr = m_SendQ.Take();
 
+
             //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,
             //                               " Processing Message(MsgId:" + msgQEntry.m_Msg.GetId() + ")");
 
@@ -64,8 +65,36 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
         //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,
         //                               " Sending WireMsg(MsgId:" + requestMsg.GetWireMsg().GetId()+ ")");
 
+
         std::pair<char *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
-        int numBytesSent = send(m_socket, buffer.first, buffer.second, 0);
+
+        std::cerr <<  "Sending wire message Message(MsgId:" << msgPtr.get()->GetId() << ")" << "buffer_lebgth:" << buffer.second << std::endl;
+
+
+        m_MsgLengthBuff [0] = buffer.second & 0x000000FF;
+        m_MsgLengthBuff [1] = (buffer.second & 0x0000FF00) >> 8;
+        m_MsgLengthBuff [2] = (buffer.second & 0x00FF0000) >> 16;
+        m_MsgLengthBuff [3] = (buffer.second & 0xFF000000) >> 24;
+
+        int numBytesSent = send(m_socket, m_MsgLengthBuff, sizeof(m_MsgLengthBuff), 0);
+        if (numBytesSent < 0)
+        {
+            // connection closed. We need to clean things up
+            errorCode = ERR_TRANSPORT_CONNECTION_CLOSED;
+        }
+        else if (numBytesSent < buffer.second)
+        {
+            // not all bytes were sent
+            errorCode = ERR_TRANSPORT_FAIL_TO_XMIT_ALL_DATA;
+        }
+        else
+        {
+            errorCode = STATUS_SUCCESS;
+            std::cerr <<  "Successfully sent the data length" << buffer.second <<  std::endl;
+        }
+
+
+        numBytesSent = send(m_socket, buffer.first, buffer.second, 0);
         if (numBytesSent < 0)
         {
             // connection closed. We need to clean things up
