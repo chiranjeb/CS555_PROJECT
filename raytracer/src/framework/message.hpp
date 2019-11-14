@@ -4,6 +4,7 @@
 #include<ostream>
 #include<istream>
 #include "defines/error_codes.hpp"
+#include "framework/trace_logger.hpp"
 
 
 class Msg
@@ -41,7 +42,7 @@ protected:
    virtual void Pack(std::ostream &ostrm)
    {
 
-      std::cerr << "Msg:Pack" << std::endl;
+      DEBUG_TRACE("Msg:Pack");
       ostrm << m_id <<" ";
    }
 

@@ -4,31 +4,6 @@
 #include<cstring>
 #include<cstdio>
 #include<sstream>
-// Buffer for std::ostream implemented by std::array
-template<std::size_t SIZE_IN_BYTES>
-class PreAllocatedStreamBuffer : public std::streambuf
-{
-public:
-   PreAllocatedStreamBuffer()
-   {
-      // set std::basic_streambuf
-      std::streambuf::setp(m_buffer.begin(), m_buffer.end());
-   }
-
-   long Tellp()
-   {
-      return int(std::streambuf::pptr() - &m_buffer[0]);
-   }
-
-   void Setg(int index)
-   {
-      setg(m_buffer.begin(), m_buffer.begin(), m_buffer.begin()+index);
-   }
-
-   std::array<char, SIZE_IN_BYTES> m_buffer;
-};
-
-
 
 int main()
 {

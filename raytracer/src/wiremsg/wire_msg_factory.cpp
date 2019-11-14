@@ -22,7 +22,7 @@ WireMsgPtr WireMsgFactory::ConstructMsg(char *buffer, int dataLength)
     int msgId;
     istrm >> msgId;
 
-    std::cerr << "WireMsgFactory::ReceivedMsg:" <<  msgId << std::endl;
+    DEBUG_TRACE("WireMsgFactory::ReceivedMsg:" <<  msgId);
 
     switch (msgId)
     {

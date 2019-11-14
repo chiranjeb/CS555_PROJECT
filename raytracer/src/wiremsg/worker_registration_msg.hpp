@@ -30,7 +30,7 @@ class WorkerRegistrationMsg : public WireMsg
    */
    void Pack(std::ostream &ostrm)
    {
-      std::cerr << "WorkerRegistrationMsg:Pack" << std::endl;
+      DEBUG_TRACE("WorkerRegistrationMsg:Pack");
       WireMsg::Pack(ostrm);
       ostrm << m_IPAddress << " ";
       ostrm << m_Port << " ";
@@ -52,7 +52,7 @@ class WorkerRegistrationMsg : public WireMsg
 
    void Dump()
    {
-      std::cerr << "WorkerRegistrationMsg: " << "IPAddress:" << m_IPAddress << "Port" << m_Port << std::endl;
+      DEBUG_TRACE("WorkerRegistrationMsg: " << "IPAddress:" << m_IPAddress << "Port" << m_Port);
    }
 
 

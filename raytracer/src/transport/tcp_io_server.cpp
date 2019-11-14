@@ -26,7 +26,7 @@ void TCPIOServer::Run()
 {
    while (true)
    {
-      std::cerr << "Wait for a new connection" << endl;
+      DEBUG_TRACE("TCPIOServer::Wait for a new connection");
       // Accept a new connection
       TCPIOConnection *p_connection = AcceptConnection();
 

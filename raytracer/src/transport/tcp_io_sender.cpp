@@ -5,10 +5,10 @@
 
 void TCPIOSender::Run()
 {
-    std::cerr << "Started TCPIOSender::Run thread" << std::endl;
+    RELEASE_TRACE("Started TCPIOSender::Run thread");
     while (1)
     {
-        std::cerr << "Running TCPIOSender::Run thread" << std::endl;
+        DEBUG_TRACE("Running TCPIOSender::Run thread");
         //std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
         m_State = STATE_RUNNING;
@@ -68,7 +68,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
 
         std::pair<char *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
 
-        std::cerr <<  "Sending wire message Message(MsgId:" << msgPtr.get()->GetId() << ")" << "buffer_lebgth:" << buffer.second << std::endl;
+        DEBUG_TRACE("Sending wire message Message(MsgId:" << msgPtr.get()->GetId() << ")" << "buffer_lebgth:" << buffer.second);
 
 
         m_MsgLengthBuff [0] = buffer.second & 0x000000FF;
@@ -90,7 +90,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
         else
         {
             errorCode = STATUS_SUCCESS;
-            std::cerr <<  "Successfully sent the data length" << buffer.second <<  std::endl;
+            DEBUG_TRACE("Successfully sent the data length" << buffer.second);
         }
 
 

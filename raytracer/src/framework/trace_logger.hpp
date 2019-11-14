@@ -1,78 +1,22 @@
+#pragma once
 #include <iostream>
-#include <array>
-#include <streambuf>
+#include <time.h>
+#include <iomanip>
+#include <sstream>
 
-// Buffer for std::ostream implemented by std::array
-template<std::size_t SIZE_IN_BYTES>
-class PreAllocatedStreamArrayBuffer : public std::streambuf
-{
-public:
-   // PreAllocatedStreamArrayBuffer
-   PreAllocatedStreamArrayBuffer()
-   {
-      // set std::basic_streambuf
-      std::streambuf::setp(m_buffer.begin(), m_buffer.end());
-   }
+/// Set this to 1 to turn off all the DEBUG STREAMS.
+#define RELEASE_BUILD 0
 
-   // Find the size of the buffer
-   long Tellp()
-   {
-      return int(std::streambuf::pptr() - &m_buffer[0]);
-   }
+/// Get a timestamp
+extern std::ostream& TimeStamp(std::ostream& ostr);
 
-private:
-   std::array<char, SIZE_IN_BYTES> m_buffer;
-};
-
-
-class PreAllocatedStreamBuffer : public std::streambuf
-{
-public:
-   // PreAllocatedStreamBuffer
-   PreAllocatedStreamBuffer(char *buffer, int size):m_buffer(buffer), m_size(size)
-   {
-      // set std::basic_streambuf
-      std::streambuf::setp(buffer, buffer+size);
-   }
-
-   // Find the size of the buffer
-   long Tellp()
-   {
-      return int(std::streambuf::pptr() - m_buffer);
-   }
-
-private:
-   char *m_buffer;
-   int m_size;
-};
-
-
-/*
-int main()
-{
-   PreAllocatedStreamBuffer<100> stream_buffer;
-
-   //std::ostringstream str(&stream_buffer);
-   //std::basic_iostream<char> str(&stream_buffer);
-   std::ostream str(&stream_buffer);
-   int origSize = str.tellp();
-   std::cerr << "Buffer length" << "previous:" << origSize << "now:" << stream_buffer.Tellp() << std::endl;
-   int i=5;
-   std::string s1, s2, s3, s4;
-   s1 = "hello";
-   s2 = "prachi" ;
-   s3 = "pogi";
-   str << i;
-   str << s1;
-   str << s2;
-   str << s3;
-   std::cerr << "Buffer length" << "previous:" << origSize << "now:" << stream_buffer.Tellp() << std::endl;
-
-   if( str.good())
-    std::cerr << "stream is good:" << std::endl;
-
-   std::istream istr(&stream_buffer);
-   istr >> i >> s1 >> s2 >> s3;
-   std::cerr << s1 << " " << s2 << " " << " " << i << " " << s3 << std::endl;
-}
-*/
+/// TODO: consider changing std::cerr to a fstream to output to log
+#define RELEASE_TRACE(x) {std::stringstream str;  TimeStamp(str) << x  ;  std::cerr << str.str() << std::endl;}
+ 
+#if RELEASE_BUILD == 0
+//#define DEBUG_TRACE(x) TimeStamp(std::cerr) << x << std::endl
+#define DEBUG_TRACE(x) {std::stringstream str;  TimeStamp(str) << x  ;  std::cerr << str.str() << std::endl;}
+#else
+/// Goal is to take these traces out in compile time to eliminate runtime cost
+#define DEBUG_TRACE(x)
+#endif

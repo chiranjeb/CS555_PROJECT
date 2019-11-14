@@ -57,9 +57,7 @@ void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, Listener *p_lis)
 {
 
    MsgPtr msg(nullptr);
-   //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,
-   //                               " Sending TCP IP message(MsgId=" + wireMsg.get()->GetId() + ") to:" + m_Socket + "AppTag:" +  wireMsg.get()->GetAppTag());
-   std::cerr <<  "Sending TCP IP message" << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag() << std::endl;
+   DEBUG_TRACE("Sending TCP IP message" << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
    if ((p_lis != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
    {
       m_ClientRespRoutingMap.insert(std::pair<int, Listener *>(wireMsg.get()->GetAppTag(), p_lis));
@@ -75,11 +73,10 @@ void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
 {
    WireMsg *pWireMsg = wireMsgPtr.get();
    pWireMsg->SetConnection(this);
-   std::cerr << "Received a wire message:" << wireMsgPtr.get()->GetId() << std::endl;
+   DEBUG_TRACE("Received a wire message:" << wireMsgPtr.get()->GetId());
    if (m_ClientRespRoutingMap.find(pWireMsg->GetAppTag()) != m_ClientRespRoutingMap.end())
    {
       // Give this to tag based handler
-      // TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT, "Received WireMsg(MsgId:" + wireMsg.GetId() + ")" + "AppTag:" + wireMsg.GetAppTag());
       m_ClientRespRoutingMap[pWireMsg->GetAppTag()]->Notify(wireMsgPtr);
    }
    else
@@ -110,9 +107,7 @@ int TCPIOConnection::MakeConnection(std::string& server, int serverPort, bool re
    {
       do
       {
-         std::cerr <<  "Attempting to connect: " << server << "port:" << serverPort << std::endl;
-         //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_TRANSPORT,
-         //                                " Attempting to connect:" + serverIP + "port:" + serverPort);
+         DEBUG_TRACE("Attempting to connect: " << server << "port:" << serverPort);
          m_socket = socket(AF_INET, SOCK_STREAM, 0);
          if (m_socket == -1) //socket failed
          {

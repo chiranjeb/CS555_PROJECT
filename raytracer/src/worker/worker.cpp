@@ -6,7 +6,7 @@
 
 void Worker::Run()
 {
-   std::cerr << "Started Worker thread" << std::endl;
+   RELEASE_TRACE("Started Worker thread");
    while (1)
    {
       MsgQEntry msgQEntry = TakeNext();
@@ -33,7 +33,7 @@ void Worker::Run()
 
 void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
 {
-   std::cerr << "Successfully established connection" << std::endl;
+   RELEASE_TRACE("Successfully established connection");
    TCPConnectionEstablishRespMsg *p_responseMsg =  static_cast<TCPConnectionEstablishRespMsg *>(msg.get());
    m_p_TCPIOConnection = p_responseMsg->GetConnection();
    WorkerRegistrationMsgPtr reigstrationMsgPtr =  WorkerRegistrationMsgPtr(new WorkerRegistrationMsg("Worker1", 40));

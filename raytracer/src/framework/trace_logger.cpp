@@ -1,54 +1,20 @@
-#include <iostream>
-#include <array>
-#include <streambuf>
+#include "trace_logger.hpp"
 
-// Buffer for std::ostream implemented by std::array
-template<std::size_t SIZE_IN_BYTES>
-class PreAllocatedStreamBuffer : public std::streambuf
+/// Output a timestamp
+std::ostream& TimeStamp(std::ostream& ostr)
 {
-public:
-   PreAllocatedStreamBuffer()
-   {
-      // set std::basic_streambuf
-      std::streambuf::setp(m_buffer.begin(), m_buffer.end());
-   }
+   // Get the localtime
+   time_t time_ptr = time(NULL);
+   tm *tm_local = localtime(&time_ptr);
+   ostr << std::setfill('0') << std::setw(2) << tm_local->tm_hour << ":" << std::setw(2) << tm_local->tm_min << ":" << std::setw(2) << tm_local->tm_sec << "|";
+   return ostr;
+}
 
-   long Tellp()
-   {
-      return int(std::streambuf::pptr() - &m_buffer[0]);
-   }
-
-private:
-   std::array<char, SIZE_IN_BYTES> m_buffer;
-};
-
-
-
+#if UNIT_TEST
 int main()
 {
-   PreAllocatedStreamBuffer<100> stream_buffer;
-
-   //std::ostringstream str(&stream_buffer);
-   //std::basic_iostream<char> str(&stream_buffer);
-   std::ostream str(&stream_buffer);
-   int origSize = str.tellp();
-   std::cerr << "Buffer length" << "previous:" << origSize << "now:" << stream_buffer.Tellp() << std::endl;
-   int i=5;
-   std::string s1, s2, s3, s4;
-   s1 = "hello";
-   s2 = "prachi" ;
-   s3 = "pogi";
-   str << i;
-   str << s1;
-   str << s2;
-   str << s3;
-   std::cerr << "Buffer length" << "previous:" << origSize << "now:" << stream_buffer.Tellp() << std::endl;
-
-   if( str.good())
-    std::cerr << "stream is good:" << std::endl;
-
-   std::istream istr(&stream_buffer);
-   istr >> i >> s1 >> s2 >> s3;
-   std::cerr << s1 << " " << s2 << " " << " " << i << " " << s3 << std::endl;
-
+   RELEASE_TRACE("Hello");
+   RELEASE_TRACE("Hello" << " test");
+   DEBUG_TRACE("Hello");
 }
+#endif

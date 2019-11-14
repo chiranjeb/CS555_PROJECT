@@ -6,7 +6,7 @@
 
 void RendererScheduler::Run()
 {
-   std::cerr << "Started Renderer Scheduler thread" << std::endl;
+   RELEASE_TRACE("Started Renderer Scheduler thread");
    while (1)
    {
       MsgQEntry msgQEntry = TakeNext();
@@ -20,7 +20,7 @@ void RendererScheduler::Run()
          switch (msgQEntry.m_Msg.get()->GetId())
          {
             case MsgIdServerConstructResponse:
-               std::cerr << "Server Started" <<  std::endl;
+               DEBUG_TRACE("Server Started");
                break;
 
             case MsgIdTCPRecv:
@@ -36,7 +36,7 @@ void RendererScheduler::Run()
 
 void RendererScheduler::OnTCPRecvMsg(MsgPtr msg)
 {
-   std::cerr << "On TCP Recv Message" << std::endl;
+   DEBUG_TRACE("On TCP Recv Message");
    TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
    WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
 
