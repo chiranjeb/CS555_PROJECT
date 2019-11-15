@@ -3,7 +3,7 @@
 Ray tracing using distributed computing
 
 Directory structure:
-  * raytracing/src/defines => Basic type defines.
+  * raytracing/src/defines => Widely used type defines
   * raytracing/src/framework => Framework specifc defines and implementation such as messaging, threading, logging
   * raytracing/src/master => Master functionalities 
   * raytracing/src/worker => Worker related functionalities
