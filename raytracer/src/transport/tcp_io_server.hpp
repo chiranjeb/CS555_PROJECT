@@ -31,6 +31,11 @@ public:
       m_thread = new std::thread(&TCPIOServer::Run, *this);
    }
 
+   int GetPort()
+   {
+       return m_listeningPort;
+   }
+
    void Run();
 
    int m_listeningPort;

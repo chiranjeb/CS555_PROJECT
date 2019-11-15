@@ -2,6 +2,14 @@
 #include "tcp_io_connection.hpp"
 #include "transport_msgs.hpp"
 
+TransportMgr::TransportMgr()
+{
+    char hostbuffer[128]; 
+    memset(hostbuffer, 0, sizeof(hostbuffer));
+    gethostname(hostbuffer, sizeof(hostbuffer)); 
+    m_hostname = std::string(hostbuffer);
+}
+
 void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listener& serverResponseHandler)
 {
    m_lis = &serverResponseHandler;
@@ -18,7 +26,7 @@ void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listen
    }
 
    // Finally notify the cmd processor.
-   m_lis->Notify(std::shared_ptr<Msg>(new StatusMsg(MsgIdServerConstructResponse, errorCode)));
+   m_lis->Notify(std::shared_ptr<Msg>(new TCPServerConstructStatusMsg(errorCode, m_perver->GetPort())));
 }
 
 

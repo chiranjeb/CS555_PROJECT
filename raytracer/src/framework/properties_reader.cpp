@@ -2,9 +2,9 @@
 
 int main ()
 {
-   std::string filename = "renderer_properties.txt";
+   std::string filename = "master_properties.txt";
    PropertiesReader properties(filename);
-   std::string hostname = properties["renderer_host"];
-   std::cerr << "Renderer host:" << hostname << std::endl;
-   std::cerr << "Renderer port:" << properties["renderer_listening_port"] << std::endl;
+   std::string hostname = properties["master_host"];
+   std::cerr << "Master host:" << hostname << std::endl;
+   std::cerr << "Master port:" << properties["master_listening_port"] << std::endl;
 }

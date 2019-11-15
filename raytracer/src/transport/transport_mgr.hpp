@@ -14,6 +14,12 @@ public:
         return s_TransportMgr;
     }
 
+    /// Return hostname
+    std::string& MyName()
+    {
+        return m_hostname;
+    }
+
     /// Create a TCP server
     void CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler);
 
@@ -28,6 +34,11 @@ public:
     void EstablishNewConnection(std::string &serverIP, int serverPort, Listener *p_lis, bool retryUntillConnected);
 
 protected:
+    TransportMgr();
+
+    /// Host name
+    std::string m_hostname;
+
     /// Asscociated TCP Server
     TCPIOServer *m_perver;
 

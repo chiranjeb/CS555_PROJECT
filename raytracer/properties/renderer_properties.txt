@@ -1,3 +1,0 @@
-renderer_host=10.6.37.65
-renderer_listening_port=8050
-

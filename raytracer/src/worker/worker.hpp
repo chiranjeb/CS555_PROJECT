@@ -24,10 +24,20 @@ public:
       m_thread = new std::thread(&Worker::Run, *this);
    }
 
+   /// Setup master info
+   void SetupMasterInfo(std::string master_address, int master_port)
+   {
+       m_master_address = master_address;
+       m_master_port = master_port; 
+   }
+
 protected:
 
    /// Run the worker thread
    void Run();
+
+   /// Connection establishment response msg
+   void OnCreateServerResponse(MsgPtr msg);
 
    /// Connection establishment response msg
    void OnConnectionEstablishmentResponseMsg(MsgPtr msg);
@@ -35,5 +45,8 @@ protected:
    /// Worker registration response msg
    void OnWorkerRegistrationRespMsg(MsgPtr msg);
 
-   TCPIOConnection *m_p_TCPIOConnection;
+   TCPIOConnection *m_p_ConnectionToMaster;
+   std::string m_master_address;
+   int m_master_port;
+   int m_listening_port;
 };

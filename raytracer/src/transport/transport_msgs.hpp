@@ -5,6 +5,22 @@
 
 class TCPIOConnection;
 
+class TCPServerConstructStatusMsg : public StatusMsg
+{
+public:
+   TCPServerConstructStatusMsg(ErrorCode_t errorCode, int serverPort)
+      : StatusMsg(MsgIdServerConstructResponse, errorCode), m_port(serverPort)
+   { }
+
+   int GetPort()
+   {
+      return m_port;
+   }
+
+protected:
+   int m_port;
+};
+
 class TCPSendMsg : public Msg
 {
 public:

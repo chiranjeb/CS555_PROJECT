@@ -1,12 +1,12 @@
 #include <iostream>
-#include "renderer_scheduler.hpp"
+#include "master_scheduler.hpp"
 #include "transport/transport_msgs.hpp"
 #include "transport/tcp_io_connection.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
 
-void RendererScheduler::Run()
+void MasterScheduler::Run()
 {
-    RELEASE_TRACE("Started Renderer Scheduler thread");
+    RELEASE_TRACE("Started Master Scheduler thread");
     while (1)
     {
         MsgQEntry msgQEntry = TakeNext();
@@ -34,7 +34,7 @@ void RendererScheduler::Run()
     }
 }
 
-void RendererScheduler::OnTCPRecvMsg(MsgPtr msg)
+void MasterScheduler::OnTCPRecvMsg(MsgPtr msg)
 {
     DEBUG_TRACE("On TCP Recv Message");
     TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
