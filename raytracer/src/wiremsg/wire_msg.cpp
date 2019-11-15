@@ -1,7 +1,7 @@
 #include "wire_msg.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////////////
-///  Returns true if a response is expected in response to sending
+///  Returns true if a response is expected from remote in response to
 ///  this message otherwise false.
 ///////////////////////////////////////////////////////////////////////////////////////
 bool WireMsg::ExpectingRecvRecvResponse()
@@ -10,7 +10,6 @@ bool WireMsg::ExpectingRecvRecvResponse()
    {
       return true;
    }
-
    return false;
 }
 
@@ -28,20 +27,17 @@ std::pair<char *, int> WireMsg::GetPackedBytes(char *pre_allocated_buffer, int s
 
 ///////////////////////////////////////////////////////////////////////////////////////
 /// Custom Message serializer
-/// @param ostrm Output stream where the message is being
-///            serialized to
+/// @param [ostrm] Output stream where the message is being serialized to
 ////////////////////////////////////////////////////////////////////////////////////////
 void WireMsg::Pack(std::ostream &ostrm)
 {
-   DEBUG_TRACE("WireMsg:Pack");
    Msg::Pack(ostrm);
    ostrm << m_ApplicationTag << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 /// Custom message deserializer
-/// @param istr Input stream from which the message is being
-///           deserialized.
+/// @param [istr] Input stream from which the message is being deserialized.
 ///////////////////////////////////////////////////////////////////////////////////////
 void WireMsg::Unpack(std::istream &istrm)
 {

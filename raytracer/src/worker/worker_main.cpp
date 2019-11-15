@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
    std::string renderer_address = properties["renderer_host"];
    int renderer_port = std::stoi(properties["renderer_listening_port"]);
 
-
    // Start the Renderer Scheduler.
    Worker::Instance().Start();
 

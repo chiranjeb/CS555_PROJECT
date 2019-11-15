@@ -13,6 +13,8 @@ public:
     /// Message constructor
     WireMsg(int msgId) : Msg(msgId)
     {
+        m_ApplicationTag = 0;
+        m_p_tcp_connection = nullptr;
     }
 
     ///  Returns the application tag
@@ -52,7 +54,7 @@ public:
         return m_p_tcp_connection;
     }
 
-    int m_ApplicationTag;                  //<< Application tag associated with this message
+    int m_ApplicationTag;                    //<< Application tag associated with this message
     TCPIOConnection *m_p_tcp_connection;     //<< TCP IP connection associated with the message
 };
 

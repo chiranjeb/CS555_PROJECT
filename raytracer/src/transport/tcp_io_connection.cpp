@@ -13,145 +13,181 @@
 #include <errno.h>
 #include <thread>
 #include "tcp_io_connection.hpp"
-#include "tcp_io_receiver.hpp"
-#include "tcp_io_sender.hpp"
+#include "tcp_io_send_recv.hpp"
 #include "transport_mgr.hpp"
 #include "transport_msgs.hpp"
 
 
 TCPIOConnection::TCPIOConnection(int socket, std::string clientIpAddress)
-   : m_socket(socket), m_ip(clientIpAddress), m_SendQ(10)
+    : m_socket(socket), m_ip(clientIpAddress), m_SendQ(10)
 {
-   for (int index = 1; index < 50000; index++)
-   {
-      m_AppTagQ.push(index);
-   }
+    for (int index = 1; index < 5000; index++)
+    {
+        m_AppTagQ.push(index);
+    }
 }
 
-TCPIOConnection::TCPIOConnection(): m_SendQ(10)
+TCPIOConnection::TCPIOConnection() : m_SendQ(10)
 {
+    for (int index = 1; index < 5000; index++)
+    {
+        m_AppTagQ.push(index);
+    }
 }
 
-/** 
-* Establish a connection initiated by client. 
-* @throw IOException on IO error.
-* @param socket client socket 
-*/
+////////////////////////////////////////////////////////////////////////////////////
+///
+/// Establish a connection initiated by client.
+///
+////////////////////////////////////////////////////////////////////////////////////
 void TCPIOConnection::Start()
 {
-   //m_SendQ = nullptr;
-   m_pIOSender = nullptr;
+    m_pIOSender = nullptr;
 
-   //If a TCP connection is used using socket. We will create a recvQ only and let
-   //upper layer chose whether to create a send thread or not.
-   //m_pIOReceiver = new TCPIOReceiver(m_Socket, this);
-   m_pIOReceiver = new TCPIOReceiver(this, m_socket);
-   m_pIOSender = new TCPIOSender(this, m_socket, m_SendQ);
+    // Create the receiver and sender
+    m_pIOReceiver = new TCPIOReceiver(this, m_socket);
+    m_pIOSender = new TCPIOSender(this, m_socket, m_SendQ);
 
-   // Start receiver and sender
-   m_pIOReceiver->Start();
-   m_pIOSender->Start();
+    // Start receiver and sender
+    m_pIOReceiver->Start();
+    m_pIOSender->Start();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+/// Send a message over a connection
+///
+/// @param [wireMsg] Pointer to the wire message
+/// @param [p_lis] Listener which will be notified -
+///       1. If a valid app tag is present in the message. Remote receiver is expected
+///          to put the app tag back in the response message.
+///       2. If requester is asking for an explicit response of the message being sent out.
+///
+///////////////////////////////////////////////////////////////////////////////////////////
 void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, Listener *p_lis)
 {
-
-   MsgPtr msg(nullptr);
-   DEBUG_TRACE("Sending TCP IP message" << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
-   if ((p_lis != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
-   {
-      m_ClientRespRoutingMap.insert(std::pair<int, Listener *>(wireMsg.get()->GetAppTag(), p_lis));
-      m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, nullptr)));
-   }
-   else
-   {
-      m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, p_lis)));
-   }
+    MsgPtr msg(nullptr);
+    DEBUG_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
+    if ((p_lis != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
+    {
+        m_ClientRespRoutingMap.insert(std::pair<int, Listener *>(wireMsg.get()->GetAppTag(), p_lis));
+        m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, nullptr)));
+    }
+    else
+    {
+        m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, p_lis)));
+    }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+/// Process a response message. There could be two cases here. Solicited and unsolicited
+/// response. Solicited responses are routed based on the <apptag, lis> map. Unsolicited
+/// responses are sent out to the unsolicited response handler registered in
+/// TransportMgr::CreateTCPServer.
+///
+/// @param [wireMsgPtr] Pointer to the wire message
+///
+///////////////////////////////////////////////////////////////////////////////////////////
 void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
 {
-   WireMsg *pWireMsg = wireMsgPtr.get();
-   pWireMsg->SetConnection(this);
-   DEBUG_TRACE("Received a wire message:" << wireMsgPtr.get()->GetId());
-   if (m_ClientRespRoutingMap.find(pWireMsg->GetAppTag()) != m_ClientRespRoutingMap.end())
-   {
-      // Give this to tag based handler
-      m_ClientRespRoutingMap[pWireMsg->GetAppTag()]->Notify(wireMsgPtr);
-   }
-   else
-   {
-      TransportMgr::Instance().ProcessUnsolicitedMsg(this, wireMsgPtr);
-   }
+    WireMsg *pWireMsg = wireMsgPtr.get();
+    pWireMsg->SetConnection(this);
+    if (m_ClientRespRoutingMap.find(pWireMsg->GetAppTag()) != m_ClientRespRoutingMap.end())
+    {
+        DEBUG_TRACE("Received a solicited message: " << wireMsgPtr.get()->GetId());
+        // Give this to tag based handler
+        m_ClientRespRoutingMap[pWireMsg->GetAppTag()]->Notify(wireMsgPtr);
+    }
+    else
+    {
+        DEBUG_TRACE("Received a unsolicited message: " << wireMsgPtr.get()->GetId());
+        TransportMgr::Instance().ProcessUnsolicitedMsg(this, wireMsgPtr);
+    }
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////
+/// Connect to a server and start connection
+///
+/// @param [serverName] Name of the server to connect
+/// @param [port] Server listening port
+/// @param [retryUntillConnected] Indicates whether to block current thread or not.
+///
+///
+/////////////////////////////////////////////////////////////////////////////////////////
 bool TCPIOConnection::Start(std::string &serverName, int port, bool retryUntillConnected)
 {
-   m_socket = MakeConnection(serverName, port, retryUntillConnected);
-   if (m_socket != -1)
-   {
-      Start();
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+    m_socket = MakeConnection(serverName, port, retryUntillConnected);
+    if (m_socket != -1)
+    {
+        Start();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-int TCPIOConnection::MakeConnection(std::string& server, int serverPort, bool retryUntilConnected)
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/// Establishes connection
+///
+/// @param [serverName] Name of the server to connect
+/// @param [port] Server listening port
+/// @param [retryUntillConnected] Indicates whether to block current thread or not.
+///
+///
+/////////////////////////////////////////////////////////////////////////////////////////
+int TCPIOConnection::MakeConnection(std::string &server, int serverPort, bool retryUntilConnected)
 {
-   ErrorCode_t errorCode;
-   while (true)
-   {
-      do
-      {
-         DEBUG_TRACE("Attempting to connect: " << server << "port:" << serverPort);
-         m_socket = socket(AF_INET, SOCK_STREAM, 0);
-         if (m_socket == -1) //socket failed
-         {
-            errorCode = ERR_TRANSPORT_CONNECTION_FAILED_TO_CREATE_SOCKET;
-            break;
-         }
-
-         int inetSuccess = inet_aton(server.c_str(), &m_server.sin_addr);
-
-         if (!inetSuccess) // inet_addr failed to parse address
-         {
-            // if hostname is not in IP strings and dots format, try resolve it
-            struct hostent *host;
-            struct in_addr **addrList;
-            if ((host = gethostbyname(server.c_str())) == NULL)
+    ErrorCode_t errorCode;
+    while (true)
+    {
+        do
+        {
+            DEBUG_TRACE("Attempting to connect: " << server << ", port:" << serverPort);
+            m_socket = socket(AF_INET, SOCK_STREAM, 0);
+            if (m_socket == -1) //socket failed
             {
-               errorCode = ERR_TRANSPORT_CONNECTION_FAIL_TO_PARSER_HOST_NAME;
-               break;
+                errorCode = ERR_TRANSPORT_CONNECTION_FAILED_TO_CREATE_SOCKET;
+                break;
             }
-            addrList = (struct in_addr **)host->h_addr_list;
-            m_server.sin_addr = *addrList[0];
-         }
-         m_server.sin_family = AF_INET;
-         m_server.sin_port = htons(serverPort);
 
-         int connectRet = connect(m_socket, (struct sockaddr *)&m_server, sizeof(m_server));
-         if (connectRet == -1)
-         {
-            errorCode = ERR_TRANSPORT_CONNECTION_FAIL_TO_ESTABLISH_CONNECTION;
-            break;
-         }
-         errorCode = STATUS_SUCCESS;
-      }
-      while (0);
+            int inetSuccess = inet_aton(server.c_str(), &m_server.sin_addr);
+
+            if (!inetSuccess) // inet_addr failed to parse address
+            {
+                // if hostname is not in IP strings and dots format, try resolve it
+                struct hostent *host;
+                struct in_addr **addrList;
+                if ((host = gethostbyname(server.c_str())) == NULL)
+                {
+                    errorCode = ERR_TRANSPORT_CONNECTION_FAIL_TO_PARSER_HOST_NAME;
+                    break;
+                }
+                addrList = (struct in_addr **)host->h_addr_list;
+                m_server.sin_addr = *addrList[0];
+            }
+            m_server.sin_family = AF_INET;
+            m_server.sin_port = htons(serverPort);
+
+            int connectRet = connect(m_socket, (struct sockaddr *)&m_server, sizeof(m_server));
+            if (connectRet == -1)
+            {
+                errorCode = ERR_TRANSPORT_CONNECTION_FAIL_TO_ESTABLISH_CONNECTION;
+                break;
+            }
+            errorCode = STATUS_SUCCESS;
+        }while (0);
 
 
-      if (errorCode == STATUS_SUCCESS)
-      {
-         return m_socket;
-      }
-      else if (retryUntilConnected)
-      {
-         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-      }
-   }
-   return -1;
+        if (errorCode == STATUS_SUCCESS)
+        {
+            return m_socket;
+        }
+        else if (retryUntilConnected)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        }
+    }
+    return -1;
 }

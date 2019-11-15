@@ -2,64 +2,125 @@
 #include "wire_msg.hpp"
 
 /**
- * This wire message is sent by the peer node to discovery node 
- * to register itself with the overlay.
+ * This wire message is sent by the worker node to scheduler to 
+ * register itself as a worker. 
  *  
  */
 class WorkerRegistrationMsg : public WireMsg
 {
    public:
-   /** 
-   * WorkerRegistrationMsg message constructor
-   *  
-   */
+   /////////////////////////////////////////////////////////////////////////  
+   /// WorkerRegistrationMsg message constructor
+   ///////////////////////////////////////////////////////////////////////// 
    WorkerRegistrationMsg(std::string ipAddress, int port): 
       WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(ipAddress), m_Port(port)
    {
+       DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
    }
-
    WorkerRegistrationMsg(): WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(""), m_Port(0)
    {
+       DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
    }
 
-   /**
-   *  Custom Message serializer
-   *  @throws IOException if an I/O error occurs.
-   *  @param out Output stream where the message is being
-   *             serialized to
-   */
+   /////////////////////////////////////////////////////////////////////////
+   /// Custom Message serializer
+   /// 
+   /// @param [ostrm] Output stream where the message is being serialized.
+   /// 
+   /////////////////////////////////////////////////////////////////////////
    void Pack(std::ostream &ostrm)
    {
-      DEBUG_TRACE("WorkerRegistrationMsg:Pack");
       WireMsg::Pack(ostrm);
       ostrm << m_IPAddress << " ";
       ostrm << m_Port << " ";
    }
 
-   /**
-   *  Custom message deserializer
-   *  @throws IOException if an I/O error occurs.
-   *  @param in Input stream from which the message is being
-   *            deserialized.
-   */
+   /////////////////////////////////////////////////////////////////////////
+   ///  Custom message deserializer
+   /// 
+   ///  @param [istrm] Input stream from which the message is being deserialized.
+   /// 
+   /////////////////////////////////////////////////////////////////////////
    void Unpack(std::istream &istrm)
    {
       WireMsg::Unpack(istrm);
       istrm >> m_IPAddress >> m_Port;
-
-      //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "WorkerRegistrationMsg:UnPack -  GUID:" + m_GUID.toString()+   "m_TCPServerId:" + m_TCPServerId.toString());
    }
 
+   /// Dump routine
    void Dump()
    {
-      DEBUG_TRACE("WorkerRegistrationMsg: " << "IPAddress:" << m_IPAddress << "Port" << m_Port);
+      DEBUG_TRACE("WorkerRegistrationMsg: " << "IPAddress: " << m_IPAddress << "Port: " << m_Port);
    }
 
-
+   ~WorkerRegistrationMsg()
+   {
+       DEBUG_TRACE("WorkerRegistrationMsg: Destructor");
+   }
+   
    std::string m_IPAddress;   // GUID / server identifier
-   int m_Port;   // TCP server info. IP and port.
+   int m_Port;                // TCP server info. IP and port.
+};
+
+///@@@ This message is for testing communication between 
+class WorkerRegistrationRespMsg : public WireMsg
+{
+   public:
+   /////////////////////////////////////////////////////////////////////////  
+   /// WorkerRegistrationRespMsg message constructor
+   ///////////////////////////////////////////////////////////////////////// 
+   WorkerRegistrationRespMsg(ErrorCode_t errorCode): 
+      WireMsg(MsgIdWorkerRegistrationResponse), m_ErrorCode(errorCode)
+   {
+       DEBUG_TRACE("WorkerRegistrationRespMsg: Constructor");
+   }
+
+   WorkerRegistrationRespMsg(): 
+       WireMsg(MsgIdWorkerRegistrationResponse)
+   {
+       DEBUG_TRACE("WorkerRegistrationRespMsg: Constructor");
+   }
+
+   /////////////////////////////////////////////////////////////////////////
+   /// Custom Message serializer
+   /// 
+   /// @param [ostrm] Output stream where the message is being serialized.
+   /// 
+   /////////////////////////////////////////////////////////////////////////
+   void Pack(std::ostream &ostrm)
+   {
+      WireMsg::Pack(ostrm);
+      ostrm << m_ErrorCode << " ";
+   }
+
+   /////////////////////////////////////////////////////////////////////////
+   ///  Custom message deserializer
+   /// 
+   ///  @param [istrm] Input stream from which the message is being deserialized.
+   /// 
+   /////////////////////////////////////////////////////////////////////////
+   void Unpack(std::istream &istrm)
+   {
+      WireMsg::Unpack(istrm);
+      istrm >> m_ErrorCode;
+   }
+
+   /// Dump routine
+   void Dump()
+   {
+      DEBUG_TRACE("WorkerRegistrationRespMsg: " << "m_ErrorCode: " << m_ErrorCode);
+   }
+
+   ~WorkerRegistrationRespMsg()
+   {
+       DEBUG_TRACE("WorkerRegistrationRespMsg: Destructor");
+   }
+   
+   int m_ErrorCode;  // Error code
 };
 
 
 
+
 typedef std::shared_ptr<WorkerRegistrationMsg> WorkerRegistrationMsgPtr;
+typedef std::shared_ptr<WorkerRegistrationRespMsg> WorkerRegistrationRespMsgPtr;

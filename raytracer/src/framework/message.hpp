@@ -19,9 +19,8 @@ public:
       return m_id;
    }
 
-
 protected:
-   ///  Unpack will not do anything. It's expected that the message
+   /// Unpack will not do anything. It's expected that the message
    /// type has been unpacked or determined first before
    /// constructing a message. Thus when the Unpack gets called,
    /// we don't need to populate the message Id. It will already be
@@ -36,25 +35,21 @@ protected:
    }
 
    /// Pack the message to a output stream.
-   /// @param ostrm Output stream where the message is being packed
-   ///            to.
+   /// @param ostrm Output stream where the message is being packed to.
    ///
    virtual void Pack(std::ostream &ostrm)
    {
-
-      DEBUG_TRACE("Msg:Pack");
       ostrm << m_id <<" ";
    }
 
    int m_id;
 };
 
-typedef std::shared_ptr<Msg> MsgPtr;
-
 class StatusMsg : public Msg
 {
 public:
-   StatusMsg(int msgId, ErrorCode_t errorCode) : Msg(msgId), m_errorCode(errorCode)
+   StatusMsg(int msgId, ErrorCode_t errorCode) 
+   : Msg(msgId), m_errorCode(errorCode)
    {
    }
 
@@ -66,6 +61,8 @@ public:
    ErrorCode_t m_errorCode;
 };
 
+
+typedef std::shared_ptr<Msg> MsgPtr;
 typedef std::shared_ptr<StatusMsg> StatusMsgPtr;
 
 

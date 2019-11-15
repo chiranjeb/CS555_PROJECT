@@ -32,5 +32,8 @@ protected:
    /// Connection establishment response msg
    void OnConnectionEstablishmentResponseMsg(MsgPtr msg);
 
+   /// Worker registration response msg
+   void OnWorkerRegistrationRespMsg(MsgPtr msg);
+
    TCPIOConnection *m_p_TCPIOConnection;
 };
