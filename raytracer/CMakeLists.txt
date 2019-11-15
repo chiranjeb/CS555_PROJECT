@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(raytracer)
 
-include_directories(includes)
 include_directories(src)
 
 find_package (Threads)
@@ -15,6 +14,7 @@ include(src/master/CMakeLists.txt)
 include(src/transport/CMakeLists.txt)
 include(src/worker/CMakeLists.txt)
 include(src/wiremsg/CMakeLists.txt)
+include(src/ray_tracer/CMakeLists.txt)
 
 
 

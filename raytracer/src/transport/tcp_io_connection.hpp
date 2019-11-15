@@ -34,7 +34,7 @@ public:
    }
 
    /// Free app tag
-   int FreeAppTag(int appTag)
+   void FreeAppTag(int appTag)
    {
        m_AppTagQ.push(appTag);
    }
