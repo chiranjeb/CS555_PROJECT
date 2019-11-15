@@ -21,9 +21,9 @@ make is used as a front end of cmake to be able to invoke make and clean easily.
 The code architecture is mostly inspired by the observer pattern. So, there is a wide use of Listener interface between modules. All threads are designed as a single pend-point.
 
 To kick off master(from directory raytracing):
-   ./build/master properties/master_properties.txt
+   * ./build/master properties/master_properties.txt
 To kick off worker(from directory raytracing):
-   ./build/worker properties/master_properties.txt
+   * ./build/worker properties/master_properties.txt
    
   
 
