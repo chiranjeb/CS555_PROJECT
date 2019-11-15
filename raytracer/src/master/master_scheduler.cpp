@@ -1,5 +1,6 @@
 #include <iostream>
 #include "master_scheduler.hpp"
+#include "transport/transport_mgr.hpp"
 #include "transport/transport_msgs.hpp"
 #include "transport/tcp_io_connection.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
@@ -44,16 +45,34 @@ void MasterScheduler::OnTCPRecvMsg(MsgPtr msg)
     {
         case MsgIdWorkerRegistrationRequest:
         {
-            WorkerRegistrationMsg *pWireMsg = static_cast<WorkerRegistrationMsg *>(wireMsgPtr.get());
-            pWireMsg->Dump();
-            WorkerRegistrationRespMsgPtr reigstrationRespMsgPtr =  WorkerRegistrationRespMsgPtr(new WorkerRegistrationRespMsg(STATUS_SUCCESS));
-            reigstrationRespMsgPtr.get()->SetAppTag(pWireMsg->GetAppTag());
-            //reigstrationMsgPtr.get()->SetAppTag(m_p_TCPIOConnection->AllocateAppTag());
-            pWireMsg->GetConnection()->SendMsg(reigstrationRespMsgPtr, nullptr);
+            OnWorkerRegistrationRequest(wireMsgPtr);
             break;
         }
         default:
             break;
+    }
+}
+
+void MasterScheduler::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
+{
+    WorkerRegistrationMsg *pWireMsg = static_cast<WorkerRegistrationMsg *>(wireMsgPtr.get());
+    pWireMsg->Dump();
+
+    /// Register the host name
+    std::string unique_hostname = UniqueServerId(pWireMsg->m_hostname, pWireMsg->m_Port).toString();
+    m_workerlist.push_back(unique_hostname);
+    TransportMgr::Instance().SaveConnection(unique_hostname, pWireMsg->GetConnection());
+    WorkerRegistrationRespMsgPtr reigstrationRespMsgPtr =  WorkerRegistrationRespMsgPtr(new WorkerRegistrationRespMsg(STATUS_SUCCESS));
+    reigstrationRespMsgPtr.get()->SetAppTag(pWireMsg->GetAppTag());
+
+    /// We are not expecting any response back. So, pass a nullptr.
+    pWireMsg->GetConnection()->SendMsg(reigstrationRespMsgPtr, nullptr);
+
+    /// Dump the worker lists
+    DEBUG_TRACE("worker list: " << m_workerlist.size());
+    for ( std::list<std::string>::iterator iter = m_workerlist.begin(); iter!= m_workerlist.end(); iter++)
+    {
+        DEBUG_TRACE("worker: " << *iter);
     }
 }
 

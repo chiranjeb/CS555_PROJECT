@@ -4,6 +4,21 @@
 #include "tcp_io_connection.hpp"
 #include "wiremsg/wire_msg.hpp"
 
+struct UniqueServerId
+{
+    UniqueServerId(std::string servername, int port):m_servername(servername), m_port(port)
+    {
+    }
+
+    std::string toString()
+    {
+        return m_servername + ":" + std::to_string(m_port);
+    }
+
+    int m_port;
+    std::string m_servername;
+};
+
 class TransportMgr
 {
 public:
@@ -19,6 +34,15 @@ public:
     {
         return m_hostname;
     }
+
+    /// Save a connection.
+    void SaveConnection(std::string &unique_hostname, TCPIOConnection *p_connection)
+    {
+        m_Connections[unique_hostname] = p_connection;
+    }
+
+    /// Find connection
+    TCPIOConnection* FindConnection(std::string &unique_hostname);
 
     /// Create a TCP server
     void CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler);

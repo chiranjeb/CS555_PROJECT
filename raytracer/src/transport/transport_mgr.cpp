@@ -4,42 +4,53 @@
 
 TransportMgr::TransportMgr()
 {
-    char hostbuffer[128]; 
+    char hostbuffer[128];
     memset(hostbuffer, 0, sizeof(hostbuffer));
-    gethostname(hostbuffer, sizeof(hostbuffer)); 
+    gethostname(hostbuffer, sizeof(hostbuffer));
     m_hostname = std::string(hostbuffer);
 }
 
-void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listener& serverResponseHandler)
+void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler)
 {
-   m_lis = &serverResponseHandler;
+    m_lis = &serverResponseHandler;
 
-   // Create a IO Server thread
-   m_perver = new TCPIOServer();
+    /// Create a IO Server thread
+    m_perver = new TCPIOServer();
 
-   // Construct the server
-   ErrorCode_t errorCode;
-   if ((errorCode = m_perver->Construct(listeningPort, listeningDepth)) == STATUS_SUCCESS)
-   {
-      // Now start it.
-      m_perver->Start();
-   }
+    /// Construct the server
+    ErrorCode_t errorCode;
+    if ((errorCode = m_perver->Construct(listeningPort, listeningDepth)) == STATUS_SUCCESS)
+    {
+        /// Now start it.
+        m_perver->Start();
+    }
 
-   // Finally notify the cmd processor.
-   m_lis->Notify(std::shared_ptr<Msg>(new TCPServerConstructStatusMsg(errorCode, m_perver->GetPort())));
+    /// Finally notify the cmd processor.
+    m_lis->Notify(std::shared_ptr<Msg>(new TCPServerConstructStatusMsg(errorCode, m_perver->GetPort())));
 }
 
+TCPIOConnection* TransportMgr::FindConnection(std::string &unique_hostname)
+{
+    auto entry = m_Connections.find(unique_hostname);
+    if (entry == m_Connections.end())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return entry->second;
+    }
+}
 
 void TransportMgr::ProcessUnsolicitedMsg(TCPIOConnection *p_connection, WireMsgPtr wireMsgPtr)
 {
-   m_lis->Notify(MsgPtr(new TCPRecvMsg(p_connection, wireMsgPtr)));
+    m_lis->Notify(MsgPtr(new TCPRecvMsg(p_connection, wireMsgPtr)));
 }
 
 
 void TransportMgr::ServiceNewConnection(TCPIOConnection *p_connection)
 {
-   m_Connections["New"]=p_connection; // todo change
-   p_connection->Start();
+    p_connection->Start();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,23 +66,23 @@ void TransportMgr::ServiceNewConnection(TCPIOConnection *p_connection)
 
 void TransportMgr::EstablishNewConnection(std::string &serverIP, int serverPort, Listener *p_lis, bool retryUntillConnected)
 {
-   auto entry = m_Connections.find(serverIP + std::to_string(serverPort));
-   if (entry == m_Connections.end())
-   {
-      TCPIOConnection *ioConnection = new TCPIOConnection();
-      if (ioConnection->Start(serverIP, serverPort, retryUntillConnected))
-      {
-         p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(STATUS_SUCCESS, ioConnection, serverIP, serverPort)));
-      }
-      else
-      {
-         p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(ERR_TRANSPORT_CONNECTION_FAIL_TO_ESTABLISH_CONNECTION, ioConnection, serverIP, serverPort)));
-      }
-   }
-   else
-   {
-      p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(STATUS_SUCCESS, entry->second, serverIP, serverPort)));
-   }
+    auto entry = m_Connections.find(UniqueServerId(serverIP, serverPort).toString());
+    if (entry == m_Connections.end())
+    {
+        TCPIOConnection *ioConnection = new TCPIOConnection();
+        if (ioConnection->Start(serverIP, serverPort, retryUntillConnected))
+        {
+            p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(STATUS_SUCCESS, ioConnection, serverIP, serverPort)));
+        }
+        else
+        {
+            p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(ERR_TRANSPORT_CONNECTION_FAIL_TO_ESTABLISH_CONNECTION, ioConnection, serverIP, serverPort)));
+        }
+    }
+    else
+    {
+        p_lis->Notify(MsgPtr(new TCPConnectionEstablishRespMsg(STATUS_SUCCESS, entry->second, serverIP, serverPort)));
+    }
 }
 
 

@@ -12,12 +12,12 @@ class WorkerRegistrationMsg : public WireMsg
    /////////////////////////////////////////////////////////////////////////  
    /// WorkerRegistrationMsg message constructor
    ///////////////////////////////////////////////////////////////////////// 
-   WorkerRegistrationMsg(std::string ipAddress, int port): 
-      WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(ipAddress), m_Port(port)
+   WorkerRegistrationMsg(std::string hostname, int port): 
+      WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(hostname), m_Port(port)
    {
        DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
    }
-   WorkerRegistrationMsg(): WireMsg(MsgIdWorkerRegistrationRequest), m_IPAddress(""), m_Port(0)
+   WorkerRegistrationMsg(): WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(""), m_Port(0)
    {
        DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
    }
@@ -31,7 +31,7 @@ class WorkerRegistrationMsg : public WireMsg
    void Pack(std::ostream &ostrm)
    {
       WireMsg::Pack(ostrm);
-      ostrm << m_IPAddress << " ";
+      ostrm << m_hostname << " ";
       ostrm << m_Port << " ";
    }
 
@@ -44,21 +44,22 @@ class WorkerRegistrationMsg : public WireMsg
    void Unpack(std::istream &istrm)
    {
       WireMsg::Unpack(istrm);
-      istrm >> m_IPAddress >> m_Port;
+      istrm >> m_hostname >> m_Port;
    }
 
    /// Dump routine
    void Dump()
    {
-      DEBUG_TRACE("WorkerRegistrationMsg: " << "IPAddress: " << m_IPAddress << "Port: " << m_Port);
+      DEBUG_TRACE("WorkerRegistrationMsg: " << "IPAddress: " << m_hostname << "Port: " << m_Port);
    }
 
    ~WorkerRegistrationMsg()
    {
        DEBUG_TRACE("WorkerRegistrationMsg: Destructor");
    }
+
    
-   std::string m_IPAddress;   // GUID / server identifier
+   std::string m_hostname;   // GUID / server identifier
    int m_Port;                // TCP server info. IP and port.
 };
 

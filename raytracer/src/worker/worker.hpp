@@ -6,47 +6,48 @@
 class TCPIOConnection;
 class Worker : public MsgQThread
 {
+    static const int WORKER_CMD_PROCESSOR_MSG_Q_DEPTH = 128;
 public:
-   Worker() : MsgQThread("Worker", 128)
-   {
-   }
-   /// Get the Worker
-   static Worker& Instance()
-   {
-      static Worker s_Worker;
-      return s_Worker;
-   }
+    Worker() : MsgQThread("Worker", WORKER_CMD_PROCESSOR_MSG_Q_DEPTH)
+    {
+    }
 
+    /// Get the Worker
+    static Worker &Instance()
+    {
+        static Worker s_Worker;
+        return s_Worker;
+    }
 
-   /// Start the worker thread
-   void Start()
-   {
-      m_thread = new std::thread(&Worker::Run, *this);
-   }
+    /// Start the worker thread
+    void Start()
+    {
+        m_thread = new std::thread(&Worker::Run, *this);
+    }
 
-   /// Setup master info
-   void SetupMasterInfo(std::string master_address, int master_port)
-   {
-       m_master_address = master_address;
-       m_master_port = master_port; 
-   }
+    /// Setup master info
+    void SetupMasterInfo(std::string master_address, int master_port)
+    {
+        m_master_address = master_address;
+        m_master_port = master_port;
+    }
 
 protected:
 
-   /// Run the worker thread
-   void Run();
+    /// Run the worker thread
+    void Run();
 
-   /// Connection establishment response msg
-   void OnCreateServerResponse(MsgPtr msg);
+    /// Connection establishment response msg
+    void OnCreateServerResponse(MsgPtr msg);
 
-   /// Connection establishment response msg
-   void OnConnectionEstablishmentResponseMsg(MsgPtr msg);
+    /// Connection establishment response msg
+    void OnConnectionEstablishmentResponseMsg(MsgPtr msg);
 
-   /// Worker registration response msg
-   void OnWorkerRegistrationRespMsg(MsgPtr msg);
+    /// Worker registration response msg
+    void OnWorkerRegistrationRespMsg(MsgPtr msg);
 
-   TCPIOConnection *m_p_ConnectionToMaster;
-   std::string m_master_address;
-   int m_master_port;
-   int m_listening_port;
+    TCPIOConnection *m_p_ConnectionToMaster;
+    std::string m_master_address;
+    int m_master_port;
+    int m_listening_port;
 };

@@ -59,6 +59,7 @@ void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
     m_p_ConnectionToMaster = p_responseMsg->GetConnection();
     std::string hostname = TransportMgr::Instance().MyName();
     WorkerRegistrationMsgPtr reigstrationMsgPtr =  WorkerRegistrationMsgPtr(new WorkerRegistrationMsg(hostname, m_listening_port));
+    /// We are expecting response, So allocate an apptag and pass our thread listener which will route back the message to us.
     reigstrationMsgPtr.get()->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
     m_p_ConnectionToMaster->SendMsg(reigstrationMsgPtr, GetThrdListener());
 }
