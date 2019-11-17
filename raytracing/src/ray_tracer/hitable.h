@@ -2,7 +2,7 @@
 #define HITABLEH
 
 #include "ray.h"
-#include "surfaces.h"
+//#include "surfaces.h" 
 
 class material;
 
@@ -68,43 +68,71 @@ public:
     return true;
   }
 
+  friend std::ostream& operator << (std::ostream &os, aabb &ab);
+  friend std::istream& operator >> (std::istream &is, aabb &ab);
+
   vec3 _min;
   vec3 _max;
 };
 
-aabb surroundingBox(aabb box0, aabb box1)
+/// Custom Message serializer
+std::ostream& operator << (std::ostream &os, aabb &ab);
+
+///  Custom message deserializer
+std::istream& operator >> (std::istream &is, aabb &ab);
+
+aabb surroundingBox(aabb box0, aabb box1);
+
+enum HitableType_t
 {
-  vec3 small(fmin(box0.min().x(), box1.min().x()),
-             fmin(box0.min().y(), box1.min().y()),
-             fmin(box0.min().z(), box1.min().z()));
-
-  vec3 big(fmax(box0.max().x(), box1.max().x()),
-             fmax(box0.max().y(), box1.max().y()),
-             fmax(box0.max().z(), box1.max().z()));
-
-  return aabb(small, big);
-}
-
+   HITABLE_TYPE_LIST = 0x01,
+   HITABLE_TYPE_BVH,
+   HITABLE_TYPE_SPEHERE,
+   HITABLE_TYPE_XY_RECTANGLE,
+   HITABLE_TYPE_XZ_RECTANGLE,
+   HITABLE_TYPE_YZ_RECTANGLE,
+   HITABLE_TYPE_FLIP_NORMALS,
+   HITABLE_TYPE_BOX,
+   HITABLE_TYPE_TRIANGLE,
+   HITABLE_TYPE_TRIANGLE_MESH,
+   HITABLE_TYPE_TRANSLATE,
+   HITABLE_TYPE_ROTATE_Y
+};
 
 class hitable
 {
 public:
   virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const = 0;
   virtual bool boundingBox(float t0, float t1, aabb& box) const = 0;
+  /// Return type
+  virtual char GetType() =0;
+  virtual void Pack(std::ostream& os) = 0;
+  virtual void Unpack(std::istream& is) = 0;
 };
 
 class bvh : public hitable
 {
 public:
-  bvh(){}
+  bvh():m_type(HITABLE_TYPE_BVH){}
   bvh(hitable **l, int n, float time0, float time1);
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const;
   virtual bool boundingBox(float t0, float t1, aabb& box) const;
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack(std::ostream &os);
+
+  ///  Custom message deserializer
+  virtual void Unpack(std::istream &is);
+
   hitable *left;
   hitable *right;
   aabb box;
+  char m_type;
 };
-bvh::bvh(hitable **l, int n, float time0, float time1)
+inline bvh::bvh(hitable **l, int n, float time0, float time1):m_type(HITABLE_TYPE_BVH)
 {
   aabb *boxes = new aabb[n];
   float *left_area = new float[n];
@@ -163,12 +191,12 @@ bvh::bvh(hitable **l, int n, float time0, float time1)
 
   box = main_box;
 }
-bool bvh::boundingBox(float t0, float t1, aabb& b) const
+inline bool bvh::boundingBox(float t0, float t1, aabb& b) const
 {
   b = box;
   return true;
 }
-bool bvh::hit(const ray& r, float tmin, float tmax, hitRecord& rec) const
+inline bool bvh::hit(const ray& r, float tmin, float tmax, hitRecord& rec) const
 {
   if(box.hit(r, tmin, tmax))
   {
@@ -199,40 +227,8 @@ bool bvh::hit(const ray& r, float tmin, float tmax, hitRecord& rec) const
   return false;
 }
 
-int box_x_compare(const void *a, const void *b)
-{
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().x() - box_right.min().x() < 0.0 )
-    return -1;
-
-  else
-    return 1;
-}
-
-int box_y_compare(const void *a, const void *b)
-{
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().y() - box_right.min().y() < 0.0 )
-    return -1;
-
-  else
-    return 1;
-}
-
-int box_z_compare(const void *a, const void *b)
-{
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().z() - box_right.min().z() < 0.0 )
-    return -1;
-
-  else
-    return 1;
-}
+int box_x_compare(const void *a, const void *b);
+int box_y_compare(const void *a, const void *b);
+int box_z_compare(const void *a, const void *b);
 
 #endif

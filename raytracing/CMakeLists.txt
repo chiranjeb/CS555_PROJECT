@@ -19,7 +19,7 @@ include(src/ray_tracer/CMakeLists.txt)
 
 
 set(TARGET_NAME master)
-add_executable(master ${RAY_TRACER_RENDERER_SOURCES} src/master/master_main.cpp)
+add_executable(master ${RAY_TRACER_MASTER_SOURCES} src/master/master_main.cpp)
 target_link_libraries (master ${CMAKE_THREAD_LIBS_INIT})
 
 set(TARGET_NAME worker)

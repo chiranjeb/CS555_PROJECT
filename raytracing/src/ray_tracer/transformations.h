@@ -3,11 +3,23 @@
 class translate : public hitable
 {
 public:
-  translate(hitable *p, const vec3& displacement): ptr(p), offset(displacement){}
+  translate(): m_type(HITABLE_TYPE_TRANSLATE){}
+  translate(hitable *p, const vec3& displacement): ptr(p), offset(displacement), m_type(HITABLE_TYPE_TRANSLATE){}
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const;
   virtual bool boundingBox(float t0, float t1, aabb& box) const ;
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   hitable *ptr;
   vec3 offset;
+  char m_type;
 };
 
 bool translate::hit(const ray&r, float tmin, float tmax, hitRecord& rec) const
@@ -34,20 +46,32 @@ bool translate::boundingBox(float t0, float t1, aabb& box) const
 class rotate_y : public hitable
 {
 public:
+  rotate_y(): m_type(HITABLE_TYPE_ROTATE_Y){}
   rotate_y(hitable *p, float angle);
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const;
   virtual bool boundingBox(float t0, float t1, aabb& box) const
   {
     box = bbox; return hasbox;
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   hitable *ptr;
   float sinTheta;
   float cosTheta;
   bool hasbox;
   aabb bbox;
+  char m_type;
 };
 
-rotate_y::rotate_y(hitable *p, float angle) : ptr(p)
+rotate_y::rotate_y(hitable *p, float angle) : ptr(p), m_type(HITABLE_TYPE_ROTATE_Y)
 {
   float radians = (M_PI /180.0)*angle;
   sinTheta = sin(radians);

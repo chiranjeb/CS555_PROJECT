@@ -1,5 +1,6 @@
 #include "wire_msg_factory.hpp"
 #include "worker_registration_msg.hpp"
+#include "scene_description_msg.hpp"
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +33,10 @@ WireMsgPtr WireMsgFactory::ConstructMsg(char *buffer, int dataLength)
 
         case MsgIdWorkerRegistrationResponse:
             wireMsg = WireMsgPtr(new WorkerRegistrationRespMsg());
+            break;
+
+       case MsgIdSceneDistributionMsg:
+            wireMsg = WireMsgPtr(new SceneDescriptionMsg());
             break;
 
         default:

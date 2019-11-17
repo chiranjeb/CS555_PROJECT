@@ -2,7 +2,7 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
-#include<list>
+#include<vector>
 
 
 class MasterScheduler : public MsgQThread
@@ -35,5 +35,8 @@ private:
    void OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr);
 
 
-   std::list<std::string> m_workerlist;
+   void OnNewSceneGeneration(WireMsgPtr wireMsgPtr);
+
+
+   std::vector<std::string> m_workerlist;
 };
