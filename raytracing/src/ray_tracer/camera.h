@@ -30,6 +30,10 @@ public:
     vec3 offset = u*rd.x() + v*rd.y();
     return ray(origin + offset, lowerLeftCorner+s*horizontal + t*vertical - origin - offset);
   }
+
+
+  friend std::ostream& operator << (std::ostream &os, camera &cam);
+  friend std::istream& operator >> (std::istream &is, camera &cam);
   vec3 origin;
   vec3 lowerLeftCorner;
   vec3 horizontal;
@@ -38,8 +42,13 @@ public:
   float lensRadius;
 };
 
+/// Custom serializer
+std::ostream& operator << (std::ostream &os, camera &cam);
 
-vec3 randomInUnitDisk()
+/// Custom deserializer
+std::istream& operator >> (std::istream &is, camera &cam);
+
+inline vec3 randomInUnitDisk()
 {
   vec3 p;
   do{

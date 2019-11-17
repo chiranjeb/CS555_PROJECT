@@ -13,14 +13,24 @@ float det(const vec3 col0, const vec3 col1, const vec3 col2);
 class sphere: public hitable
 {
 public:
-  sphere() {}
-  sphere(vec3 cen, float r, material *ptr): center(cen), radius(r), matPtr(ptr) {};
+  sphere():m_type(HITABLE_TYPE_SPEHERE) {}
+  sphere(vec3 cen, float r, material *ptr): m_type(HITABLE_TYPE_SPEHERE), center(cen), radius(r), matPtr(ptr) {};
   virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const;
   bool boundingBox(float t0, float t1, aabb& box) const;
   vec3 getPointOn()const
   {
     return center;// + randomOnUnitSphere()*radius;
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+  /// Custom message deserializer
+  virtual void Unpack  (std::istream &is);
+
+  char m_type;
   vec3 center;
   float radius;
   material * matPtr;
@@ -66,9 +76,11 @@ bool sphere::boundingBox(float t0, float t1, aabb& box)const
 class xy_rect: public hitable
 {
 public:
-  xy_rect() {}
+  xy_rect():m_type(HITABLE_TYPE_XY_RECTANGLE) {}
   xy_rect(float _x0, float _x1, float _y0, float _y1, float _k, material *mat):
-          x0(_x0), x1(_x1), y0(_y0), y1(_y1), k(_k), matPtr(mat) {};
+          x0(_x0), x1(_x1), y0(_y0), y1(_y1), k(_k), matPtr(mat), m_type(HITABLE_TYPE_XY_RECTANGLE) {};
+
+
   virtual bool hit(const ray& r, float t0, float t1, hitRecord& rec) const
   {
     float t = (k - r.origin().z()) / r.direction().z();
@@ -95,17 +107,29 @@ public:
   {
     return vec3(x0 + drand48()*(x1-x0), y0 + drand48()*(y1-y0), k);
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   material *matPtr;
   float x0, x1, y0, y1, k;
+  char m_type;
 };
 
 
 class xz_rect: public hitable
 {
 public:
-  xz_rect() {}
+  xz_rect():m_type(HITABLE_TYPE_XZ_RECTANGLE)  {}
   xz_rect(float _x0, float _x1, float _z0, float _z1, float _k, material *mat):
-          x0(_x0), x1(_x1), z0(_z0), z1(_z1), k(_k), matPtr(mat) {};
+          x0(_x0), x1(_x1), z0(_z0), z1(_z1), k(_k), matPtr(mat), m_type(HITABLE_TYPE_XZ_RECTANGLE)  {};
+
   virtual bool hit(const ray& r, float t0, float t1, hitRecord& rec) const
   {
     float t = (k - r.origin().y()) / r.direction().y();
@@ -149,8 +173,19 @@ public:
   //   vec3 random_point = vec3(x0 + drand48()*(x1-x0), k, z0 + drand48()*(z1-z0));
   //   return random_point - o;
   // }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   material *matPtr;
   float x0, x1, z0, z1, k;
+  char m_type;
 };
 
 
@@ -159,9 +194,10 @@ public:
 class yz_rect: public hitable
 {
 public:
-  yz_rect() {}
+  yz_rect():m_type(HITABLE_TYPE_YZ_RECTANGLE) {}
   yz_rect(float _y0, float _y1, float _z0, float _z1, float _k, material *mat):
-          y0(_y0), y1(_y1), z0(_z0), z1(_z1), k(_k), matPtr(mat) {};
+          y0(_y0), y1(_y1), z0(_z0), z1(_z1), k(_k), matPtr(mat), m_type(HITABLE_TYPE_YZ_RECTANGLE) {};
+
   virtual bool hit(const ray& r, float t0, float t1, hitRecord& rec) const
   {
     float t = (k - r.origin().x()) / r.direction().x();
@@ -187,14 +223,27 @@ public:
   {
     return vec3(k, y0 + drand48()*(y1-y0), z0 + drand48()*(z1-z0));
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack(std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   material *matPtr;
   float y0, y1, z0, z1, k;
+  char m_type;
 };
 
 class flipNormals : public hitable
 {
 public:
-  flipNormals(hitable *p) : ptr(p){}
+  flipNormals(): m_type(HITABLE_TYPE_FLIP_NORMALS){}
+  flipNormals(hitable *p) : ptr(p), m_type(HITABLE_TYPE_FLIP_NORMALS){}
+
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord &rec) const
   {
     if (ptr -> hit(r, tmin, tmax, rec))
@@ -209,13 +258,24 @@ public:
   {
     return ptr->boundingBox(t0, t1, box);
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack(std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   hitable *ptr;
+  char m_type;
 };
 
 class box : public hitable
 {
 public:
-  box() {}
+  box():m_type(HITABLE_TYPE_BOX){}
   box(const vec3& p0, const vec3& p1, material *ptr);
   virtual bool hit(const ray& r, float t0, float t1, hitRecord& rec) const;
   virtual bool boundingBox(float t0, float t1, aabb& box) const
@@ -223,11 +283,22 @@ public:
     box = aabb(pmin, pmax);
     return true;
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   vec3 pmin, pmax;
   hitable *listPtr;
+  char m_type;
 };
 
-box::box(const vec3& p0, const vec3& p1, material *ptr)
+box::box(const vec3& p0, const vec3& p1, material *ptr): m_type(HITABLE_TYPE_BOX)
 {
   pmin = p0;
   pmax = p1;
@@ -249,8 +320,8 @@ bool box::hit(const ray& r, float t0, float t1, hitRecord& rec) const
 class triangle : public hitable
 {
 public:
-  triangle() {}
-  triangle(const vec3& p0, const vec3& p1, const vec3& p2, material* ptr) : a(p0), b(p1), c(p2), matPtr(ptr) {};
+  triangle(): m_type(HITABLE_TYPE_TRIANGLE) {}
+  triangle(const vec3& p0, const vec3& p1, const vec3& p2, material* ptr) : a(p0), b(p1), c(p2), matPtr(ptr), m_type(HITABLE_TYPE_TRIANGLE) {};
   virtual bool hit(const ray& r, float t0, float t1, hitRecord& rec) const;
   virtual bool boundingBox(float t0, float t1, aabb& box) const
   {
@@ -264,8 +335,19 @@ public:
     box = aabb(pmin, pmax);
     return false;
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack (std::ostream &os);
+
+  /// Custom message deserializer
+  virtual void Unpack (std::istream &is);
+
   vec3 a, b, c, normal = vec3(0,0,0);
   material *matPtr;
+  char m_type;
 };
 
 bool triangle::hit(const ray&r, float t0, float t1, hitRecord &rec) const
@@ -305,8 +387,8 @@ bool triangle::hit(const ray&r, float t0, float t1, hitRecord &rec) const
 class trianglemesh : public hitable
 {
 public:
-  trianglemesh() {}
-  trianglemesh(char file[], material *ptr, float scale, const vec3& translate)
+  trianglemesh(): m_type(HITABLE_TYPE_TRIANGLE_MESH)  {}
+  trianglemesh(char file[], material *ptr, float scale, const vec3& translate): m_type(HITABLE_TYPE_TRIANGLE_MESH) 
   {
     objl::Loader loader;
     loader.LoadFile(file);
@@ -314,8 +396,25 @@ public:
 
     for (int i = 0; i < FLT_MAX; i++);
   }
+
+  /// Return type
+  virtual char GetType() { return m_type;}
+
+  /// Custom Message serializer
+  virtual void Pack(std::ostream &os)
+  {
+     //@@@ TODO: ask Matt about this.
+  }
+
+  /// Custom message deserializer
+  virtual void Unpack(std::istream &is)
+  {
+     //@@@ TODO: ask Matt about this.
+  }
+
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const {return false;}
   virtual bool boundingBox(float t0, float t1, aabb& box) const {return false;}
+  char m_type;
 };
 
 
