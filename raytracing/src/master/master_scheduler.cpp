@@ -9,7 +9,6 @@
 
 void MasterScheduler::Run()
 {
-    RELEASE_TRACE("Started Master Scheduler thread");
     while (1)
     {
         MsgQEntry msgQEntry = TakeNext();
@@ -72,29 +71,35 @@ void MasterScheduler::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
 
     /// Dump the worker lists
     DEBUG_TRACE("worker list: " << m_workerlist.size());
-    for ( std::vector<std::string>::iterator iter = m_workerlist.begin(); iter!= m_workerlist.end(); iter++)
+    for (std::vector<std::string>::iterator iter = m_workerlist.begin(); iter != m_workerlist.end(); iter++)
     {
         DEBUG_TRACE("worker: " << *iter);
     }
+
+    // @todo: This should come from a client ideally.
+    // For now, just get the scene descriptor and send to all the clients.
+    /// Send the scene file.
+    //SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GenerateRandomScene();
+    //SceneDescriptionMsgPtr sceneDescriptorMsg = std::make_shared<SceneDescriptionMsg>(sceneDescriptorPtr);
+    //TransportMgr::Instance().FindConnection(m_workerlist[0])->SendMsg(sceneDescriptorMsg, GetThrdListener());
 }
+
 
 
 void MasterScheduler::OnNewSceneGeneration(WireMsgPtr wireMsgPtr)
 {
-   // @todo: This should come from a client ideally.
-   // For now, just get the scene descriptor and send to all the clients.
-   SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GenerateRandomScene();
-
-   // For each worker, distribute the load. Find out the equally distributed workload. Identify partition count.
-   int numPartition = 1; // Let's check the network serialization/deserialization.
-   for (int index = 0; index < numPartition; ++index)
-   {
-       // Create a scene description message for each  worker. Include some work in the scene description too.
-       SceneDescriptionMsgPtr sceneDescriptorMsg = std::make_shared<SceneDescriptionMsg>(sceneDescriptorPtr);
-       // Note we are not waiting for the response from the worker. However, we want to make sure the message 
-       // has been sent out by the transport layer otherwise  we need to do fault handling.
-       TransportMgr::Instance().FindConnection(m_workerlist[index])->SendMsg(sceneDescriptorMsg, GetThrdListener());
-   }
+#if 0
+    // For each worker, distribute the load. Find out the equally distributed workload. Identify partition count.
+    int numPartition = 1; // Let's check the network serialization/deserialization.
+    for (int index = 0; index < numPartition; ++index)
+    {
+        // Create a scene description message for each  worker. Include some work in the scene description too.
+        SceneDescriptionMsgPtr sceneDescriptorMsg = std::make_shared<SceneDescriptionMsg>(sceneDescriptorPtr);
+        // Note we are not waiting for the response from the worker. However, we want to make sure the message
+        // has been sent out by the transport layer otherwise  we need to do fault handling.
+        TransportMgr::Instance().FindConnection(m_workerlist[index])->SendMsg(sceneDescriptorMsg, GetThrdListener());
+    }
+#endif
 
 }
 

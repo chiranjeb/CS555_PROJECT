@@ -71,7 +71,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
 
         // We may need to revisit this when are done identifying all the messages.
         std::pair<char *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
-        DEBUG_TRACE("Sending wire message Message(MsgId:" << msgPtr.get()->GetId() << "), " << "buffer_length:" << buffer.second);
+        DEBUG_TRACE("Sending wire message Message(MsgId:" << tcpSendMsg->GetWireMsg().get()->GetId() << "), " << "buffer_length:" << buffer.second);
 
         PacketLength packetLength(buffer.second);
         if ((errorCode = SendData(packetLength.Data(), packetLength.Size())) == STATUS_SUCCESS)

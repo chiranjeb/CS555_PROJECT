@@ -7,6 +7,7 @@
 #include "scene.h"
 #include "scene_descriptor.hpp"
 
+
 using namespace std;
 vec3 color(const ray& r, hitable *world, int depth, vec3& curAlbedo);
 vec3 randomInUnitSphere();
@@ -242,11 +243,16 @@ material* ConstructMaterial(std::istream& is, char type)
 
 
 
-hitable* ConstructHitable(std::istream& is, uint16_t type)
+hitable* ConstructHitable(std::istream& is, char type)
 {
    hitable *ptr;
    switch (type)
    {
+      case HITABLE_TYPE_LIST:
+         {
+             ptr = new hitableList();
+             break;
+         }
       case HITABLE_TYPE_BVH:
          {
             ptr =  new bvh();
@@ -365,17 +371,22 @@ std::istream& operator >> (std::istream &is, camera &cam)
 
 void sphere::Pack(std::ostream& os)
 {
+   DEBUG_TRACE_VERBOSE(", sphere::Pack:" << " ");
    os << center << " " << radius << " ";
    os << matPtr->GetType() << " ";
+   DEBUG_TRACE_VERBOSE(center << " " << radius << " type: " << std::hex << int(matPtr->GetType()) << ",");
    matPtr->Pack(os);
 }
 
 /// Custom message deserializer
 void sphere::Unpack(std::istream& is)
 {
+   DEBUG_TRACE_VERBOSE(", sphere::Unpack" << " ");
    is >> center >> radius;
    char type;
    is >> type;
+
+   DEBUG_TRACE_VERBOSE(center << " " << radius << " type: " << std::hex << int(type) << ",");
    matPtr = ConstructMaterial(is, type);
 }
 
@@ -516,23 +527,29 @@ void translate::Unpack(std::istream& is)
 void hitableList::Pack(std::ostream& os)
 {
    os << listSize;
+   DEBUG_TRACE_VERBOSE( "hitableList::Pack, listSize: " << listSize << std::endl);
    for (int index = 0; index < listSize; ++index)
    {
+      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Pack, listSize: " << listSize << ", index:" << index);
       os << list[index]->GetType() << " ";
       list[index]->Pack(os);
    }
+   DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Pack, done");
 }
 
 void hitableList::Unpack(std::istream& is)
 {
    is >> listSize;
+   DEBUG_TRACE_VERBOSE("hitableList::Unpack, listSize: " << listSize << std::endl);
    list = new hitable *[listSize + 1];
    for (int index = 0; index < listSize; ++index)
    {
+      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, listSize: " << listSize << ", index:" << index);
       char type;
       is >> type;
       list[index] = ConstructHitable(is, type);
    }
+   DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, done: ");
 }
 
 /// Custom Message serializer
@@ -561,7 +578,7 @@ void bvh::Unpack(std::istream& is)
 /// Custom Message serializer
 void lambertian::Pack(std::ostream& os)
 {
-   os << m_type << " ";
+   os << albedo->GetType() << " ";
    albedo->Pack(os);
 }
 
@@ -576,7 +593,7 @@ void lambertian::Unpack(std::istream& is)
 /// Custom Message serializer
 void metal::Pack(std::ostream& os)
 {
-   os << m_type << " ";
+   os << albedo->GetType() << " ";
    albedo->Pack(os);
    os << fuzz << " ";
 }
@@ -593,9 +610,10 @@ void metal::Unpack(std::istream& is)
 /// Custom Message serializer
 void dielectric::Pack(std::ostream& os)
 {
-   os << m_type << " ";
+   os << albedo->GetType() << " ";
    albedo->Pack(os);
    os << refIdx << " ";
+   DEBUG_TRACE_VERBOSE(refIdx << " ");
 }
 
 /// Custom message deserializer
@@ -605,12 +623,13 @@ void dielectric::Unpack(std::istream& is)
    is >> type;
    albedo = ConstructTexture(is, type);
    is  >> refIdx;
+   DEBUG_TRACE_VERBOSE(refIdx << " ");
 }
 
 /// Custom Message serializer
 void diffuseLight::Pack(std::ostream& os)
 {
-   os << m_type << " ";
+   os << emit->GetType() << " ";
    emit->Pack(os);
 }
 
@@ -627,12 +646,14 @@ void diffuseLight::Unpack(std::istream& is)
 void constantTexture::Pack(std::ostream& os)
 {
    os << color << " ";
+   DEBUG_TRACE_VERBOSE(color << " ");
 }
 
 /// Custom message deserializer
 void constantTexture::Unpack(std::istream& is)
 {
    is >> color;
+   DEBUG_TRACE_VERBOSE(color << " ");
 }
 
 
@@ -641,13 +662,15 @@ void checkerTexture::Pack(std::ostream& os)
 {
    os << odd->GetType() << " ";
    odd->Pack(os);
+
+   os << even->GetType() << " ";
    even->Pack(os);
 }
 
 /// Custom message deserializer
 void checkerTexture::Unpack(std::istream& is)
 {
-   uint16_t oddType, evenType;
+   char oddType, evenType;
 
    is >> oddType;
    odd = ConstructTexture(is, oddType);

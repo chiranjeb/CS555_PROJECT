@@ -7,6 +7,8 @@
 typedef std::shared_ptr<camera> CameraPtr;
 typedef std::shared_ptr<hitable> HitablePtr;
 
+hitable* ConstructHitable(std::istream& is, char type);
+
 class SceneFactory;
 class SceneDescriptor
 {
@@ -20,16 +22,32 @@ public:
    {
       os << m_nX << " ";
       os << m_nY << " ";
-      os << (*m_Camera.get()) << " ";
-      //os << (*m_HitableList.get()) << " ";
+      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << std::endl);
+
+      os << (*m_Camera.get()) << " "; 
+      DEBUG_TRACE_VERBOSE("Camera:" << (*m_Camera.get()) << std::endl);
+
+      os << m_HitableList->GetType() << " ";
+      DEBUG_TRACE_VERBOSE("Type:" << std::hex << m_HitableList->GetType() << " " << std::endl);
+
+      m_HitableList->Pack(os);
    }
 
-   void UnPack(std::istream& is)
+   void Unpack(std::istream& is)
    {
       int hitableSize;
-      is >> m_nX >> m_nY >> (*m_Camera.get());
-      //m_HitableList = std::make_shared<hitableList>();
-      //istrm >> (*m_HitableList.get());
+      is >> m_nX >> m_nY ;
+      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << std::endl);
+
+      is >> (*m_Camera.get());
+      DEBUG_TRACE_VERBOSE("Camera:" << (*m_Camera.get()));
+
+      char type;
+      is >> type;
+      DEBUG_TRACE_VERBOSE("Type:" << std::hex << type << " " << std::endl);
+
+      hitable *ptr = ConstructHitable(is, type);
+      m_HitableList= HitablePtr(ptr);
    }
 
    friend class SceneFactory;
