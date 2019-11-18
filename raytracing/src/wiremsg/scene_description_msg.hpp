@@ -12,6 +12,7 @@ class SceneDescriptionMsg : public WireMsg
    SceneDescriptionMsg(SceneDescriptorPtr sceneDescriptorPtr): 
       WireMsg(MsgIdSceneDistributionMsg), m_SceneDescriptorPtr(sceneDescriptorPtr)
    {
+       DEBUG_TRACE("SceneDescriptionMsg: Constructor");
    }
 
    /// Scene distribution message.
@@ -44,7 +45,12 @@ class SceneDescriptionMsg : public WireMsg
    {
       WireMsg::Unpack(istrm);
       m_SceneDescriptorPtr = std::make_shared<SceneDescriptor>();
-      m_SceneDescriptorPtr.get()->UnPack(istrm);
+      m_SceneDescriptorPtr.get()->Unpack(istrm);
+   }
+
+   ~SceneDescriptionMsg()
+   {
+       DEBUG_TRACE("SceneDescriptionMsg: Destructor");
    }
 
    // @todo: add chunk size.

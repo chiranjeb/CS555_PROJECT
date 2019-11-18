@@ -2,6 +2,7 @@
 #define HITABLEH
 
 #include "ray.h"
+#include "framework/framework_includes.hpp"
 //#include "surfaces.h" 
 
 class material;

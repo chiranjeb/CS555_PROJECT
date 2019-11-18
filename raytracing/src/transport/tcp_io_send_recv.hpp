@@ -5,7 +5,8 @@
 
 class TCPIOConnection;
 
-static const int MAX_MSG_BUFFER_SIZE_IN_BYTES = 4196;
+// Consider changing this.
+static const int MAX_MSG_BUFFER_SIZE_IN_BYTES = 4196*8;
 
 struct PacketLength
 {
