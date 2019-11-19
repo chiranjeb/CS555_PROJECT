@@ -15,7 +15,7 @@ public:
       std::string line;
       while (std::getline(file, line))
       {
-         line = line.substr(0, line.size()-1);
+         line = line.substr(0, line.size());
          std::stringstream linestream(line);
          std::string token1, token2;
          std::getline(linestream, token1, '=');
