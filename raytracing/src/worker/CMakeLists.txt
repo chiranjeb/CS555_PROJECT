@@ -1,4 +1,5 @@
 list(APPEND RAY_TRACER_WORKER_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/worker.cpp
+	${CMAKE_CURRENT_LIST_DIR}/pixel_producer.cpp
 	)
 

@@ -50,6 +50,12 @@ public:
       m_HitableList= HitablePtr(ptr);
    }
 
+   int GetNX() { return m_nX; }
+   int GetNY() { return m_nY; }
+
+   CameraPtr GetCameraPtr() { return m_Camera; }
+   HitablePtr GetWorld() { return m_HitableList;}
+
    friend class SceneFactory;
 
 protected:
@@ -61,12 +67,20 @@ protected:
 
 typedef std::shared_ptr<SceneDescriptor> SceneDescriptorPtr;
 
+void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start,
+                   uint32_t nx, uint32_t ny, uint32_t ns, 
+                   camera *p_camera, hitable* world, std::ostream &os);
 
+inline void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start, SceneDescriptorPtr sceneDescriptorPtr, std::ostream &os)
+{
+   ProducePixels(NY_end, NY_start, NX_end, NX_start, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), 20,
+                 sceneDescriptorPtr->GetCameraPtr().get(), sceneDescriptorPtr->GetWorld().get(), os);
+}
 
 class SceneFactory
 {
 public:
-   static SceneDescriptorPtr GenerateRandomScene()
+   static SceneDescriptorPtr GenerateRandomScene(std::string scene_name)
    {
       /// Currently we have only one scene. When we have lot of scenes, this function
       /// can chose scenes randomly.
@@ -78,12 +92,15 @@ public:
 
       int nS;
 
-      /// Lets create get our scene.
-      extern hitable* myScene(camera& cam, int& nx, int& ny, int& ns);
-      hitable *world = myScene(cam, pDescriptor->m_nX, pDescriptor->m_nY, nS);
+      if (scene_name == "random_scene")
+      {
+          /// Lets create get our scene.
+          extern hitable* myScene(camera& cam, int& nx, int& ny, int& ns);
+          hitable *world = myScene(cam, pDescriptor->m_nX, pDescriptor->m_nY, nS);
 
-      /// Now save the hitable list
-      pDescriptor->m_HitableList = HitablePtr(world);
+          /// Now save the hitable list
+          pDescriptor->m_HitableList = HitablePtr(world);
+      }
 
       /// Finally return the scene descriptor pointer.
       return sceneDescriptorPtr;

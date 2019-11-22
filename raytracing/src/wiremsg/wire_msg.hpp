@@ -2,6 +2,7 @@
 #include<memory>
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
+
 /**
  * Base class for all wire message.
  *  
@@ -34,10 +35,13 @@ public:
     bool ExpectingRecvRecvResponse();
 
     ///  Return a serialized version of the message
-    std::pair<char *, int> GetPackedBytes(char *pre_allocated_buffer, int size);
+    std::pair<uint8_t *, int> GetPackedBytes(uint8_t *pre_allocated_buffer, int size);
 
     ///  Custom Message serializer
     void Pack(std::ostream &ostrm);
+
+    /// Repack
+    void Repack();
 
     ///  Custom message deserializer
     void Unpack(std::istream &istrm);
@@ -53,6 +57,15 @@ public:
     {
         return m_p_tcp_connection;
     }
+
+    void SetBufferContainer(uint8_t *p_buffer, uint32_t size)
+    {
+       m_PackedMsgBuffer = p_buffer;
+       m_PackedMsgBufferLength = size;
+    }
+
+    uint8_t* m_PackedMsgBuffer;
+    uint8_t  m_PackedMsgBufferLength;
 
     int m_ApplicationTag;                    //<< Application tag associated with this message
     TCPIOConnection *m_p_tcp_connection;     //<< TCP IP connection associated with the message

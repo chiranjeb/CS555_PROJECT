@@ -7,8 +7,8 @@
 
 class MasterScheduler : public MsgQThread
 {
-    static const int SCHEDULER_MSG_Q_DEPTH = 128;
 public:
+   static const int SCHEDULER_MSG_Q_DEPTH = 128;
    MasterScheduler() : MsgQThread("MasterScheduler", SCHEDULER_MSG_Q_DEPTH)
    {
    }
@@ -20,10 +20,7 @@ public:
    }
 
    // Start the scheduler thread
-   void Start()
-   {
-      m_thread = new std::thread(&MasterScheduler::Run, *this);
-   }
+   void Start();
 
 private:
    // Actual Scheduler thread
@@ -34,9 +31,7 @@ private:
 
    void OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr);
 
-
-   void OnNewSceneGeneration(WireMsgPtr wireMsgPtr);
-
+   void OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr);
 
    std::vector<std::string> m_workerlist;
 };
