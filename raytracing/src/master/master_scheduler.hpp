@@ -12,12 +12,6 @@ public:
    MasterScheduler() : MsgQThread("MasterScheduler", SCHEDULER_MSG_Q_DEPTH)
    {
    }
-   // Get the Master scheduler
-   static MasterScheduler& Instance()
-   {
-      static MasterScheduler s_Scheduler;
-      return s_Scheduler;
-   }
 
    // Start the scheduler thread
    void Start();
@@ -32,6 +26,49 @@ private:
    void OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr);
 
    void OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr);
+};
+
+class Master
+{
+   static const int NUM_RAY_SCHEDULER = 32;
+public:
+   Master()
+   {
+      m_ThreadPoolLis.Construct(m_MasterScheduler, NUM_RAY_SCHEDULER);
+   }
+
+   // Get the Master scheduler
+   static Master& Instance()
+   {
+      static Master s_Master;
+      return s_Master;
+   }
+
+   void Start()
+   {
+      for (int index = 0; index < NUM_RAY_SCHEDULER; ++index)
+      {
+         // Start the Master Scheduler.
+         m_MasterScheduler[index].Start();
+      }
+   }
+
+   Listener* GetLis()
+   {
+      return &m_ThreadPoolLis;
+   }
+
+   void AddWorker(std::string &worker);
+
+   std::vector<std::string>& GetWorkerList()
+   {
+      return m_workerlist;
+   }
+
+protected:
+   MasterScheduler m_MasterScheduler[NUM_RAY_SCHEDULER];
+   MsgQThreadPoolLis<MasterScheduler> m_ThreadPoolLis;
 
    std::vector<std::string> m_workerlist;
+   std::mutex m_Mutex;
 };

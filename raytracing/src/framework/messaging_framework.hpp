@@ -123,6 +123,11 @@ public:
       return m_ThrdLis.get();
    }
 
+   BlockingMsgQPtr GetListeningQ()
+   {
+      return m_RequestQ;
+   }
+
    MsgQEntry TakeNext()
    {
       return m_RequestQ.get()->Take();
@@ -136,6 +141,42 @@ protected:
    BlockingMsgQPtr    m_RequestQ;
 
    MsgQListenerPtr m_ThrdLis;
+};
+
+
+
+/// Message Q Thread
+template<class T>
+class MsgQThreadPoolLis : public Listener
+{
+public:
+   /// This class defines a message queue entry
+   MsgQThreadPoolLis(T* threadPool=nullptr, int N=0)
+   {
+      Construct(threadPool, N);
+   }
+
+   void Construct(T* threadPool, int N)
+   {
+      m_Threads = threadPool;
+      m_NextThread = 0;
+      m_NumThreads = N;
+   }
+   
+   virtual void Notify(MsgPtr msg)
+   {
+      std::mutex m_Mutex;
+      if (m_NextThread >= m_NumThreads)
+      {
+         m_NextThread=0;
+      }
+      m_Threads[m_NextThread++].Send(MsgQEntry(msg, nullptr));
+   }
+
+protected:
+   T   *m_Threads;
+   int m_NumThreads;
+   int m_NextThread;
 };
 
 

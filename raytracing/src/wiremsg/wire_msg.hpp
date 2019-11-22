@@ -16,6 +16,7 @@ public:
     {
         m_ApplicationTag = 0;
         m_p_tcp_connection = nullptr;
+        m_BufferValid = false;
     }
 
     ///  Returns the application tag
@@ -65,7 +66,8 @@ public:
     }
 
     uint8_t* m_PackedMsgBuffer;
-    uint8_t  m_PackedMsgBufferLength;
+    uint32_t  m_PackedMsgBufferLength;
+    bool m_BufferValid;
 
     int m_ApplicationTag;                    //<< Application tag associated with this message
     TCPIOConnection *m_p_tcp_connection;     //<< TCP IP connection associated with the message

@@ -51,6 +51,9 @@ protected:
    /// Run the worker thread
    void Run();
 
+
+   void OnTCPRecvMsg(MsgPtr msg);
+
    /// Connection establishment response msg
    void OnCreateServerResponse(MsgPtr msg);
 

@@ -11,6 +11,8 @@ public:
       WireMsg(MsgIdSceneProduceRequest), m_SceneDescriptorPtr(sceneDescriptorPtr)
    {
       DEBUG_TRACE("MsgIdSceneProduceRequest: Constructor");
+      m_PackedMsgBufferLength = sizeof(uint8_t)*32*1024;
+      m_PackedMsgBuffer = (uint8_t *)malloc(m_PackedMsgBufferLength);
    }
 
    /// Scene distribution message.

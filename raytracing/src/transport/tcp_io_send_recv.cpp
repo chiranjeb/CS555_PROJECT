@@ -10,7 +10,6 @@ void TCPIOSender::Run()
     RELEASE_TRACE("Started TCPIOSender::Run thread.");
     while (1)
     {
-        DEBUG_TRACE("Running TCPIOSender::Run thread.");
         m_State = STATE_RUNNING;
         m_Stop = false;
         while (m_Stop == false)
@@ -35,6 +34,9 @@ void TCPIOSender::Run()
             }
             //Go back and see if there is anything to send out.
         }
+
+
+        DEBUG_TRACE("!!!!!!!!!!!!!!!!Sender Exiting!!!!!!!!!!!!!!!");
         ///@@@ Need to handle connection fault
     }
 }
@@ -133,11 +135,12 @@ void TCPIOReceiver::Run()
         wireMsgPtr->SetBufferContainer(xfer_buffer, packetLength.Get());
         m_p_connection->ProcessReceivedMsg(wireMsgPtr);
     }
+
 }
 
 void TCPIOReceiver::HandleException()
 {
-    DEBUG_TRACE("TCPIOReceiver::HandleException");
+    DEBUG_TRACE("!!!!!!!!!!!!!!!!!!!!!!TCPIOReceiver::HandleException!!!!!!!!!!!!!!!!");
     /// @@@ TODO: close socket.
     // close(m_socket);
     // Clean up the connections.

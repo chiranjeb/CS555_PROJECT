@@ -21,6 +21,7 @@ std::pair<uint8_t *, int> WireMsg::GetPackedBytes(uint8_t *pre_allocated_buffer,
 {
    if (m_PackedMsgBuffer == nullptr)
    {
+      //DEBUG_TRACE("m_PackedMsgBuffer is null" << std::hex << std::endl);
       PreAllocatedStreamBuffer streambuff(reinterpret_cast<char*>(pre_allocated_buffer), size);
       std::ostream ostrm(&streambuff);
       Pack(ostrm);
@@ -28,7 +29,19 @@ std::pair<uint8_t *, int> WireMsg::GetPackedBytes(uint8_t *pre_allocated_buffer,
    }
    else
    {
-      return std::pair<uint8_t *, int>(m_PackedMsgBuffer, m_PackedMsgBufferLength);
+      //DEBUG_TRACE("m_BufferValid:" << m_BufferValid << std::endl);
+      if (m_BufferValid)
+      {
+         return std::pair<uint8_t *, int>(m_PackedMsgBuffer, m_PackedMsgBufferLength);
+      }
+      else
+      {
+         PreAllocatedStreamBuffer streambuff(reinterpret_cast<char*>(m_PackedMsgBuffer), m_PackedMsgBufferLength);
+         std::ostream ostrm(&streambuff);
+         m_BufferValid = true;
+         Pack(ostrm);
+         return std::pair<uint8_t *, int>(m_PackedMsgBuffer, streambuff.Tellp());
+      }
    }
 }
 
@@ -39,7 +52,7 @@ std::pair<uint8_t *, int> WireMsg::GetPackedBytes(uint8_t *pre_allocated_buffer,
 void WireMsg::Pack(std::ostream& ostrm)
 {
    Msg::Pack(ostrm);
-   ostrm << m_ApplicationTag << " ";
+   ostrm << m_ApplicationTag << " " << m_BufferValid << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +62,7 @@ void WireMsg::Pack(std::ostream& ostrm)
 void WireMsg::Unpack(std::istream& istrm)
 {
    Msg::Unpack(istrm);
-   istrm >> m_ApplicationTag;
+   istrm >> m_ApplicationTag >> m_BufferValid;
 }
 
 
@@ -59,7 +72,7 @@ void WireMsg::Repack()
    std::ostream ostrm(&streambuff);
 
    // Just pack the id and application tag.
-   Pack(ostrm);
+   WireMsg::Pack(ostrm);
 }
 
 

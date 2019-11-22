@@ -36,8 +36,9 @@ public:
    /// Free app tag
    void FreeAppTag(int appTag)
    {
+       m_ClientRespRoutingMap.erase(appTag);
        m_AppTagQ.push(appTag);
-   }
+   } 
 
    /// Send message
    void SendMsg(WireMsgPtr wireMsg, Listener *p_lis);
