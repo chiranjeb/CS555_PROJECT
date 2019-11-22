@@ -4,5 +4,5 @@
 class WireMsgFactory
 {
 public:
-    static WireMsgPtr ConstructMsg(char *buffer, int dataLength);
+    static WireMsgPtr ConstructMsg(uint8_t *buffer, int dataLength);
 };

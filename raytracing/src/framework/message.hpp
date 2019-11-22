@@ -39,7 +39,7 @@ protected:
    ///
    virtual void Pack(std::ostream &ostrm)
    {
-      ostrm << m_id <<" ";
+      ostrm << m_id << " ";
    }
 
    int m_id;

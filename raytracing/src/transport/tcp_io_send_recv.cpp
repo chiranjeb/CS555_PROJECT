@@ -39,7 +39,7 @@ void TCPIOSender::Run()
     }
 }
 
-ErrorCode_t TCPIOSender::SendData(char *data, int size)
+ErrorCode_t TCPIOSender::SendData(uint8_t *data, int size)
 {
     ErrorCode_t errorCode;
     int numBytesSent = send(m_socket, data, size, 0);
@@ -70,7 +70,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
         TCPSendMsg *tcpSendMsg = static_cast<TCPSendMsg *>(msgPtr.get());
 
         // We may need to revisit this when are done identifying all the messages.
-        std::pair<char *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
+        std::pair<uint8_t*, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
         DEBUG_TRACE("Sending wire message Message(MsgId:" << tcpSendMsg->GetWireMsg().get()->GetId() << "), " << "buffer_length:" << buffer.second);
 
         PacketLength packetLength(buffer.second);
@@ -108,9 +108,19 @@ void TCPIOReceiver::Run()
             break;
         }
 
+        uint8_t *xfer_buffer;
+        if (packetLength.Get() > MAX_MSG_BUFFER_SIZE_IN_BYTES )
+        {
+            xfer_buffer = (uint8_t *) malloc(sizeof(uint8_t) * packetLength.Get());
+        }
+        else
+        {
+            xfer_buffer = m_MsgBuffer;
+        }
+
         // We received the message length. Now, transfer the actual message.
         DEBUG_TRACE("Successfully received the data length: " << numOfBytesReceived);
-        numOfBytesReceived = recv(m_socket, m_MsgBuffer, packetLength.Get(), 0);
+        numOfBytesReceived = recv(m_socket, xfer_buffer, packetLength.Get(), 0);
         if (numOfBytesReceived < 1)
         {
             HandleException();
@@ -119,7 +129,8 @@ void TCPIOReceiver::Run()
 
         // Construct the message and send it to the upper layer.
         DEBUG_TRACE("Successfully received all the data: " << numOfBytesReceived);
-        WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(&m_MsgBuffer[0], numOfBytesReceived);
+        WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(xfer_buffer, numOfBytesReceived);
+        wireMsgPtr->SetBufferContainer(xfer_buffer, packetLength.Get());
         m_p_connection->ProcessReceivedMsg(wireMsgPtr);
     }
 }

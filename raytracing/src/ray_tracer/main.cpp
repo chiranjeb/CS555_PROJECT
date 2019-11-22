@@ -87,6 +87,39 @@ vec3 color(const ray& r, hitable *world, int depth, vec3& curAlbedo)
 }
 
 
+
+void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start,
+                   uint32_t nx, uint32_t ny, uint32_t ns, 
+                   camera *p_camera, hitable* world, std::ostream &os)
+{
+   DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: ");
+   vec3 curAlbedo;
+   for (int j = NY_end; j >= NY_start; j--)
+   {
+      for (int i = 0; i < NX_end; ++i)
+      {
+         vec3 col(0, 0, 0);
+         for (int s = 0; s < 20; s++)
+         {
+            float u = float(i + drand48()) / float(nx);
+            float v = float(j + drand48()) / float(ny);
+            ray r = p_camera->getRay(u, v);
+            vec3 curAlbedo(1.0, 1.0, 1.0);
+            col += color(r, world, 0, curAlbedo);
+         }
+         col /= float(ns);
+         col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
+         if (col[0] > 1 || col[2] > 1 || col[3] > 1) cout << "there is a problem here: " << i << endl;
+         int ir = int(255.99*col[0]);
+         int ig = int(255.99*col[1]);
+         int ib = int(255.99*col[2]);
+         os << ir << " " << ig << " " << ib << "\n";
+      }
+   }
+}
+
+
+
 /// Custom Message serializer
 std::ostream& operator << (std::ostream &os, aabb &ab)
 {
