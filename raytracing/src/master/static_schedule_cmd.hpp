@@ -9,13 +9,13 @@ class TCPIOConnection;
 class StaticScheduleCmd : public Command
 {
 public:
-   StaticScheduleCmd(std::vector<std::string>& workerList, BlockingMsgQPtr pQ): Command(pQ), m_workerList(workerList)
+   StaticScheduleCmd(std::vector<std::string>& workerList, BlockingMsgQPtr pQ) : Command(pQ), m_workerList(workerList)
    {
    }
 
-protected:
    /// Actual Scheduler thread
    void ProcessMsg(MsgPtr msg);
+protected:
 
    /// Scene produce request message handler.
    void OnSceneProduceRequestMsg(MsgPtr msg);

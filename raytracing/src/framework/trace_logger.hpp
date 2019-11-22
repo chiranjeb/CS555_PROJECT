@@ -6,7 +6,7 @@
 
 /// Set this to 1 to turn off all the DEBUG STREAMS.
 #define RELEASE_BUILD 0
-#define VERVOSE_BUILD 0
+#define VERVOSE_BUILD 1
 /// Get a timestamp
 extern std::ostream& TimeStamp(std::ostream& ostr);
 

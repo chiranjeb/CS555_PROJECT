@@ -43,22 +43,39 @@ void Worker::Run()
                   break;
                }
 
-            case MsgIdSceneProduceRequest:
-               {
-                  OnSceneProduceRequestMsg(msgQEntry.m_Msg);
-                  break;
-               }
+            case MsgIdTCPRecv:
+               OnTCPRecvMsg(msgQEntry.m_Msg);
+               break;
 
-            case MsgIdPixelProduceRequest:
-               {
-                  OnPixelProduceRequestMsg(msgQEntry.m_Msg);
-                  break;
-               }
 
             default:
                break;
          }
       }
+   }
+}
+
+void Worker::OnTCPRecvMsg(MsgPtr msg)
+{
+   DEBUG_TRACE("On TCP Recv Message");
+   TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
+   WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
+
+   switch (wireMsgPtr.get()->GetId())
+   {
+      case MsgIdSceneProduceRequest:
+         {
+            OnSceneProduceRequestMsg(msg);
+            break;
+         }
+
+      case MsgIdPixelProduceRequest:
+         {
+            OnPixelProduceRequestMsg(msg);
+            break;
+         }
+      default:
+         break;
    }
 }
 

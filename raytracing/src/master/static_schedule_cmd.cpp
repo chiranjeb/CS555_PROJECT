@@ -8,22 +8,19 @@
 
 void StaticScheduleCmd::ProcessMsg(MsgPtr msg)
 {
-   while (1)
+   DEBUG_TRACE("StaticScheduleCmd::ProcessMsg - Received MsgId: " << std::hex << msg->GetId());
+   switch (msg->GetId())
    {
-      DEBUG_TRACE("StaticScheduleCmd::ProcessMsg - Received MsgId: " << std::hex << msg->GetId());
-      switch (msg->GetId())
-      {
-         case MsgIdSceneProduceRequest:
-            OnSceneProduceRequestMsg(msg);
-            break;
+      case MsgIdSceneProduceRequest:
+         OnSceneProduceRequestMsg(msg);
+         break;
 
-         case MsgIdPixelProduceResponse:
-            OnPixelProduceResponseMsg(msg);
-            break;
+      case MsgIdPixelProduceResponse:
+         OnPixelProduceResponseMsg(msg);
+         break;
 
-         default:
-            break;
-      }
+      default:
+         break;
    }
 }
 
@@ -40,8 +37,10 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
    int appTag = pRequestMsg->GetAppTag();
    pRequestMsg->SetAppTag(0);
 
+   DEBUG_TRACE("Perform Repack");
    // We need to reserialize the first few bytes....
    pRequestMsg->Repack();
+
 
    /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
    for (int index = 0; index < m_workerList.size(); ++index)
@@ -49,14 +48,18 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
       TransportMgr::Instance().FindConnection(m_workerList[index])->SendMsg(pRequestMsg, nullptr);
    }
 
+   DEBUG_TRACE("Kick off workers");
+
    /// Let's first generate sequential pixel workload
    GenerateSequentialPixelWorkload(pRequestMsg->GetSceneId());
 
+   //DEBUG_TRACE("Sending Request Ack");
+
    /// all the tasks are scheduled. Send the acknowledgement to the client that the request has been accepted.
-   SceneProduceRequestAckMsgPtr sceneProduceRequestAckMsgPtr = std::make_shared<SceneProduceRequestAckMsg>(appTag, STATUS_SUCCESS);
+   //SceneProduceRequestAckMsgPtr sceneProduceRequestAckMsgPtr = std::make_shared<SceneProduceRequestAckMsg>(appTag, STATUS_SUCCESS);
 
    /// Send the response back to the client.
-   pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, nullptr);
+   //pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, nullptr);
 }
 
 
@@ -66,11 +69,12 @@ void StaticScheduleCmd::GenerateSequentialPixelWorkload(std::size_t sceneId)
    int pixelOffset = 0;
    for (int index = 0; index < m_workerList.size(); ++index)
    {
+      DEBUG_TRACE("Send request to worker index:" << index);
       /// Create a scene description message for each  worker. Include some work in the scene description too.
       PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(sceneId);
 
       /// Let's create sequential pixel based workload.
-      int startY = m_NY - (pixelOffset / m_NX + 1 );
+      int startY = m_NY - (pixelOffset / m_NX + 1);
       int startX = pixelOffset % m_NX;
       int endY = m_NY - ((pixelOffset +  m_workloadInPixels) /  m_NX + 1);
       int endX = (pixelOffset +  m_workloadInPixels) % m_NX;

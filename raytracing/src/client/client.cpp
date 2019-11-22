@@ -102,6 +102,7 @@ void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
    std::size_t scene_id = std::hash<std::string>
    {}
    (m_scene_name + asctime(curtime));
+
    requestMsg->SetSceneId(scene_id);
    requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
    requestMsg->SetAnswerBackAddress(TransportMgr::Instance().MyName(), m_listening_port);

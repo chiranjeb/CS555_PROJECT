@@ -54,7 +54,6 @@ void MsgQThread::ProcessUnHandledMsg(MsgPtr msg)
    switch (msg.get()->GetId())
    {
       default:
-         //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "MsgQThread::ProcessUnHandledMsg  - Encountered - Unhandled Message:" + msg.GetId());
          break;
    }
 }
