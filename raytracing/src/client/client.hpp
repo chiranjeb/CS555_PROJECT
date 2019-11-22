@@ -16,28 +16,18 @@ public:
    /// Get the Worker
    static Client& Instance()
    {
-      static Worker s_Worker;
-      return s_Worker;
+      static Client s_Client;
+      return s_Client;
    }
 
    /// Start the worker thread
-   void Start()
-   {
-      m_thread = new std::thread(&Client::Run, *this);
-   }
+   void Start();
 
    /// setup scene name.
-   void SetupSceneName(std::string scene_name)
-   {
-      m_scene_name = scene_name;
-   }
+   void SetupSceneName(std::string scene_name);
 
    /// Setup master info
-   void SetupMasterInfo(std::string master_address, int master_port)
-   {
-      m_master_address = master_address;
-      m_master_port = master_port;
-   }
+   void SetupMasterInfo(std::string master_address, int master_port);
 
 protected:
 
@@ -56,20 +46,18 @@ protected:
    /// Scene segment produce response message
    void OnSceneSegmentProduceRespMsg(MsgPtr msg);
 
-
    TCPIOConnection *m_p_ConnectionToMaster;
    std::string m_master_address;
    int m_master_port;
    int m_listening_port;
-
    std::string m_scene_name;
+
+
+   uint32_t m_CurrentPixelToWrite;
+   uint32_t m_SceneSizeInPixels;
 
 
    // scene segment response
    std::set<MsgPtr> m_SceneSegmentResponseSet;
-   uint32_t m_CurrentPixelToWrite;
-   uint32_t m_SceneSizeInPixels;
 
-   // file stream pointer
-   std::ifstream *m_file_stream_pointer;
 };

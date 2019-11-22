@@ -91,13 +91,6 @@ void MasterScheduler::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
    {
       DEBUG_TRACE("worker: " << *iter);
    }
-
-   // @todo: This should come from a client ideally.
-   // For now, just get the scene descriptor and send to all the clients.
-   /// Send the scene file.
-   //SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GenerateRandomScene();
-   //SceneDescriptionMsgPtr sceneDescriptorMsg = std::make_shared<SceneDescriptionMsg>(sceneDescriptorPtr);
-   //TransportMgr::Instance().FindConnection(m_workerlist[0])->SendMsg(sceneDescriptorMsg, GetThrdListener());
 }
 
 

@@ -80,7 +80,7 @@ inline void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, u
 class SceneFactory
 {
 public:
-   static SceneDescriptorPtr GenerateRandomScene(std::string scene_name)
+   static SceneDescriptorPtr GetScene(std::string scene_name)
    {
       /// Currently we have only one scene. When we have lot of scenes, this function
       /// can chose scenes randomly.
