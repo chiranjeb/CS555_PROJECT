@@ -1,11 +1,28 @@
 #include <iostream>
-#include "worker.hpp"
+#include "client.hpp"
 #include "transport/transport_msgs.hpp"
 #include "transport/tcp_io_connection.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
 #include "transport/transport_mgr.hpp"
-#include "ray_tracer/scene_descriptor.hpp"
+#include "wiremsg/scene_produce_msg.hpp"
 #include <functional>
+
+
+
+// file stream pointer
+std::ofstream m_file_output_stream;
+
+void Client::SetupSceneName(std::string scene_name)
+{
+   m_scene_name = scene_name;
+}
+
+/// Setup master info
+void Client::SetupMasterInfo(std::string master_address, int master_port)
+{
+   m_master_address = master_address;
+   m_master_port = master_port;
+}
 
 void Client::Run()
 {
@@ -14,7 +31,7 @@ void Client::Run()
    {
       MsgQEntry msgQEntry = TakeNext();
       MsgPtr msgPtr = msgQEntry.m_Msg;
-      DEBUG_TRACE("Client ProcessMsg: " << hex << msgQEntry.m_Msg.get()->GetId());
+      DEBUG_TRACE("Client ProcessMsg: " << std::hex << msgQEntry.m_Msg.get()->GetId());
       if (msgQEntry.m_Cmd.get() != nullptr)
       {
          msgQEntry.m_Cmd.get()->ProcessMsg(msgQEntry.m_Msg);
@@ -50,6 +67,11 @@ void Client::Run()
    }
 }
 
+void Client::Start()
+{
+   m_thread = new std::thread(&Client::Run, *this);
+}
+
 void Client::OnCreateServerResponse(MsgPtr msg)
 {
    DEBUG_TRACE("Worker::OnCreateServerResponse");
@@ -68,19 +90,23 @@ void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_scene_name);
 
    // Create the output file pointer.
-   m_file_stream_pointer = new  std::file(m_scene_name + ".ppm", ios::in | ios::binary | ios::ate);
+   m_file_output_stream.open(m_scene_name + ".ppm");
+
    m_SceneSizeInPixels = sceneDescriptorPtr->GetNX() * sceneDescriptorPtr->GetNY();
 
    // Create the scene produce request message.
    SceneProduceRequestMsgPtr requestMsg = std::make_shared<SceneProduceRequestMsg>(sceneDescriptorPtr);
 
-   time_t _tm =time(NULL );
-   struct tm * curtime = localtime ( &_tm );
-   std::size_t scene_id = std::hash<std::string>{}(m_scene_name + asctime(curtime));
+   time_t _tm = time(NULL);
+   struct tm *curtime = localtime(&_tm);
+   std::size_t scene_id = std::hash<std::string>
+   {}
+   (m_scene_name + asctime(curtime));
    requestMsg->SetSceneId(scene_id);
    requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
    requestMsg->SetAnswerBackAddress(TransportMgr::Instance().MyName(), m_listening_port);
    m_p_ConnectionToMaster->SendMsg(requestMsg, GetThrdListener());
+
 }
 
 void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
@@ -91,23 +117,23 @@ void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
 void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 {
    RELEASE_TRACE("Client::Received a scene produce response message");
-   SceneProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
+   SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
 
    if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
    {
       // write out the file.
-      std::pair<uint8_t*, uint32_t> sceneSegmentBuffer = respMsgPtr->GetSceneBuffer();
-      m_file_stream_pointer->write(sceneSegmentBuffer.first, sceneSegmentBuffer.second);
+      std::pair<uint8_t *, uint32_t> sceneSegmentBuffer = respMsgPtr->GetSceneBuffer();
+      m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
       m_CurrentPixelToWrite += respMsgPtr->GetScenePixelOffset();
 
       // The pixels are produced in the final format which contains space and end lines. We can remove them and transfer over
       // the network to reduce network I/O. For time being, let's just stich using the final format.
       for (std::set<MsgPtr>::iterator iter = m_SceneSegmentResponseSet.begin(); iter != m_SceneSegmentResponseSet.end(); ++iter)
       {
-         SceneProduceResponseMsgPtr segmentMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>((*iter));
+         SceneSegmentProduceResponseMsgPtr segmentMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>((*iter));
          if (segmentMsgPtr->GetScenePixelOffset() == m_CurrentPixelToWrite)
          {
-            m_file_stream_pointer->write(sceneSegmentBuffer.first, sceneSegmentBuffer.second);
+            m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
             m_CurrentPixelToWrite += segmentMsgPtr->GetScenePixelOffset();
             iter = m_SceneSegmentResponseSet.erase(iter);
          }
@@ -121,8 +147,7 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
       {
          // We are done. close connections and exit.
          RELEASE_TRACE("Successfully produced the image.");
-         m_file_stream_pointer->close();
-         delete m_file_stream_pointer;
+         m_file_output_stream.close();
          exit(0);
       }
    }
