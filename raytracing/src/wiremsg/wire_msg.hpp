@@ -17,6 +17,7 @@ public:
         m_ApplicationTag = 0;
         m_p_tcp_connection = nullptr;
         m_BufferValid = false;
+        m_PackedMsgBuffer = nullptr;
     }
 
     ///  Returns the application tag
@@ -63,6 +64,14 @@ public:
     {
        m_PackedMsgBuffer = p_buffer;
        m_PackedMsgBufferLength = size;
+    }
+
+    ~WireMsg()
+    {
+        if (m_PackedMsgBuffer != nullptr)
+        {
+            free(m_PackedMsgBuffer);
+        }
     }
 
     uint8_t* m_PackedMsgBuffer;
