@@ -4,7 +4,6 @@
 #include "transport/tcp_io_connection.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
 #include "transport/transport_mgr.hpp"
-#include "wiremsg/scene_produce_msg.hpp"
 #include <functional>
 
 
@@ -148,8 +147,8 @@ void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
 
 void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 {
-    RELEASE_TRACE("Client::Received a scene produce response message");
     SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
+    RELEASE_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
     if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
     {
@@ -158,22 +157,24 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
         // write out the file.
         std::pair<uint8_t *, uint32_t> sceneSegmentBuffer = respMsgPtr->GetSceneBuffer();
         m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
-        m_CurrentPixelToWrite += respMsgPtr->GetScenePixelOffset();
+        m_CurrentPixelToWrite += respMsgPtr->GetNumPixels();
 
         // The pixels are produced in the final format which contains space and end lines. We can remove them and transfer over
         // the network to reduce network I/O. For time being, let's just stich using the final format.
-        for (std::set<MsgPtr>::iterator iter = m_SceneSegmentResponseSet.begin(); iter != m_SceneSegmentResponseSet.end(); ++iter)
+        for (std::set<MsgPtr>::iterator iter = m_SceneSegmentResponseSet.begin(); iter != m_SceneSegmentResponseSet.end(); )
         {
             SceneSegmentProduceResponseMsgPtr segmentMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>((*iter));
             if (segmentMsgPtr->GetScenePixelOffset() == m_CurrentPixelToWrite)
             {
+                sceneSegmentBuffer = segmentMsgPtr->GetSceneBuffer();
                 m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
-                m_CurrentPixelToWrite += segmentMsgPtr->GetScenePixelOffset();
+                m_CurrentPixelToWrite += segmentMsgPtr->GetNumPixels();
+
                 iter = m_SceneSegmentResponseSet.erase(iter);
             }
             else
             {
-                break;
+                iter++;
             }
         }
 

@@ -201,6 +201,18 @@ public:
 };
 
 
+typedef std::shared_ptr<SceneSegmentProduceResponseMsg> SceneSegmentProduceResponseMsgPtr;
+struct SceneSegmentProduceResponseMsgCompare
+{
+   bool operator()( const MsgPtr &msg1, const MsgPtr &msg2)
+   {
+      SceneSegmentProduceResponseMsgPtr respMsgPtr1 = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg1);
+      SceneSegmentProduceResponseMsgPtr respMsgPtr2 = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg2);
+      return respMsgPtr1->GetScenePixelOffset() < respMsgPtr2->GetScenePixelOffset();
+   }
+};
+
+
 
 class SceneProduceRequestAckMsg : public WireMsg
 {
@@ -270,6 +282,5 @@ public:
 
 
 typedef std::shared_ptr<SceneProduceRequestMsg> SceneProduceRequestMsgPtr;
-typedef std::shared_ptr<SceneSegmentProduceResponseMsg> SceneSegmentProduceResponseMsgPtr;
 typedef std::shared_ptr<SceneProduceRequestAckMsg> SceneProduceRequestAckMsgPtr;
 

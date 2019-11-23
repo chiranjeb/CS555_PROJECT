@@ -30,7 +30,7 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
                                                                                                     pRequestMsg->GetNumPixels(),
                                                                                                     pRequestMsg->GetScenePixelOffset());
 
-    // Stream through so that we don't have to worry about serializing later one.
+    /// Stream through so that we don't have to worry about serializing it later.
     PreAllocatedStreamBuffer streambuff(reinterpret_cast<char *>(respMsgPtr->GetPixelBufferStart()), respMsgPtr->GetPixelBufferMaxLimit());
     std::ostream ostrm(&streambuff);
 
@@ -38,16 +38,19 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
     SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
 
+    /// Produce pixels
     ProducePixels(pRequestMsg->m_endY, pRequestMsg->m_startY, pRequestMsg->m_endX, pRequestMsg->m_startX,
                   sceneDescriptorPtr, ostrm);
 
+    /// Update valid buffer
     respMsgPtr->UpdateValidBuffer(streambuff.Tellp());
     DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Done" << streambuff.Tellp());
 
+    /// Pack partial stuff.
     respMsgPtr->PackPartial();
     if (m_p_clientConnection != nullptr)
     {
-        // Ship the result to the client first
+        /// Ship the result to client. We are not waiting for the response.
         m_p_clientConnection->SendMsg(respMsgPtr, nullptr);
     }
     else
