@@ -9,52 +9,56 @@
 
 void PixelProducer::ProcessMsg(MsgPtr msg)
 {
-   RELEASE_TRACE("PixelProducer::ReceivedMsg: " << msg->GetId());
-   while (1)
-   {
-      switch (msg->GetId())
-      {
-         case MsgIdPixelProduceRequest:
-            {
-               OnPixelProduceRequestMsg(msg);
-               break;
-            }
-         default:
+    RELEASE_TRACE("PixelProducer::ReceivedMsg: " << msg->GetId());
+    switch (msg->GetId())
+    {
+        case MsgIdPixelProduceRequest:
+        {
+            OnPixelProduceRequestMsg(msg);
             break;
-      }
-   }
+        }
+        default:
+            break;
+    }
 }
 
 void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 {
-   DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: ");
-   PixelProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
-   SceneSegmentProduceResponseMsgPtr respMsgPtr = std::make_shared<SceneSegmentProduceResponseMsg>(pRequestMsg->GetSceneId(),
-                                                                                                   pRequestMsg->GetNumPixels(),
-                                                                                                   pRequestMsg->GetScenePixelOffset());
-   // Stream through so that we don't have to worry about serializing later one.
-   PreAllocatedStreamBuffer streambuff(reinterpret_cast<char *>(respMsgPtr->GetPixelBufferStart()), respMsgPtr->GetPixelBufferMaxLimit());
-   std::ostream ostrm(&streambuff);
+    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Start");
+    PixelProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
+    SceneSegmentProduceResponseMsgPtr respMsgPtr = std::make_shared<SceneSegmentProduceResponseMsg>(pRequestMsg->GetSceneId(),
+                                                                                                    pRequestMsg->GetNumPixels(),
+                                                                                                    pRequestMsg->GetScenePixelOffset());
 
-   SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
+    // Stream through so that we don't have to worry about serializing later one.
+    PreAllocatedStreamBuffer streambuff(reinterpret_cast<char *>(respMsgPtr->GetPixelBufferStart()), respMsgPtr->GetPixelBufferMaxLimit());
+    std::ostream ostrm(&streambuff);
 
-   ProducePixels(pRequestMsg->m_endY, pRequestMsg->m_startY, pRequestMsg->m_endX, pRequestMsg->m_startX,
-                 sceneDescriptorPtr, ostrm);
 
-   if (m_p_clientConnection != nullptr)
-   {
-      // Ship the result to the client first
-      m_p_clientConnection->SendMsg(respMsgPtr, nullptr);
-   }
-   else
-   {
-      // This command will be kicked out when connection is made
-   }
+    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
+    SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
 
-   // Send the response to the master scheduler.
-   PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId());
-   respMsg->SetAppTag(pRequestMsg->GetAppTag());
-   Worker::Instance().GetConnectionToMaster()->SendMsg(respMsg, nullptr);
+    ProducePixels(pRequestMsg->m_endY, pRequestMsg->m_startY, pRequestMsg->m_endX, pRequestMsg->m_startX,
+                  sceneDescriptorPtr, ostrm);
+
+    respMsgPtr->UpdateValidBuffer(streambuff.Tellp());
+    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Done" << streambuff.Tellp());
+
+    respMsgPtr->PackPartial();
+    if (m_p_clientConnection != nullptr)
+    {
+        // Ship the result to the client first
+        m_p_clientConnection->SendMsg(respMsgPtr, nullptr);
+    }
+    else
+    {
+        // This command will be kicked out when connection is made
+    }
+
+    // Send the response to the master scheduler.
+    //PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId());
+    //respMsg->SetAppTag(pRequestMsg->GetAppTag());
+    //Worker::Instance().GetConnectionToMaster()->SendMsg(respMsg, nullptr);
 }
 
 

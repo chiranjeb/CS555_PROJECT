@@ -100,21 +100,26 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
                    uint32_t nx, uint32_t ny, uint32_t ns,
                    camera *p_camera, hitable *world, std::ostream& os)
 {
-   DEBUG_TRACE("ProducePixels: ");
+   DEBUG_TRACE("ProducePixels: " << "NY_end: " << NY_end << ", NY_start: " << NY_start << ", NX_start: " << NX_start << ", NX_end" << NX_end);
+   DEBUG_TRACE("ProducePixels: " << "nx: " << nx << ", ny: " << ny << ", ns: " << ns);
+
    vec3 curAlbedo;
-   for (int j = NY_end; j >= NY_start; j--)
+   int start = (int)NY_start;
+   for (int j = NY_end; j >= start; j--)
    {
       int i = 0;
       int endx = nx;
+      //std::cerr << "endx:" << endx << std::endl;
       if ((j == NY_end) && (NX_start != 0))
       {
          i = NX_start;
       }
-      if ((j == NY_start) && (NX_end != nx))
+      if ((j == NY_start) && (NX_end != (nx-1)))
       {
-         endx = NX_end;
+         endx = NX_end+1;
       }
 
+      //std::cerr << "endx:" << endx << std::endl;
       for (; i < endx; ++i)
       {
          vec3 col(0, 0, 0);
@@ -129,10 +134,11 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
          col /= float(ns);
          col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
          if (col[0] > 1 || col[2] > 1 || col[3] > 1) cout << "there is a problem here: " << i << endl;
-         uint8_t ir = uint8_t(255.99 * col[0]);
-         uint8_t ig = uint8_t(255.99 * col[1]);
-         uint8_t ib = uint8_t(255.99 * col[2]);
+         short int ir = 255.99 * col[0];
+         short int ig = 255.99 * col[1];
+         short int ib = 255.99 * col[2];
          os << ir << " " << ig << " " << ib << "\n";
+         //std::cerr << "nx:" << nx  << ", ny:" << ny << ", Y:" << j << ", X:" << i << ", NY_start:" << NY_start <<  std::endl;
       }
    }
 }

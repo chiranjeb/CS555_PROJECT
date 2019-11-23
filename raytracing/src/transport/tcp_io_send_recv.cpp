@@ -72,7 +72,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
         TCPSendMsg *tcpSendMsg = static_cast<TCPSendMsg *>(msgPtr.get());
 
         // We may need to revisit this when are done identifying all the messages.
-        std::pair<uint8_t*, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
+        std::pair<uint8_t *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
         DEBUG_TRACE("Sending wire message Message(MsgId:" << tcpSendMsg->GetWireMsg().get()->GetId() << "), " << "buffer_length:" << buffer.second);
 
         PacketLength packetLength(buffer.second);
@@ -110,15 +110,7 @@ void TCPIOReceiver::Run()
             break;
         }
 
-        uint8_t *xfer_buffer;
-        if (packetLength.Get() > MAX_MSG_BUFFER_SIZE_IN_BYTES )
-        {
-            xfer_buffer = (uint8_t *) malloc(sizeof(uint8_t) * packetLength.Get());
-        }
-        else
-        {
-            xfer_buffer = m_MsgBuffer;
-        }
+        uint8_t *xfer_buffer = (uint8_t *)malloc(sizeof(uint8_t) * packetLength.Get());
 
         // We received the message length. Now, transfer the actual message.
         DEBUG_TRACE("Successfully received the data length: " << numOfBytesReceived);

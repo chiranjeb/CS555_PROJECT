@@ -12,6 +12,7 @@ class Worker : public MsgQThread
 public:
    Worker() : MsgQThread("Worker", WORKER_CMD_PROCESSOR_MSG_Q_DEPTH)
    {
+       DEBUG_TRACE("Worker::Worker" );
    }
 
    /// Get the Worker
@@ -24,20 +25,37 @@ public:
    /// Start the worker thread
    void Start()
    {
-      m_thread = new std::thread(&Worker::Run, *this);
+      m_thread = new std::thread(&Worker::Run, &Worker::Instance());
    }
 
    /// Setup master info
    void SetupMasterInfo(std::string master_address, int master_port)
    {
+      DEBUG_TRACE("Dump::Start(this:" << std::hex << this << ")");
       m_master_address = master_address;
       m_master_port = master_port;
+   }
+
+   void Dump()
+   {
+       DEBUG_TRACE("Dump::Start(this:" << std::hex << this << ")");
+       for (std::map<std::size_t, SceneProduceRequestMsgPtr>::iterator iter = m_SceneFileMap.begin(); iter!=m_SceneFileMap.end(); ++iter)
+       {
+           DEBUG_TRACE("SceneProduceRequestMsgPtr: " << iter->first << " " << iter->second.get() );
+       }
+       DEBUG_TRACE("Dump::End" );
    }
 
    /// Return scene descriptor
    SceneDescriptorPtr GetSceneDescriptor(std::size_t sceneId)
    {
-      return m_SceneFileMap[sceneId]->GetSceneDescriptor();
+      DEBUG_TRACE("GetSceneDescriptor: " << sceneId );
+      Dump();
+      SceneProduceRequestMsgPtr request = m_SceneFileMap[sceneId];
+      DEBUG_TRACE("SceneProduceRequestMsgPtr: " << std::hex << request.get() );
+      SceneDescriptorPtr descript  = request->GetSceneDescriptor();
+      DEBUG_TRACE("SceneDescriptorPtr: " << std::hex << descript.get() );
+      return descript;
    }
 
 
@@ -45,6 +63,8 @@ public:
    {
       return m_p_ConnectionToMaster;
    }
+
+   Worker& operator=(Worker& other);
 
 protected:
 
