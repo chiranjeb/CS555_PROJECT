@@ -32,15 +32,14 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
     m_NX = pRequestMsg->GetNX();
     m_NY = pRequestMsg->GetNY();
     DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << m_workerList.size());
-    m_workloadInPixels = m_NX * m_NY / m_workerList.size();
+    m_workloadInPixels = ((m_NX * m_NY + m_workerList.size() - 1)/ m_workerList.size());
     m_p_client_connection = pRequestMsg->GetConnection();
 
     int appTag = pRequestMsg->GetAppTag();
     pRequestMsg->SetAppTag(0);
 
-    // We need to reserialize the first few bytes....
+    ///j We need to reserialize the first few bytes....
     pRequestMsg->Repack();
-
 
     /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
     for (int index = 0; index < m_workerList.size(); ++index)
@@ -58,30 +57,47 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
     pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, nullptr);
 }
 
+struct Pixel2XYMapper
+{
+   Pixel2XYMapper(int Ny, int Nx, int pixelPos)
+   {
+      Y = Ny - ((pixelPos/ Nx) + 1) ;
+      X = pixelPos % Nx;
+   }
+   int X;
+   int Y;
+};
+
 
 void StaticScheduleCmd::GenerateSequentialPixelWorkload(std::size_t sceneId)
 {
     /// Now submit the pixel generation request.
     int pixelOffset = 0;
-
+    int totalPixels = m_NX * m_NY ;
     DEBUG_TRACE("sceneDescriptorPtr->GetNY():" << m_NX << "sceneDescriptorPtr->GetNX():" << m_NY);
     for (int index = 0; index < m_workerList.size(); ++index)
     {
-        DEBUG_TRACE("Send request to worker index:" << index);
+        DEBUG_TRACE("Send request to worker index:" << index << ", pixelOffset:" << pixelOffset << ", m_workloadInPixels:" << m_workloadInPixels);
         /// Create a scene description message for each  worker. Include some work in the scene description too.
         PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(sceneId);
 
-        /// Let's create sequential pixel based workload.
-        int endY = m_NY - ((pixelOffset / m_NX) + 1);
-        int startX = pixelOffset % m_NX;
-        int startY = m_NY - ((pixelOffset +  m_workloadInPixels) /  m_NX);
-        int endX = (pixelOffset +  m_workloadInPixels - 1) % m_NX;
+        int workload = m_workloadInPixels;
+        if (index == (m_workerList.size()-1))
+        {
+           workload = totalPixels - pixelOffset;
+        }
 
-        //startY = 1;
+        int endY  =  Pixel2XYMapper(m_NY, m_NX, pixelOffset).Y ;
+        int startX = Pixel2XYMapper(m_NY, m_NX, pixelOffset).X ;
+
+        int startY = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).Y ;
+        int endX = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).X ;
+
+
         DEBUG_TRACE("endY:" << endY << ", startY:" << startY << ", startX:" << startX << ", endX:" << endX << std::endl);
         /// Update work set
         pixelProduceRequestMsg->GenerateWork(startY, startX,  endY, endX);
-        pixelProduceRequestMsg->SetPixelDomain(pixelOffset, m_workloadInPixels);
+        pixelProduceRequestMsg->SetPixelDomain(pixelOffset, workload);
 
         /// Update the scene id.
         m_NumPendingCompletionResponse = 0;
