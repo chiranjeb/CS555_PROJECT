@@ -19,34 +19,42 @@ int main()
 
 int ray_tracer_produce_scene()
 {
-   int nx, ny, ns;
+   int nx, ny, ns, i = 0, j = 0, s;
    camera cam;
    vec3 curAlbedo;
-
+   float u,v;
    hitable *world = myScene(cam, nx, ny, ns);
+   int frame[ny][nx][3];
+
    cout << "P3\n" << nx << " " << ny << "\n255\n";
-   for (int j = ny - 1; j >= 0; j--)
+
+   #pragma omp parallel for schedule(static, 10) private(j,i,s,u,v)
+   for (j = ny - 1; j >= 0; j--)
    {
-      for (int i = 0; i < nx; i++)
+      for (i = 0; i < nx; i++)
       {
          vec3 col(0, 0, 0);
-#pragma omp parallel for schedule(static, 10)
-         for (int s = 0; s < ns; s++)
+         for (s = 0; s < ns; s++)
          {
-            float u = float(i + drand48()) / float(nx);
-            float v = float(j + drand48()) / float(ny);
+            u = float(i + drand48()) / float(nx);
+            v = float(j + drand48()) / float(ny);
             ray r = cam.getRay(u, v);
             vec3 curAlbedo(1.0, 1.0, 1.0);
             col += color(r, world, 0, curAlbedo);
          }
          col /= float(ns);
          col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
-         if (col[0] > 1 || col[2] > 1 || col[3] > 1) cout << "there is a problem here: " << i << endl;
-         int ir = int(255.99*col[0]);
-         int ig = int(255.99*col[1]);
-         int ib = int(255.99*col[2]);
-         cout << ir << " " << ig << " " << ib << "\n";
+         frame[j][i][0] = int(255.99*col[0]);
+         frame[j][i][1] = int(255.99*col[1]);
+         frame[j][i][2] = int(255.99*col[2]);
       }
+   }
+   for(j = ny-1; j >= 0; j--)
+   {
+       for(i = 0; i < nx; i++)
+       {
+           cout << frame[j][i][0] << " " << frame[j][i][1] << " " << frame[j][i][2] << "\n";
+       }
    }
    return 0;
 }
