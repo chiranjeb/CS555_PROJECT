@@ -6,7 +6,7 @@
 class TCPIOConnection;
 
 // Consider changing this.
-static const int MAX_MSG_BUFFER_SIZE_IN_BYTES = 4196*8;
+static const int MAX_MSG_BUFFER_SIZE_IN_BYTES = 4096;
 
 struct PacketLength
 {
@@ -23,7 +23,7 @@ struct PacketLength
         m_MsgLengthBuff[3] = (value & 0xFF000000) >> 24;
     }
 
-    char* Data()
+    uint8_t* Data()
     {
         return &m_MsgLengthBuff[0];
     }
@@ -38,7 +38,7 @@ struct PacketLength
         return m_MsgLengthBuff[3] << 24 | m_MsgLengthBuff[2] << 16 | m_MsgLengthBuff[1] << 8 | m_MsgLengthBuff[0];
     }
 
-    char m_MsgLengthBuff[MAX_PACKET_SIZE_LENGTH];
+    uint8_t m_MsgLengthBuff[MAX_PACKET_SIZE_LENGTH];
 };
 
 class TCPIOSender : public Thread
@@ -60,7 +60,7 @@ public:
     }
 
     /// Send data
-    ErrorCode_t SendData(char *data, int size);
+    ErrorCode_t SendData(uint8_t *data, int size);
 
 protected:
     void OnTCPSendMsg(MsgPtr requestMsgPtr);
@@ -77,7 +77,7 @@ protected:
     BlockingQueue<MsgPtr> &m_SendQ;
     bool m_Stop;
     State m_State;
-    char m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
+    uint8_t m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
 };
 
 class TCPIOReceiver  : public Thread
@@ -96,7 +96,7 @@ public:
 protected:
     void Run();
     void HandleException();
-    char m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
+    uint8_t m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
 
     int m_socket;
     TCPIOConnection *m_p_connection;

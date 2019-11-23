@@ -1,20 +1,15 @@
 #include "messaging_framework.hpp"
 #include <memory>
 
-Command::Command(MsgQThread *thread)
+Command::Command(BlockingMsgQPtr q)
 {
-   m_pHandlerThreadPtr = thread;
+   m_RequestQ = q;
 }
 
-Listener* Command::GetHandlerThrdListener()
-{
-   return m_pHandlerThreadPtr->GetThrdListener();
-}
 
 void Command::Notify(MsgPtr msg)
 {
-   //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, TraceLogger.MODULE_FRAMEWORK, "Command::Notify");
-   m_pHandlerThreadPtr->Send(MsgQEntry(msg, CommandPtr(this)));
+   m_RequestQ->Put(MsgQEntry(msg, CommandPtr(this)));
 }
 
 /** 
@@ -26,16 +21,15 @@ void Command::ProcessMsg(MsgPtr msg)
 {
    switch (msg.get()->GetId())
    {
-   default:
-      //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "Cmd Encountered - Unhandled Message:" + msg.GetId());
-      break;
+      default:
+         break;
    }
 }
 /**
 * Notify the waiting thread. 
 * @param msg Notification message 
 */
-void MsgQThreadListener::Notify(MsgPtr msgPtr)
+void MsgQListener::Notify(MsgPtr msgPtr)
 {
    m_MsgQ.get()->Put(MsgQEntry(msgPtr, CommandPtr(nullptr)));
 }
@@ -45,7 +39,7 @@ void MsgQThreadListener::Notify(MsgPtr msgPtr)
 /// This class defines a message queue entry
 MsgQThread::MsgQThread(std::string threadName, int threadMsgQDepth) :  Thread(threadName),
    m_RequestQ(new  BlockingQueue<MsgQEntry>(threadMsgQDepth)),
-   m_ThrdLis(new MsgQThreadListener(m_RequestQ)) 
+   m_ThrdLis(new MsgQListener(m_RequestQ))
 {
 }
 
@@ -59,8 +53,42 @@ void MsgQThread::ProcessUnHandledMsg(MsgPtr msg)
 {
    switch (msg.get()->GetId())
    {
-   default:
-      //TraceLogger.Instance().Println(TraceLogger.LEVEL_DEBUG, "MsgQThread::ProcessUnHandledMsg  - Encountered - Unhandled Message:" + msg.GetId());
-      break;
+      default:
+         break;
    }
 }
+
+
+
+
+// Actual Scheduler thread
+void WorkerThread::Run()
+{
+   while (true)
+   {
+      //Wait for a message to process.
+      MsgQEntry entry = m_RequestQ->Take();
+      entry.m_Cmd->ProcessMsg(entry.m_Msg);
+   }
+}
+
+
+
+ThreadPoolManager::ThreadPoolManager(int numThreads, BlockingMsgQPtr blockingQ)
+{
+   m_RequestQ = blockingQ;
+   for (int index = 0; index < numThreads; ++index)
+   {
+      //Create a worker thread.
+      m_WorkerThreads.push_back(new WorkerThread("WORKER-THREAD-" + std::to_string(index) + ": ", m_RequestQ));
+   }
+}
+
+void ThreadPoolManager::Start()
+{
+   for (int index = 0; index < m_WorkerThreads.size(); ++index)
+   {
+      m_WorkerThreads[index]->Start();
+   }
+}
+
