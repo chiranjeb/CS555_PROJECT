@@ -117,7 +117,7 @@ void TCPIOReceiver::Run()
         while (packetLength.Get() !=numOfBytesReceived)
         {
            // We received the message length. Now, transfer the actual message.
-           int numBytes = recv(m_socket, xfer_buffer+numOfBytesReceived, packetLength.Get() - numOfBytesReceived, 0)
+           int numBytes = recv(m_socket, xfer_buffer+numOfBytesReceived, packetLength.Get() - numOfBytesReceived, 0);
            numOfBytesReceived += numBytes;
            if (numBytes < 1)
            {
