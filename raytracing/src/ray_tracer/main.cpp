@@ -95,15 +95,59 @@ vec3 color(const ray& r, hitable *world, int depth, vec3& curAlbedo)
 }
 
 
+
+void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start,
+                   uint32_t nx, uint32_t ny, uint32_t ns,
+                   camera *p_camera, hitable *world, std::ostream& os)
+{
+   DEBUG_TRACE("ProducePixels: ");
+   vec3 curAlbedo;
+   for (int j = NY_end; j >= NY_start; j--)
+   {
+      int i = 0;
+      int endx = nx;
+      if ((j == NY_end) && (NX_start != 0))
+      {
+         i = NX_start;
+      }
+      if ((j == NY_start) && (NX_end != nx))
+      {
+         endx = NX_end;
+      }
+
+      for (; i < endx; ++i)
+      {
+         vec3 col(0, 0, 0);
+         for (int s = 0; s < 20; s++)
+         {
+            float u = float(i + drand48()) / float(nx);
+            float v = float(j + drand48()) / float(ny);
+            ray r = p_camera->getRay(u, v);
+            vec3 curAlbedo(1.0, 1.0, 1.0);
+            col += color(r, world, 0, curAlbedo);
+         }
+         col /= float(ns);
+         col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
+         if (col[0] > 1 || col[2] > 1 || col[3] > 1) cout << "there is a problem here: " << i << endl;
+         uint8_t ir = uint8_t(255.99 * col[0]);
+         uint8_t ig = uint8_t(255.99 * col[1]);
+         uint8_t ib = uint8_t(255.99 * col[2]);
+         os << ir << " " << ig << " " << ib << "\n";
+      }
+   }
+}
+
+
+
 /// Custom Message serializer
-std::ostream& operator << (std::ostream &os, aabb &ab)
+std::ostream& operator<<(std::ostream& os, aabb& ab)
 {
    os << ab._min << " " << ab._max << " ";
    return os;
 }
 
 ///  Custom message deserializer
-std::istream& operator >> (std::istream &is, aabb &ab)
+std::istream& operator>>(std::istream& is, aabb& ab)
 {
    is >> ab._min >> ab._max;
    return is;
@@ -111,52 +155,46 @@ std::istream& operator >> (std::istream &is, aabb &ab)
 
 aabb surroundingBox(aabb box0, aabb box1)
 {
-  vec3 small(fmin(box0.min().x(), box1.min().x()),
-             fmin(box0.min().y(), box1.min().y()),
-             fmin(box0.min().z(), box1.min().z()));
+   vec3 small(fmin(box0.min().x(), box1.min().x()),
+              fmin(box0.min().y(), box1.min().y()),
+              fmin(box0.min().z(), box1.min().z()));
 
-  vec3 big(fmax(box0.max().x(), box1.max().x()),
-             fmax(box0.max().y(), box1.max().y()),
-             fmax(box0.max().z(), box1.max().z()));
+   vec3 big(fmax(box0.max().x(), box1.max().x()),
+            fmax(box0.max().y(), box1.max().y()),
+            fmax(box0.max().z(), box1.max().z()));
 
-  return aabb(small, big);
+   return aabb(small, big);
 }
 
 
 int box_x_compare(const void *a, const void *b)
 {
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().x() - box_right.min().x() < 0.0 )
-    return -1;
+   aabb box_left, box_right;
+   hitable *ah = *(hitable **)a;
+   hitable *bh = *(hitable **)b;
+   if (box_left.min().x() - box_right.min().x() < 0.0) return -1;
 
-  else
-    return 1;
+   else return 1;
 }
 
 int box_y_compare(const void *a, const void *b)
 {
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().y() - box_right.min().y() < 0.0 )
-    return -1;
+   aabb box_left, box_right;
+   hitable *ah = *(hitable **)a;
+   hitable *bh = *(hitable **)b;
+   if (box_left.min().y() - box_right.min().y() < 0.0) return -1;
 
-  else
-    return 1;
+   else return 1;
 }
 
 int box_z_compare(const void *a, const void *b)
 {
-  aabb box_left, box_right;
-  hitable *ah = *(hitable**)a;
-  hitable *bh = *(hitable**)b;
-  if (box_left.min().z() - box_right.min().z() < 0.0 )
-    return -1;
+   aabb box_left, box_right;
+   hitable *ah = *(hitable **)a;
+   hitable *bh = *(hitable **)b;
+   if (box_left.min().z() - box_right.min().z() < 0.0) return -1;
 
-  else
-    return 1;
+   else return 1;
 }
 
 // vec3 color(const ray& r, hitable* world, hitable* lights, hitable* nonLights, int depth, vec3& curAlbedo)
@@ -258,8 +296,8 @@ hitable* ConstructHitable(std::istream& is, char type)
    {
       case HITABLE_TYPE_LIST:
          {
-             ptr = new hitableList();
-             break;
+            ptr = new hitableList();
+            break;
          }
       case HITABLE_TYPE_BVH:
          {
@@ -331,19 +369,19 @@ texture* ConstructTexture(std::istream& is, uint16_t type)
    switch (type)
    {
       case TEXTURE_TYPE_CONSTANT_TEXTURE:
-         ptr = new constantTexture(); 
+         ptr = new constantTexture();
          break;
       case TEXTURE_TYPE_CHECKER_TEXTURE:
-         ptr = new checkerTexture(); 
+         ptr = new checkerTexture();
          break;
       case TEXTURE_TYPE_CHECKER_NOISE:
-         ptr = new checkerNoise(); 
+         ptr = new checkerNoise();
          break;
       case TEXTURE_TYPE_CAMO:
-         ptr = new camo(); 
+         ptr = new camo();
          break;
       case TEXTURE_TYPE_MARBLE:
-         ptr = new marble(); 
+         ptr = new marble();
          break;
       default:
          return nullptr;
@@ -354,25 +392,25 @@ texture* ConstructTexture(std::istream& is, uint16_t type)
 
 
 /// Custom serializer
-std::ostream& operator << (std::ostream &os, camera &cam)
+std::ostream& operator<<(std::ostream& os, camera& cam)
 {
-   os << cam.origin   << " " 
-      << cam.lowerLeftCorner << " " 
-      << cam.horizontal << " " 
-      << cam.vertical << " " 
-      << cam.u << " " 
-      << cam.v << " " 
-      << cam.w << " " 
+   os << cam.origin   << " "
+      << cam.lowerLeftCorner << " "
+      << cam.horizontal << " "
+      << cam.vertical << " "
+      << cam.u << " "
+      << cam.v << " "
+      << cam.w << " "
       << cam.lensRadius << " ";
    return os;
 }
 
 /// Custom deserializer
-std::istream& operator >> (std::istream &is, camera &cam)
+std::istream& operator>>(std::istream& is, camera& cam)
 {
-   is >> cam.origin >> cam.lowerLeftCorner 
-      >> cam.horizontal >> cam.vertical 
-      >> cam.u >> cam.v >> cam.w >> cam.lensRadius ;
+   is >> cam.origin >> cam.lowerLeftCorner
+      >> cam.horizontal >> cam.vertical
+      >> cam.u >> cam.v >> cam.w >> cam.lensRadius;
    return is;
 }
 
@@ -535,7 +573,7 @@ void translate::Unpack(std::istream& is)
 void hitableList::Pack(std::ostream& os)
 {
    os << listSize;
-   DEBUG_TRACE_VERBOSE( "hitableList::Pack, listSize: " << listSize << std::endl);
+   DEBUG_TRACE_VERBOSE("hitableList::Pack, listSize: " << listSize << std::endl);
    for (int index = 0; index < listSize; ++index)
    {
       DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Pack, listSize: " << listSize << ", index:" << index);
@@ -691,7 +729,7 @@ void checkerTexture::Unpack(std::istream& is)
 /// Custom Message serializer
 void checkerNoise::Pack(std::ostream& os)
 {
-   os << color << " "; 
+   os << color << " ";
    os << scale  << " ";
 }
 

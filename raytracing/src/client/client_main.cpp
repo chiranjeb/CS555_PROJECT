@@ -2,14 +2,9 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 #include "transport/transport_mgr.hpp"
-#include "worker.hpp"
+#include "client.hpp"
 
 using namespace std;
-
-static const uint32_t SCENE_PRODUCER_Q_DEPTH = 128;
-static const uint32_t NUM_SCENE_PRODUCER = 16;
-
-
 
 int main(int argc, char *argv[])
 {
@@ -18,14 +13,18 @@ int main(int argc, char *argv[])
    PropertiesReader  properties(master_properties);
    std::string master_address = properties["master_host"];
    int master_port = std::stoi(properties["master_listening_port"]);
-   Worker::Instance().SetupMasterInfo(master_address, master_port);
+   Client::Instance().SetupMasterInfo(master_address, master_port);
+
+
+   std::string scene_name = argv[2];
+   Client::Instance().SetupSceneName(scene_name);
 
    // Start the worker.
-   Worker::Instance().Start();
+   Client::Instance().Start();
 
    // Start a server
-   const int SERVER_LISTENING_Q_DEPTH = 40;
-   TransportMgr::Instance().CreateTCPServer(0, SERVER_LISTENING_Q_DEPTH, *Worker::Instance().GetThrdListener());
+   const int SERVER_LISTENING_Q_DEPTH = 10;
+   TransportMgr::Instance().CreateTCPServer(0, SERVER_LISTENING_Q_DEPTH, *Client::Instance().GetThrdListener());
 
    while (1)
    {
