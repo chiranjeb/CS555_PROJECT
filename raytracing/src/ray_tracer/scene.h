@@ -114,8 +114,8 @@ hitable *random_scene() {
 
 hitable* myScene(camera& cam, int& nx, int& ny, int& ns)
 {
-  nx = 512;
-  ny = 512;
+  nx = 1024;
+  ny = 1024;
 
 
   //nx = 64;

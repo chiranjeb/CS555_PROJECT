@@ -79,11 +79,7 @@ void StaticScheduleCmd::GenerateSequentialPixelWorkload(std::size_t sceneId)
         /// Let's create sequential pixel based workload.
         int endY = m_NY - ((pixelOffset / m_NX) + 1);
         int startX = pixelOffset % m_NX;
-        int startY = m_NY - (((pixelOffset +  m_workloadInPixels) /  m_NX) + 1);
-        if (startY < 0)
-        {
-            startY = 0;
-        }
+        int startY = m_NY - ((pixelOffset +  m_workloadInPixels) /  m_NX);
         int endX = (pixelOffset +  m_workloadInPixels - 1) % m_NX;
 
         //startY = 1;

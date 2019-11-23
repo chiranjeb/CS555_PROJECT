@@ -2,6 +2,7 @@
 
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
+#include "wiremsg/scene_produce_msg.hpp"
 #include <fstream>
 
 class TCPIOConnection;
@@ -60,6 +61,6 @@ protected:
 
 
     // scene segment response
-    std::set<MsgPtr> m_SceneSegmentResponseSet;
+    std::set<MsgPtr, SceneSegmentProduceResponseMsgCompare> m_SceneSegmentResponseSet;
 
 };

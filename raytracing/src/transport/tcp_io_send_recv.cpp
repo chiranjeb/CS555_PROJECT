@@ -112,16 +112,21 @@ void TCPIOReceiver::Run()
 
         uint8_t *xfer_buffer = (uint8_t *)malloc(sizeof(uint8_t) * packetLength.Get());
 
-        // We received the message length. Now, transfer the actual message.
-        DEBUG_TRACE("Successfully received the data length: " << numOfBytesReceived);
-        numOfBytesReceived = recv(m_socket, xfer_buffer, packetLength.Get(), 0);
-        if (numOfBytesReceived < 1)
+        numOfBytesReceived = 0;
+        DEBUG_TRACE("Successfully received the data length: " << packetLength.Get());
+        while (packetLength.Get() !=numOfBytesReceived)
         {
-            HandleException();
-            break;
+           // We received the message length. Now, transfer the actual message.
+           int numBytes = recv(m_socket, xfer_buffer+numOfBytesReceived, packetLength.Get() - numOfBytesReceived, 0)
+           numOfBytesReceived += numBytes;
+           if (numBytes < 1)
+           {
+               HandleException();
+               break;
+           }
+           DEBUG_TRACE("Successfully received data: " << numOfBytesReceived);
+           // Construct the message and send it to the upper layer.
         }
-
-        // Construct the message and send it to the upper layer.
         DEBUG_TRACE("Successfully received all the data: " << numOfBytesReceived);
         WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(xfer_buffer, numOfBytesReceived);
         wireMsgPtr->SetBufferContainer(xfer_buffer, packetLength.Get());
