@@ -1,0 +1,5 @@
+p:512:512:10
+c:(-8.8,2,5):(0,0,0):(0,1,0):40:0.0:10
+h:constantTexture((0.5,0.5,0.5)):diffuse():sphere((0,-1000,0),1000):0:1
+h:constantTexture((1.0,1.0,1.0)):dielectric(1.5):sphere((0,1,0),1.0):0:1
+h:checkerTexture(constantTexture(1.0,1.0,1.0),constantTexture(0.0,0.0,0.0)):diffuse():sphere((-4,1,0),1.0):0:1
