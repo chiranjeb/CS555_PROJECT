@@ -151,14 +151,14 @@ class MsgQThreadPoolLis : public Listener
 {
 public:
    /// This class defines a message queue entry
-   MsgQThreadPoolLis(T* threadPool=nullptr, int N=0)
+   MsgQThreadPoolLis(T** threadPoolPtr=nullptr, int N=0)
    {
-      Construct(threadPool, N);
+      Construct(threadPoolPtr, N);
    }
 
-   void Construct(T* threadPool, int N)
+   void Construct(T** threadPoolPtr, int N)
    {
-      m_Threads = threadPool;
+      m_ThreadsPtr = threadPoolPtr;
       m_NextThread = 0;
       m_NumThreads = N;
    }
@@ -170,11 +170,11 @@ public:
       {
          m_NextThread=0;
       }
-      m_Threads[m_NextThread++].Send(MsgQEntry(msg, nullptr));
+      m_ThreadsPtr[m_NextThread++]->Send(MsgQEntry(msg, nullptr));
    }
 
 protected:
-   T   *m_Threads;
+   T   **m_ThreadsPtr;
    int m_NumThreads;
    int m_NextThread;
 };

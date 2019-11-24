@@ -5,6 +5,7 @@
 #include "wiremsg/scene_produce_msg.hpp"
 #include "wiremsg/pixel_produce_msg.hpp"
 #include "ray_tracer/scene_descriptor.hpp"
+#include "resource_tracker.hpp"
 
 void StaticScheduleCmd::ProcessMsg(MsgPtr msg)
 {
@@ -28,11 +29,11 @@ void StaticScheduleCmd::ProcessMsg(MsgPtr msg)
 void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
 {
     SceneProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<SceneProduceRequestMsg>(msg);
+    std::vector<ResourceEntryPtr> &workerList = ResourceTracker::Instance().GetWorkers();
 
     m_NX = pRequestMsg->GetNX();
     m_NY = pRequestMsg->GetNY();
-    DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << m_workerList.size());
-    m_workloadInPixels = ((m_NX * m_NY + m_workerList.size() - 1)/ m_workerList.size());
+    DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << workerList.size());
     m_p_client_connection = pRequestMsg->GetConnection();
 
     int appTag = pRequestMsg->GetAppTag();
@@ -42,9 +43,9 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
     pRequestMsg->Repack();
 
     /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
-    for (int index = 0; index < m_workerList.size(); ++index)
+    for (int index = 0; index < workerList.size(); ++index)
     {
-        TransportMgr::Instance().FindConnection(m_workerList[index])->SendMsg(pRequestMsg, nullptr);
+        TransportMgr::Instance().FindConnection(workerList[index]->m_unique_host_name)->SendMsg(pRequestMsg, nullptr);
     }
 
     /// Let's first generate sequential pixel workload
@@ -57,16 +58,6 @@ void StaticScheduleCmd::OnSceneProduceRequestMsg(MsgPtr msg)
     pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, nullptr);
 }
 
-struct Pixel2XYMapper
-{
-   Pixel2XYMapper(int Ny, int Nx, int pixelPos)
-   {
-      Y = Ny - ((pixelPos/ Nx) + 1) ;
-      X = pixelPos % Nx;
-   }
-   int X;
-   int Y;
-};
 
 
 void StaticScheduleCmd::GenerateSequentialPixelWorkload(std::size_t sceneId)
@@ -74,39 +65,42 @@ void StaticScheduleCmd::GenerateSequentialPixelWorkload(std::size_t sceneId)
     /// Now submit the pixel generation request.
     int pixelOffset = 0;
     int totalPixels = m_NX * m_NY ;
-    DEBUG_TRACE("sceneDescriptorPtr->GetNY():" << m_NX << "sceneDescriptorPtr->GetNX():" << m_NY);
-    for (int index = 0; index < m_workerList.size(); ++index)
+    m_NumPendingCompletionResponse = 0;
+    uint32_t totalAvailableHwThreads = ResourceTracker::Instance().GetTotalNumberOfHwThreads();
+    uint32_t workloadInPixels = (totalPixels + totalAvailableHwThreads -1)/totalAvailableHwThreads;
+
+    DEBUG_TRACE("m_NX:" << m_NX << "m_NY:" << m_NY);
+    std::vector<ResourceEntryPtr> &workerList = ResourceTracker::Instance().GetWorkers();
+    for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex )
     {
-        DEBUG_TRACE("Send request to worker index:" << index << ", pixelOffset:" << pixelOffset << ", m_workloadInPixels:" << m_workloadInPixels);
-        /// Create a scene description message for each  worker. Include some work in the scene description too.
-        PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(sceneId);
+       uint32_t numberOfHwExecutionThreadsForCurrentWorker = workerList[workerIndex]->m_available_hw_execution_thread;
+       PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(sceneId, numberOfHwExecutionThreadsForCurrentWorker);
+       for (int hwExecutionThreadId = 0; hwExecutionThreadId < numberOfHwExecutionThreadsForCurrentWorker; ++hwExecutionThreadId)
+       {
+             uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, pixelOffset).Y ;
+             uint16_t startX = Pixel2XYMapper(m_NY, m_NX, pixelOffset).X ;
 
-        int workload = m_workloadInPixels;
-        if (index == (m_workerList.size()-1))
-        {
-           workload = totalPixels - pixelOffset;
-        }
+             int workload = workloadInPixels;
+             if ((workerIndex == (workerList.size()-1)) && 
+                 (hwExecutionThreadId == (numberOfHwExecutionThreadsForCurrentWorker-1)))
+             {
+                workload = totalPixels - pixelOffset;
+             }
 
-        int endY  =  Pixel2XYMapper(m_NY, m_NX, pixelOffset).Y ;
-        int startX = Pixel2XYMapper(m_NY, m_NX, pixelOffset).X ;
+             uint16_t startY = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).Y ;
+             uint16_t endX = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).X ;
+             DEBUG_TRACE("endY:" << endY << ", startY:" << startY << ", startX:" << startX << ", endX:" << endX << std::endl);
+             /// Update work set
+             pixelProduceRequestMsg->GenerateWork(hwExecutionThreadId, startY, startX,  endY, endX);
+             pixelProduceRequestMsg->SetPixelDomain(hwExecutionThreadId, pixelOffset, workload);
+             pixelOffset += workloadInPixels;
+       }
 
-        int startY = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).Y ;
-        int endX = Pixel2XYMapper(m_NY, m_NX, pixelOffset+workload-1).X ;
-
-
-        DEBUG_TRACE("endY:" << endY << ", startY:" << startY << ", startX:" << startX << ", endX:" << endX << std::endl);
-        /// Update work set
-        pixelProduceRequestMsg->GenerateWork(startY, startX,  endY, endX);
-        pixelProduceRequestMsg->SetPixelDomain(pixelOffset, workload);
-
-        /// Update the scene id.
-        m_NumPendingCompletionResponse = 0;
-
-        /// Send scene production message. Now we will wait for the response.
-        TCPIOConnection *p_connection = TransportMgr::Instance().FindConnection(m_workerList[index]);
-        pixelProduceRequestMsg->SetAppTag(p_connection->AllocateAppTag());
-        p_connection->SendMsg(pixelProduceRequestMsg, this);
-        pixelOffset += m_workloadInPixels;
+       /// Send scene production message. Now we will wait for the response.
+       TCPIOConnection *p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_unique_host_name);
+       pixelProduceRequestMsg->SetAppTag(p_connection->AllocateAppTag());
+       p_connection->SendMsg(pixelProduceRequestMsg, this);
+       m_NumPendingCompletionResponse++;
     }
 }
 

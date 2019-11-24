@@ -1,3 +1,7 @@
 master_host=albany
 master_listening_port=8050
+master_server_listening_q_depth=40
+num_ray_scheduling_master_threads=32
+scheduling_thread_q_depth=128
+scheduling_policy=0
 

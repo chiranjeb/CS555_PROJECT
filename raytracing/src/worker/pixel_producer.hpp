@@ -6,8 +6,8 @@ class TCPIOConnection;
 class PixelProducer : public Command
 {
 public:
-   PixelProducer(BlockingMsgQPtr pQ, TCPIOConnection *p_clientConnection) :
-      Command(pQ), m_p_clientConnection(p_clientConnection)
+   PixelProducer(BlockingMsgQPtr pQ, TCPIOConnection *p_clientConnection, uint16_t requestIndex) :
+      Command(pQ), m_p_clientConnection(p_clientConnection), m_requestIndex(requestIndex)
    {
    }
 
@@ -27,6 +27,8 @@ protected:
    void OnSceneProduceDone(MsgPtr msg);
 
    TCPIOConnection *m_p_clientConnection;
+
+   uint16_t m_requestIndex;
 };
 
 typedef std::shared_ptr<PixelProducer> PixelProducerPtr;

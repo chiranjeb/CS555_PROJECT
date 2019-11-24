@@ -9,7 +9,7 @@ class TCPIOConnection;
 class StaticScheduleCmd : public Command
 {
 public:
-   StaticScheduleCmd(std::vector<std::string>& workerList, BlockingMsgQPtr pQ) : Command(pQ), m_workerList(workerList)
+   StaticScheduleCmd(BlockingMsgQPtr pQ) : Command(pQ)
    {
    }
 
@@ -28,7 +28,6 @@ protected:
    void GenerateSequentialPixelWorkload(std::size_t sceneId);
 
    uint32_t  m_NX, m_NY;
-   uint32_t m_workloadInPixels;
    uint32_t m_NumPendingCompletionResponse;
    std::map<std::string, bool> m_workOrder;
    TCPIOConnection *m_p_client_connection;

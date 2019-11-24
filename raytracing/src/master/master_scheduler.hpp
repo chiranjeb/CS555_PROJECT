@@ -2,73 +2,81 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
-#include<vector>
+#include "resource_tracker.hpp"
+#include <vector>
 
+///////////////////////////////////////////////////////////////////////////////////
+///
+///  Scheduling Policy Parameter: This is the master scheduler policy parameter.
+///  
+////////////////////////////////////////////////////////////////////////////////////
+struct SchedulingPolicyParam
+{
+   /// Return scheduling policy parameter.
+   static SchedulingPolicyParam& Get();
 
+   bool ConfiguredAsStaticScheduler()
+   {
+      return (m_Policy == 0);
+   }
+
+   int m_Policy; /// Scheduling policy. 0 - for static scheduler. 1 - for dynamic schedule
+};
+
+///////////////////////////////////////////////////////////////////////////////////
+///
+///  MasterScheduler: This is the master scheduler thread. There are 'N'
+///  configurable master scheduler threads in the system. Each new scene producing 
+///  request will be handled by a seperate scheduling thread. This is to make sure 
+///  better Qos for the incoming scene producing request. 
+///                   
+////////////////////////////////////////////////////////////////////////////////////
 class MasterScheduler : public MsgQThread
 {
 public:
-   static const int SCHEDULER_MSG_Q_DEPTH = 128;
-   MasterScheduler() : MsgQThread("MasterScheduler", SCHEDULER_MSG_Q_DEPTH)
-   {
-   }
+   /// Constructor
+   MasterScheduler(int scheduling_thread_q_depth);
 
-   // Start the scheduler thread
+   /// Start the master scheduler thread
    void Start();
 
 private:
-   // Actual Scheduler thread
+   /// Actual Scheduler thread
    void Run();
 
-   // On unsolicited TCP receive message.
+   /// On unsolicited TCP receive message.
    void OnTCPRecvMsg(MsgPtr msg);
 
+   /// worker registration request
    void OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr);
 
+   /// Scene produce request message
    void OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr);
 };
 
 class Master
 {
-   static const int NUM_RAY_SCHEDULER = 32;
 public:
-   Master()
-   {
-      m_ThreadPoolLis.Construct(m_MasterScheduler, NUM_RAY_SCHEDULER);
-   }
+   /// Instantantiate master
+   static void Instantiate(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth, int scheduling_policy);
 
    // Get the Master scheduler
-   static Master& Instance()
-   {
-      static Master s_Master;
-      return s_Master;
-   }
+   static Master& Instance();
 
-   void Start()
-   {
-      for (int index = 0; index < NUM_RAY_SCHEDULER; ++index)
-      {
-         // Start the Master Scheduler.
-         m_MasterScheduler[index].Start();
-      }
-   }
+   /// Start master
+   void Start();
 
+   /// Return listener for the unsolicited message notification.
    Listener* GetLis()
    {
       return &m_ThreadPoolLis;
    }
 
-   void AddWorker(std::string &worker);
-
-   std::vector<std::string>& GetWorkerList()
-   {
-      return m_workerlist;
-   }
-
 protected:
-   MasterScheduler m_MasterScheduler[NUM_RAY_SCHEDULER];
-   MsgQThreadPoolLis<MasterScheduler> m_ThreadPoolLis;
+   /// Constructor
+   Master(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth);
 
-   std::vector<std::string> m_workerlist;
-   std::mutex m_Mutex;
+   MasterScheduler **m_pMasterScheduler;
+   int m_num_ray_scheduling_master_threads;
+   MsgQThreadPoolLis<MasterScheduler> m_ThreadPoolLis;
 };

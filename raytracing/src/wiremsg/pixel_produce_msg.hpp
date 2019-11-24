@@ -2,143 +2,105 @@
 #include "wire_msg.hpp"
 #include "ray_tracer/scene_descriptor.hpp"
 
+struct PixelProduceRequest
+{
+   void GenerateWork(uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX);
+   void SetPixelDomain(uint32_t offset, uint32_t numPixels);
+   void Pack(std::ostream& ostrm);
+   void Unpack(std::istream& istrm);
+
+   uint32_t GetNumPixels() { return m_NumPixels;}
+   uint32_t GetScenePixelOffset() { return m_ScenePixelOffset; }
+
+   uint16_t m_startY;
+   uint16_t m_startX;
+   uint16_t m_endY;
+   uint16_t m_endX;
+   uint32_t m_NumPixels;
+   uint32_t m_ScenePixelOffset;
+};
+
+
 class PixelProduceRequestMsg : public WireMsg
 {
 public:
-    /// PixelProduceRequestMsg message constructor
-    PixelProduceRequestMsg(std::size_t scene_id) : WireMsg(MsgIdPixelProduceRequest)
-    {
-        m_scene_id = scene_id;
-        DEBUG_TRACE("PixelProduceRequestMsg: Constructor");
-    }
+   /// PixelProduceRequestMsg message constructor
+   PixelProduceRequestMsg(std::size_t scene_id, int numWorkLoad);
 
-    /// Scene distribution message.
-    PixelProduceRequestMsg() : WireMsg(MsgIdPixelProduceRequest)
-    {
-    }
+   /// PixelProduceRequestMsg message constructor
+   PixelProduceRequestMsg() : WireMsg(MsgIdPixelProduceRequest)
+   {
+   }
 
-    /// Generate Work order.
-    void GenerateWork(int startY, int startX, int endY, int endX)
-    {
-        m_startY = startY;
-        m_startX = startX;
-        m_endY = endY;
-        m_endX = endX;
-    }
+   /// Return number of request
+   uint16_t GetNumRequests() { return m_num_request; }
 
-    void SetPixelDomain(uint32_t offset, uint32_t numPixels)
-    {
-        m_ScenePixelOffset = offset;
-        m_NumPixels = numPixels;
-    }
+   /// Generate Work order.
+   void GenerateWork(int index, uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX)
+   {
+      m_pixel_produce_request[index].GenerateWork(startY, startX, endY, endX);
+   }
 
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    /// Custom Message serializer
-    /// @param [ostrm] Output stream where the message is being
-    ///            serialized to
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void Pack(std::ostream &ostrm)
-    {
-        DEBUG_TRACE("PixelProduceRequestMsg:Pack");
-        WireMsg::Pack(ostrm);
+   /// Set pixel domain
+   void SetPixelDomain(int index, uint32_t offset, uint32_t numPixels)
+   {
+      m_pixel_produce_request[index].SetPixelDomain(offset, numPixels);
+   }
 
-        ostrm << m_startY << " ";
-        ostrm << m_startX << " ";
-        ostrm << m_endY << " ";
-        ostrm << m_endX << " ";
-        ostrm << m_scene_id << " ";
-        ostrm << m_NumPixels << " ";
-        ostrm << m_ScenePixelOffset << " ";
-    }
+   /// Return request
+   PixelProduceRequest* GetRequest(int index) { return &m_pixel_produce_request[index];}
 
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    /// Custom message deserializer
-    /// @param [istrm] Input stream from which the message is being
-    ///           deserialized.
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void Unpack(std::istream &istrm)
-    {
-        WireMsg::Unpack(istrm);
-        istrm >> m_startY >> m_startX >> m_endY >> m_endX >> m_scene_id >> m_NumPixels >> m_ScenePixelOffset;
-    }
+   /// Custom Message serializer
+   void Pack(std::ostream& ostrm);
 
-    ~PixelProduceRequestMsg()
-    {
-        DEBUG_TRACE("PixelProduceRequestMsg: Destructor");
-    }
+   /// Custom message deserializer
+   void Unpack(std::istream& istrm);
 
-    std::size_t GetSceneId() { return m_scene_id;}
-    uint32_t GetNumPixels() { return m_NumPixels;}
-    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset; }
+   /// PixelProduceRequestMsg message destructor
+   ~PixelProduceRequestMsg();
 
-    std::size_t m_scene_id;
-    uint32_t m_NX;
-    uint32_t m_NY;
-    uint32_t m_startY;
-    uint32_t m_startX;
-    uint32_t m_endY;
-    uint32_t m_endX;
-    uint32_t m_NumPixels;
-    uint32_t m_ScenePixelOffset;
+   std::size_t GetSceneId() { return m_scene_id;}
+
+   uint32_t GetNumPixels(int index) { return m_pixel_produce_request[index].m_NumPixels;}
+   uint32_t GetScenePixelOffset(int index) { return m_pixel_produce_request[index].m_ScenePixelOffset; }
+
+protected:
+   std::size_t m_scene_id;
+   PixelProduceRequest *m_pixel_produce_request;
+   uint32_t m_num_request;
+   uint32_t m_NX;
+   uint32_t m_NY;
 };
+
 
 
 class PixelProduceResponseMsg : public WireMsg
 {
 public:
-    /// PixelProduceRequestMsg message constructor
-    PixelProduceResponseMsg(std::size_t scene_id) :
-        WireMsg(MsgIdPixelProduceResponse)
-    {
-        m_scene_id = scene_id;
-        DEBUG_TRACE("PixelProduceResponseMsg: Constructor");
-    }
+   /// PixelProduceRequestMsg message constructor
+   PixelProduceResponseMsg(std::size_t scene_id);
 
-    /// Scene distribution message.
-    PixelProduceResponseMsg() : WireMsg(MsgIdPixelProduceResponse)
-    {
-    }
+   /// PixelProduceRequestMsg message constructor
+   PixelProduceResponseMsg() : WireMsg(MsgIdPixelProduceResponse)
+   {
+   }
 
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    /// Custom Message serializer
-    /// @param [ostrm] Output stream where the message is being
-    ///            serialized to
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void Pack(std::ostream &ostrm)
-    {
-        DEBUG_TRACE("PixelProduceResponseMsg:Pack");
-        WireMsg::Pack(ostrm);
-        ostrm << m_scene_id << " ";
-    }
+   /// Custom Message serializer
+   void Pack(std::ostream& ostrm);
 
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    /// Custom message deserializer
-    /// @param [istrm] Input stream from which the message is being
-    ///           deserialized.
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void Unpack(std::istream &istrm)
-    {
-        WireMsg::Unpack(istrm);
-        istrm >> m_scene_id;
-    }
+   /// Custom message deserializer
+   void Unpack(std::istream& istrm);
 
-    ~PixelProduceResponseMsg()
-    {
-        DEBUG_TRACE("PixelProduceResponseMsg: Destructor");
-    }
+   /// PixelProduceRequestMsg message destructor
+   ~PixelProduceResponseMsg()
+   {
+      DEBUG_TRACE("PixelProduceResponseMsg: Destructor");
+   }
 
-    std::size_t m_scene_id;
-
-    uint8_t *m_PackedMsgBuffer;
-    uint8_t m_PackedMsgBufferLength;
+protected:
+   std::size_t m_scene_id;
+   uint8_t *m_PackedMsgBuffer;
+   uint8_t m_PackedMsgBufferLength;
 };
 
 

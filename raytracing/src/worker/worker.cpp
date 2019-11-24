@@ -9,8 +9,99 @@
 #define SCENE_PRODUCER_Q_DEPTH 32
 #define NUM_SCENE_PRODUCER 16
 
-BlockingQueue<MsgQEntry> g_SceneProducerQ(SCENE_PRODUCER_Q_DEPTH);
-ThreadPoolManager m_ThreadPoolMgr(NUM_SCENE_PRODUCER, std::make_shared<BlockingQueue<MsgQEntry>>(SCENE_PRODUCER_Q_DEPTH));
+
+namespace
+{
+Worker *g_pWorker;
+ThreadPoolManager *g_pThreadPoolMgr;
+WorkerCapabilities g_WorkerCapabilities;
+}
+
+WorkerCapabilities& WorkerCapabilities::Get()
+{
+    return g_WorkerCapabilities;
+}
+
+
+void WorkerCapabilities::UpdateAdvertisedHwConcurrencyLevel(int percentageUsedForSceneProduction)
+{
+    m_max_advertised_hw_concurrency_level = (std::thread::hardware_concurrency() * percentageUsedForSceneProduction) / 100;
+    if (m_max_advertised_hw_concurrency_level == 0)
+    {
+        //We need to have at least one scene production thread.
+        m_max_advertised_hw_concurrency_level = 1;
+    }
+
+    RELEASE_TRACE("Number of scene producers: " << m_max_advertised_hw_concurrency_level);
+}
+
+
+void Worker::Initialize(std::string master_address,
+                        int master_port,
+                        int worker_cmd_processor_q_depth,
+                        int max_advertised_hw_concurrency_level,
+                        int scene_producer_q_depth)
+{
+    /// Create and start the worker thread.
+    g_pWorker = new Worker(master_address, master_port, worker_cmd_processor_q_depth);
+    g_pWorker->Start();
+
+    /// define number of scene producer as number of he threads.
+    g_WorkerCapabilities.UpdateAdvertisedHwConcurrencyLevel(max_advertised_hw_concurrency_level);
+
+    /// Start the scene producers.
+    int numThreads = g_WorkerCapabilities.m_max_advertised_hw_concurrency_level;
+    g_pThreadPoolMgr  = new ThreadPoolManager(numThreads, std::make_shared < BlockingQueue < MsgQEntry >> (scene_producer_q_depth));
+    g_pThreadPoolMgr->Start();
+
+    RELEASE_TRACE("Successfully initialized worker.");
+}
+
+
+Worker::Worker(std::string master_address, int master_port, int workerCmdProcessorQDepth) : MsgQThread("Worker", workerCmdProcessorQDepth)
+{
+    DEBUG_TRACE("Worker::Worker");
+    m_master_address = master_address;
+    m_master_port = master_port;
+}
+
+/// Get the Worker
+Worker& Worker::Instance()
+{
+    return *g_pWorker;
+}
+
+/// Start the worker thread
+void Worker::Start()
+{
+    m_thread = new std::thread(&Worker::Run, &Worker::Instance());
+}
+
+void Worker::Dump()
+{
+    DEBUG_TRACE("Dump::Start(this:" << std::hex << this << ")");
+    for (std::map<std::size_t, SceneProduceRequestMsgPtr>::iterator iter = m_SceneFileMap.begin(); iter != m_SceneFileMap.end(); ++iter)
+    {
+        DEBUG_TRACE("SceneProduceRequestMsgPtr: " << iter->first << " " << iter->second.get());
+    }
+    DEBUG_TRACE("Dump::End");
+}
+
+
+/// Return scene descriptor
+SceneDescriptorPtr Worker::GetSceneDescriptor(std::size_t sceneId)
+{
+    DEBUG_TRACE("GetSceneDescriptor: " << sceneId);
+    Dump();
+    SceneProduceRequestMsgPtr request = m_SceneFileMap[sceneId];
+    DEBUG_TRACE("SceneProduceRequestMsgPtr: " << std::hex << request.get());
+    SceneDescriptorPtr descript  = request->GetSceneDescriptor();
+    DEBUG_TRACE("SceneDescriptorPtr: " << std::hex << descript.get());
+    return descript;
+}
+
+
+
 
 void Worker::Run()
 {
@@ -27,30 +118,30 @@ void Worker::Run()
         {
             switch (msgQEntry.m_Msg.get()->GetId())
             {
-                case MsgIdServerConstructResponse:
-                {
-                    OnCreateServerResponse(msgQEntry.m_Msg);
-                    break;
-                }
-                case MsgIdConnectionEstablishmentResponse:
-                {
-                    OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
-                    break;
-                }
-                case MsgIdWorkerRegistrationResponse:
-                {
-                    OnWorkerRegistrationRespMsg(msgQEntry.m_Msg);
-                    break;
-                }
+               case MsgIdServerConstructResponse:
+                   {
+                       OnCreateServerResponse(msgQEntry.m_Msg);
+                       break;
+                   }
+               case MsgIdConnectionEstablishmentResponse:
+                   {
+                       OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
+                       break;
+                   }
+               case MsgIdWorkerRegistrationResponse:
+                   {
+                       OnWorkerRegistrationRespMsg(msgQEntry.m_Msg);
+                       break;
+                   }
 
-                case MsgIdTCPRecv:
-                {
-                    OnTCPRecvMsg(msgQEntry.m_Msg);
-                    break;
-                }
+               case MsgIdTCPRecv:
+                   {
+                       OnTCPRecvMsg(msgQEntry.m_Msg);
+                       break;
+                   }
 
-                default:
-                    break;
+               default:
+                   break;
             }
         }
     }
@@ -64,19 +155,19 @@ void Worker::OnTCPRecvMsg(MsgPtr msg)
 
     switch (wireMsgPtr.get()->GetId())
     {
-        case MsgIdSceneProduceRequest:
-        {
-            OnSceneProduceRequestMsg(wireMsgPtr);
-            break;
-        }
+       case MsgIdSceneProduceRequest:
+           {
+               OnSceneProduceRequestMsg(wireMsgPtr);
+               break;
+           }
 
-        case MsgIdPixelProduceRequest:
-        {
-            OnPixelProduceRequestMsg(wireMsgPtr);
-            break;
-        }
-        default:
-            break;
+       case MsgIdPixelProduceRequest:
+           {
+               OnPixelProduceRequestMsg(wireMsgPtr);
+               break;
+           }
+       default:
+           break;
     }
 }
 
@@ -86,7 +177,6 @@ void Worker::OnCreateServerResponse(MsgPtr msg)
     TCPServerConstructStatusMsg *p_responseMsg =  static_cast<TCPServerConstructStatusMsg *>(msg.get());
     m_listening_port  = p_responseMsg->GetPort();
 
-    m_ThreadPoolMgr.Start();
 
     // Let's establish a connection
     m_p_ConnectionToMaster = nullptr;
@@ -102,8 +192,10 @@ void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
     {
         m_p_ConnectionToMaster = p_responseMsg->GetConnection();
         std::string hostname = TransportMgr::Instance().MyName();
-        WorkerRegistrationMsgPtr reigstrationMsgPtr =  WorkerRegistrationMsgPtr(new WorkerRegistrationMsg(hostname, m_listening_port));
+
         /// We are expecting response, So allocate an apptag and pass our thread listener which will route back the message to us.
+        uint16_t advertisedHwThreadConcurrency  = g_WorkerCapabilities.m_max_advertised_hw_concurrency_level;
+        WorkerRegistrationMsgPtr reigstrationMsgPtr =  std::make_shared<WorkerRegistrationMsg>(hostname, m_listening_port, advertisedHwThreadConcurrency);
         reigstrationMsgPtr.get()->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
         m_p_ConnectionToMaster->SendMsg(reigstrationMsgPtr, GetThrdListener());
     }
@@ -112,7 +204,15 @@ void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
         UniqueServerId serverId(p_responseMsg->GetServerAddress(), p_responseMsg->GetServerPort());
         std::size_t sceneId = m_Client2SceneId[serverId.toString()];
         m_SceneId2Connection.insert(std::pair<std::size_t, TCPIOConnection *>(sceneId, p_responseMsg->GetConnection()));
-        m_WaitersForConnectionSetup[sceneId]->SetConnection(p_responseMsg->GetConnection());
+
+        /// Get all the pixel producers waiting for connection setup
+        auto it = m_WaitersForConnectionSetup.equal_range(sceneId);
+        for (auto itr = it.first; itr != it.second; ++itr)
+        {
+            /// Update the connection
+            itr->second->SetConnection(p_responseMsg->GetConnection());
+            //m_WaitersForConnectionSetup[sceneId]->SetConnection(p_responseMsg->GetConnection());
+        }
         m_WaitersForConnectionSetup.erase(sceneId);
     }
 }
@@ -121,7 +221,6 @@ void Worker::OnWorkerRegistrationRespMsg(MsgPtr msg)
 {
     DEBUG_TRACE("Worker::OnWorkerRegistrationRespMsg(this:" << std::hex << this << ")");
     WorkerRegistrationRespMsg *p_responseMsg =  static_cast<WorkerRegistrationRespMsg *>(msg.get());
-    p_responseMsg->Dump();
     p_responseMsg->GetConnection()->FreeAppTag(p_responseMsg->GetAppTag());
 }
 
@@ -178,11 +277,14 @@ void Worker::OnPixelProduceRequestMsg(MsgPtr msg)
     DEBUG_TRACE("Worker::OnPixelProduceRequestMsg");
     PixelProduceRequestMsgPtr requestMsgPtr  = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
     TCPIOConnection *pConnection = m_SceneId2Connection[requestMsgPtr->GetSceneId()];
-    PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_ThreadPoolMgr.GetListeningQ(), pConnection);
-    m_ThreadPoolMgr.Send(MsgQEntry(requestMsgPtr, cmdPtr));
-    if (pConnection == nullptr)
+    for (int index = 0; index < requestMsgPtr->GetNumRequests(); ++index)
     {
-        m_WaitersForConnectionSetup.insert(std::pair<std::size_t, PixelProducerPtr>(requestMsgPtr->GetSceneId(), cmdPtr));
+        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(g_pThreadPoolMgr->GetListeningQ(), pConnection, index);
+        g_pThreadPoolMgr->Send(MsgQEntry(requestMsgPtr, cmdPtr));
+        if (pConnection == nullptr)
+        {
+            m_WaitersForConnectionSetup.insert(std::pair<std::size_t, PixelProducerPtr>(requestMsgPtr->GetSceneId(), cmdPtr));
+        }
     }
 }
 
