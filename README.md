@@ -10,6 +10,7 @@ Directory structure:
   * raytracing/src/transport => TCP connection and send/recv functionalities 
   * raytracing/src/ray_tracer => Matt's ray tracer code
   * raytracing/src/wiremsg => All wire message definitions and implementations
+  * raytracing/src/client => Client functionalities
 
 Build instructions:
   To build code go to `raytracing` folder.
@@ -24,8 +25,10 @@ To kick off master(from directory raytracing):
    * ./build/master properties/master_properties.txt
 
 To kick off worker(from directory raytracing):
-   * ./build/worker properties/master_properties.txt
+   * ./build/worker properties/master_properties.txt properties/worker_properties.txt
    
+To kick off client(from directory raytracing):
+   * ./build/worker properties/master_properties.txt
   
 
 
