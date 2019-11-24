@@ -27,8 +27,8 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Start");
     PixelProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
     SceneSegmentProduceResponseMsgPtr respMsgPtr = std::make_shared<SceneSegmentProduceResponseMsg>(pRequestMsg->GetSceneId(),
-                                                                                                    pRequestMsg->GetNumPixels(),
-                                                                                                    pRequestMsg->GetScenePixelOffset());
+                                                                                                    pRequestMsg->GetNumPixels(m_requestIndex),
+                                                                                                    pRequestMsg->GetScenePixelOffset(m_requestIndex));
 
     /// Stream through so that we don't have to worry about serializing it later.
     PreAllocatedStreamBuffer streambuff(reinterpret_cast<char *>(respMsgPtr->GetPixelBufferStart()), respMsgPtr->GetPixelBufferMaxLimit());
@@ -39,7 +39,8 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
 
     /// Produce pixels
-    ProducePixels(pRequestMsg->m_endY, pRequestMsg->m_startY, pRequestMsg->m_endX, pRequestMsg->m_startX,
+    PixelProduceRequest *pRequest = pRequestMsg->GetRequest(m_requestIndex);
+    ProducePixels(pRequest->m_endY, pRequest->m_startY, pRequest->m_endX, pRequest->m_startX,
                   sceneDescriptorPtr, ostrm);
 
     /// Update valid buffer

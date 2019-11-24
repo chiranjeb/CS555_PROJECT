@@ -1,0 +1,5 @@
+worker_server_listening_q_depth=40
+worker_cmd_processor_q_depth=128
+max_advertised_hw_concurrency_level=1
+scene_producer_q_depth=64
+
