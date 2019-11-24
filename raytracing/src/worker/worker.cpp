@@ -13,7 +13,6 @@
 namespace
 {
 Worker *g_pWorker;
-ThreadPoolManager *g_pThreadPoolMgr;
 WorkerCapabilities g_WorkerCapabilities;
 }
 
@@ -42,23 +41,29 @@ void Worker::Initialize(std::string master_address,
                         int max_advertised_hw_concurrency_level,
                         int scene_producer_q_depth)
 {
-    /// Create and start the worker thread.
-    g_pWorker = new Worker(master_address, master_port, worker_cmd_processor_q_depth);
-    g_pWorker->Start();
 
     /// define number of scene producer as number of he threads.
     g_WorkerCapabilities.UpdateAdvertisedHwConcurrencyLevel(max_advertised_hw_concurrency_level);
 
     /// Start the scene producers.
     int numThreads = g_WorkerCapabilities.m_max_advertised_hw_concurrency_level;
-    g_pThreadPoolMgr  = new ThreadPoolManager(numThreads, std::make_shared < BlockingQueue < MsgQEntry >> (scene_producer_q_depth));
-    g_pThreadPoolMgr->Start();
+
+    /// Create and start the worker thread.
+    g_pWorker = new Worker(master_address, master_port, worker_cmd_processor_q_depth,
+                           numThreads, scene_producer_q_depth);
+
+    g_pWorker->Start();
+
+
 
     RELEASE_TRACE("Successfully initialized worker.");
 }
 
 
-Worker::Worker(std::string master_address, int master_port, int workerCmdProcessorQDepth) : MsgQThread("Worker", workerCmdProcessorQDepth)
+Worker::Worker(std::string master_address, int master_port, int workerCmdProcessorQDepth,
+               int numPixelProducers, int pixelProducerQDepth) : 
+    MsgQThread("Worker", workerCmdProcessorQDepth),
+    m_PixelProducerThreads(numPixelProducers, pixelProducerQDepth)
 {
     DEBUG_TRACE("Worker::Worker");
     m_master_address = master_address;
@@ -74,6 +79,7 @@ Worker& Worker::Instance()
 /// Start the worker thread
 void Worker::Start()
 {
+    m_PixelProducerThreads.Start();
     m_thread = new std::thread(&Worker::Run, &Worker::Instance());
 }
 
@@ -279,8 +285,9 @@ void Worker::OnPixelProduceRequestMsg(MsgPtr msg)
     TCPIOConnection *pConnection = m_SceneId2Connection[requestMsgPtr->GetSceneId()];
     for (int index = 0; index < requestMsgPtr->GetNumRequests(); ++index)
     {
-        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(g_pThreadPoolMgr->GetListeningQ(), pConnection, index);
-        g_pThreadPoolMgr->Send(MsgQEntry(requestMsgPtr, cmdPtr));
+        PixelProduceRequest *pRequest = requestMsgPtr->GetRequest(index);
+        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_PixelProducerThreads.GetListeningQ(pRequest->m_ThreadId), pConnection, index);
+        m_PixelProducerThreads.Send(pRequest->m_ThreadId, MsgQEntry(requestMsgPtr, cmdPtr));
         if (pConnection == nullptr)
         {
             m_WaitersForConnectionSetup.insert(std::pair<std::size_t, PixelProducerPtr>(requestMsgPtr->GetSceneId(), cmdPtr));

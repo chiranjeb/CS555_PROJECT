@@ -38,6 +38,7 @@ public:
     /// Save a connection.
     void SaveConnection(std::string &unique_hostname, TCPIOConnection *p_connection)
     {
+        p_connection->SetRemoteHostName(unique_hostname);
         m_Connections[unique_hostname] = p_connection;
     }
 

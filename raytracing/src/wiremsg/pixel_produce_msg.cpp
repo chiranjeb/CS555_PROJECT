@@ -23,19 +23,26 @@ void PixelProduceRequest::Pack(std::ostream& ostrm)
    ostrm << m_endX << " ";
    ostrm << m_NumPixels << " ";
    ostrm << m_ScenePixelOffset << " ";
+   ostrm << m_ThreadId << " ";
 }
 
 void PixelProduceRequest::Unpack(std::istream& istrm)
 {
-   istrm >> m_startY >> m_startX >> m_endY >> m_endX >> m_NumPixels >> m_ScenePixelOffset;
+   istrm >> m_startY >> m_startX >> m_endY 
+         >> m_endX >> m_NumPixels 
+         >> m_ScenePixelOffset >> m_ThreadId;
 }
 
 /// PixelProduceRequestMsg message constructor
-PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t scene_id, int numWorkLoad) : WireMsg(MsgIdPixelProduceRequest)
+PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkLoad) : WireMsg(MsgIdPixelProduceRequest)
 {
-   m_scene_id = scene_id;
-   m_num_request = numWorkLoad;
-   m_pixel_produce_request = (PixelProduceRequest *)malloc(sizeof(PixelProduceRequest) * m_num_request);
+   m_SceneId = sceneId;
+   m_NumRequest = numWorkLoad;
+   m_pPixelProduceRequest = (PixelProduceRequest *)malloc(sizeof(PixelProduceRequest) * m_NumRequest);
+   for (uint16_t index = 0; index < m_NumRequest; ++index)
+   {
+       m_pPixelProduceRequest[index].m_ThreadId = index;
+   }
    DEBUG_TRACE("PixelProduceRequestMsg: Constructor");
 }
 
@@ -51,11 +58,11 @@ void PixelProduceRequestMsg::Pack(std::ostream& ostrm)
 {
    DEBUG_TRACE("PixelProduceRequestMsg:Pack");
    WireMsg::Pack(ostrm);
-   ostrm << m_scene_id << " ";
-   ostrm << m_num_request << " ";
-   for (int index = 0; index < m_num_request; index++)
+   ostrm << m_SceneId << " ";
+   ostrm << m_NumRequest << " ";
+   for (int index = 0; index < m_NumRequest; index++)
    {
-      m_pixel_produce_request[index].Pack(ostrm);
+      m_pPixelProduceRequest[index].Pack(ostrm);
    }
 }
 
@@ -69,19 +76,19 @@ void PixelProduceRequestMsg::Pack(std::ostream& ostrm)
 void PixelProduceRequestMsg::Unpack(std::istream& istrm)
 {
    WireMsg::Unpack(istrm);
-   istrm >> m_scene_id;
-   istrm >> m_num_request;
-   m_pixel_produce_request = (PixelProduceRequest *)malloc(sizeof(PixelProduceRequest) * m_num_request);
-   for (int index = 0; index < m_num_request; index++)
+   istrm >> m_SceneId;
+   istrm >> m_NumRequest;
+   m_pPixelProduceRequest = (PixelProduceRequest *)malloc(sizeof(PixelProduceRequest) * m_NumRequest);
+   for (int index = 0; index < m_NumRequest; index++)
    {
-      m_pixel_produce_request[index].Unpack(istrm);
+      m_pPixelProduceRequest[index].Unpack(istrm);
    }
 }
 
 PixelProduceRequestMsg::~PixelProduceRequestMsg()
 {
    DEBUG_TRACE("PixelProduceRequestMsg: Destructor");
-   free(m_pixel_produce_request);
+   free(m_pPixelProduceRequest);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -95,7 +102,11 @@ void PixelProduceResponseMsg::Pack(std::ostream& ostrm)
 {
    DEBUG_TRACE("PixelProduceResponseMsg:Pack");
    WireMsg::Pack(ostrm);
-   ostrm << m_scene_id << " ";
+   ostrm << m_SceneId << " ";
+   ostrm << m_NumPixels << " ";
+   ostrm << m_ScenePixelOffset << " ";
+   ostrm << m_ThreadId << " ";
+
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -108,7 +119,8 @@ void PixelProduceResponseMsg::Pack(std::ostream& ostrm)
 void PixelProduceResponseMsg::Unpack(std::istream& istrm)
 {
    WireMsg::Unpack(istrm);
-   istrm >> m_scene_id;
+   istrm >> m_SceneId >> m_NumPixels 
+         >> m_ScenePixelOffset >> m_ThreadId ;
 }
 
 

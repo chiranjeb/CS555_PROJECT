@@ -58,12 +58,24 @@ public:
       return m_socket;
    }
 
+   /// Get remote hostname.
+   std::string& GetRemoteHostName()
+   {
+       return m_HostName;
+   }
+
+   /// Set remote hostname.
+   void SetRemoteHostName(std::string hostname)
+   {
+       m_HostName = hostname;
+   }
+
 private:
    /// Make connection
    int MakeConnection(std::string& server, int serverPort, bool retryUntilConnected);
 
    /// Remote ip connected to this machine.
-   std::string m_ip;
+   std::string m_ip, m_HostName;
 
    /// Asscociated socket with this TCP connection
    int m_socket;

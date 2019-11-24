@@ -44,7 +44,8 @@ public:
 
 protected:
     /// Worker constructor
-    Worker(std::string master_address, int master_port, int worker_cmd_processor_q_depth);
+    Worker(std::string master_address, int master_port, int worker_cmd_processor_q_depth, 
+           int numPixelProducers, int pixelProducerQDepth);
 
     /// Start the worker thread
     void Start();
@@ -84,5 +85,5 @@ protected:
     std::map<std::size_t, std::string> m_SceneId2Client;            /// scene id to client map. A scene could be requested by multiple client
 
     std::multimap<std::size_t, PixelProducerPtr> m_WaitersForConnectionSetup;     /// scene id to connection map.
-
+    WorkerThreadList m_PixelProducerThreads;
 };
