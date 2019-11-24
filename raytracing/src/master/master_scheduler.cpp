@@ -6,7 +6,7 @@
 #include "wiremsg/worker_registration_msg.hpp"
 #include "wiremsg/scene_produce_msg.hpp"
 #include "ray_tracer/scene_descriptor.hpp"
-#include "static_schedule_cmd.hpp"
+#include "scene_scheduler.hpp"
 
 namespace
 {
@@ -20,16 +20,16 @@ SchedulingPolicyParam& SchedulingPolicyParam::Get()
    return g_SchedulingPolicyParam;
 }
 
-MasterScheduler::MasterScheduler(int scheduling_thread_q_depth) : MsgQThread("MasterScheduler", scheduling_thread_q_depth)
+MasterSchedulerThread::MasterSchedulerThread(int scheduling_thread_q_depth) : MsgQThread("MasterSchedulerThread", scheduling_thread_q_depth)
 {
 }
 
-void MasterScheduler::Start()
+void MasterSchedulerThread::Start()
 {
-   m_thread = new std::thread(&MasterScheduler::Run, *this);
+   m_thread = new std::thread(&MasterSchedulerThread::Run, *this);
 }
 
-void MasterScheduler::Run()
+void MasterSchedulerThread::Run()
 {
    while (1)
    {
@@ -59,7 +59,7 @@ void MasterScheduler::Run()
    }
 }
 
-void MasterScheduler::OnTCPRecvMsg(MsgPtr msg)
+void MasterSchedulerThread::OnTCPRecvMsg(MsgPtr msg)
 {
    DEBUG_TRACE("On TCP Recv Message");
    TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
@@ -82,7 +82,7 @@ void MasterScheduler::OnTCPRecvMsg(MsgPtr msg)
    }
 }
 
-void MasterScheduler::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
+void MasterSchedulerThread::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
 {
    WorkerRegistrationMsgPtr registrationMsgPtr = std::dynamic_pointer_cast<WorkerRegistrationMsg>(wireMsgPtr);
 
@@ -100,14 +100,14 @@ void MasterScheduler::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
 
 
 
-void MasterScheduler::OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr)
+void MasterSchedulerThread::OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr)
 {
-   DEBUG_TRACE("MasterScheduler::OnSceneProduceRequestMsg" << std::hex << this);
+   DEBUG_TRACE("MasterSchedulerThread::OnSceneProduceRequestMsg" << std::hex << this);
 
    // Check current scheduling policy. Create a command and attach it to this Q.
    if (SchedulingPolicyParam::Get().ConfiguredAsStaticScheduler())
    {
-      StaticScheduleCmdPtr cmdPtr = std::make_shared<StaticScheduleCmd>(GetListeningQ());
+      SceneSchedulerPtr cmdPtr = std::make_shared<SceneScheduler>(GetListeningQ());
       cmdPtr->ProcessMsg(wireMsgPtr);
    }
    else
@@ -121,12 +121,12 @@ void MasterScheduler::OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr)
 Master::Master(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth)
 {
    m_num_ray_scheduling_master_threads = num_ray_scheduling_master_threads;
-   m_pMasterScheduler = new MasterScheduler* [num_ray_scheduling_master_threads];
+   m_pMasterSchedulerThread = new MasterSchedulerThread* [num_ray_scheduling_master_threads];
    for (int index = 0; index < m_num_ray_scheduling_master_threads; ++index)
    {
-      m_pMasterScheduler[index] = new MasterScheduler(scheduling_thread_q_depth);
+      m_pMasterSchedulerThread[index] = new MasterSchedulerThread(scheduling_thread_q_depth);
    }
-   m_ThreadPoolLis.Construct(m_pMasterScheduler, num_ray_scheduling_master_threads);
+   m_ThreadPoolLis.Construct(m_pMasterSchedulerThread, num_ray_scheduling_master_threads);
 }
 
 
@@ -140,7 +140,7 @@ void Master::Start()
    for (int index = 0; index < m_num_ray_scheduling_master_threads; ++index)
    {
       // Start the Master Scheduler.
-      m_pMasterScheduler[index]->Start();
+      m_pMasterSchedulerThread[index]->Start();
    }
 }
 

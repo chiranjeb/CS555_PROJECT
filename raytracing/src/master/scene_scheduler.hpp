@@ -6,10 +6,10 @@
 #include<map>
 
 class TCPIOConnection;
-class StaticScheduleCmd : public Command
+class SceneScheduler : public Command
 {
 public:
-   StaticScheduleCmd(BlockingMsgQPtr pQ) : Command(pQ)
+   SceneScheduler(BlockingMsgQPtr pQ) : Command(pQ)
    {
    }
 
@@ -23,15 +23,18 @@ protected:
    /// Pixel produce response message.
    void OnPixelProduceResponseMsg(MsgPtr msg);
 
-
    /// Different chunking of the work.
-   void GenerateSequentialPixelWorkload(std::size_t sceneId);
+   void KickOffSceneScheduling();
 
-   uint32_t  m_NX, m_NY;
    uint32_t m_NumPendingCompletionResponse;
    std::map<std::string, bool> m_workOrder;
    TCPIOConnection *m_p_client_connection;
    std::vector<std::string> m_workerList;
+
+   std::size_t m_SceneId;
+   uint32_t  m_NX, m_NY;
+   uint32_t m_TotalNumPixelsToProduce;
+   uint32_t m_CurrentPixelOffset;
 };
 
-typedef std::shared_ptr<StaticScheduleCmd> StaticScheduleCmdPtr;
+typedef std::shared_ptr<SceneScheduler> SceneSchedulerPtr;

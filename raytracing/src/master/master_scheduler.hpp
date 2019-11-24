@@ -25,17 +25,17 @@ struct SchedulingPolicyParam
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///
-///  MasterScheduler: This is the master scheduler thread. There are 'N'
+///  MasterSchedulerThread: This is the master scheduler thread. There are 'N'
 ///  configurable master scheduler threads in the system. Each new scene producing 
 ///  request will be handled by a seperate scheduling thread. This is to make sure 
 ///  better Qos for the incoming scene producing request. 
 ///                   
 ////////////////////////////////////////////////////////////////////////////////////
-class MasterScheduler : public MsgQThread
+class MasterSchedulerThread : public MsgQThread
 {
 public:
    /// Constructor
-   MasterScheduler(int scheduling_thread_q_depth);
+   MasterSchedulerThread(int scheduling_thread_q_depth);
 
    /// Start the master scheduler thread
    void Start();
@@ -76,7 +76,7 @@ protected:
    /// Constructor
    Master(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth);
 
-   MasterScheduler **m_pMasterScheduler;
+   MasterSchedulerThread **m_pMasterSchedulerThread;
    int m_num_ray_scheduling_master_threads;
-   MsgQThreadPoolLis<MasterScheduler> m_ThreadPoolLis;
+   MsgQThreadPoolLis<MasterSchedulerThread> m_ThreadPoolLis;
 };

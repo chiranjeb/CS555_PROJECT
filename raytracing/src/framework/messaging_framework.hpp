@@ -10,7 +10,7 @@
 class Listener
 {
 public:
-   virtual void Notify(MsgPtr msg) = 0;
+    virtual void Notify(MsgPtr msg) = 0;
 };
 
 typedef std::shared_ptr<Listener> ListenerPtr;
@@ -21,8 +21,8 @@ class CommandBase : public Listener
 {
 
 public:
-   virtual void Notify(MsgPtr msg)=0;
-   virtual void ProcessMsg(MsgPtr msg)=0;
+    virtual void Notify(MsgPtr msg) = 0;
+    virtual void ProcessMsg(MsgPtr msg) = 0;
 };
 
 
@@ -32,21 +32,21 @@ typedef std::shared_ptr<CommandBase> CommandBasePtr;
 class MsgQEntry
 {
 public:
-   /// This class defines a message queue entry
-   MsgQEntry(MsgPtr msg, CommandBasePtr cmd)
-   {
-      m_Msg = msg;
-      m_Cmd = cmd;
-   }
+    /// This class defines a message queue entry
+    MsgQEntry(MsgPtr msg, CommandBasePtr cmd)
+    {
+        m_Msg = msg;
+        m_Cmd = cmd;
+    }
 
-   /// Response message to be sent to a command.
-   MsgPtr  m_Msg;
+    /// Response message to be sent to a command.
+    MsgPtr  m_Msg;
 
-   /// Command where the response message needs to be routed to.
-   /// A null command needs to be handled generic way. One example
-   /// could be  - an unsolicited message being put in a queue of
-   /// message queue entry with a value of null command.
-   CommandBasePtr m_Cmd;
+    /// Command where the response message needs to be routed to.
+    /// A null command needs to be handled generic way. One example
+    /// could be  - an unsolicited message being put in a queue of
+    /// message queue entry with a value of null command.
+    CommandBasePtr m_Cmd;
 };
 
 typedef std::shared_ptr<BlockingQueue<MsgQEntry> > BlockingMsgQPtr;
@@ -55,17 +55,17 @@ typedef std::shared_ptr<BlockingQueue<MsgQEntry> > BlockingMsgQPtr;
 class Command : public CommandBase
 {
 public:
-   /// Constructor
-   Command(BlockingMsgQPtr q);
+    /// Constructor
+    Command(BlockingMsgQPtr q);
 
-   /// over-ridden Notify
-   virtual void Notify(MsgPtr msg);
+    /// over-ridden Notify
+    virtual void Notify(MsgPtr msg);
 
-   /// Process Msg
-   virtual void ProcessMsg(MsgPtr msg);
+    /// Process Msg
+    virtual void ProcessMsg(MsgPtr msg);
 
 protected:
-   BlockingMsgQPtr    m_RequestQ;
+    BlockingMsgQPtr    m_RequestQ;
 };
 
 
@@ -76,17 +76,17 @@ typedef std::shared_ptr<Command> CommandPtr;
 class MsgQListener : public Listener
 {
 public:
-   /// Constructor
-   MsgQListener(BlockingMsgQPtr msgQ)
-   {
-      m_MsgQ = msgQ;
-   }
+    /// Constructor
+    MsgQListener(BlockingMsgQPtr msgQ)
+    {
+        m_MsgQ = msgQ;
+    }
 
-   /// Notify the waiting thread.
-   virtual void Notify(MsgPtr msgPtr);
+    /// Notify the waiting thread.
+    virtual void Notify(MsgPtr msgPtr);
 
 private:
-   BlockingMsgQPtr   m_MsgQ;
+    BlockingMsgQPtr   m_MsgQ;
 };
 
 
@@ -97,50 +97,50 @@ typedef std::shared_ptr<MsgQListener> MsgQListenerPtr;
 class Thread
 {
 public:
-   Thread(std::string threadName = "unknown")
-   {
-      m_ThreadName = threadName;
-   }
+    Thread(std::string threadName = "unknown")
+    {
+        m_ThreadName = threadName;
+    }
 
 protected:
-   std::string  m_ThreadName;
-   std::thread *m_thread;
+    std::string  m_ThreadName;
+    std::thread *m_thread;
 };
 
 /// Message Q Thread
 class MsgQThread : public Thread
 {
 public:
-   /// This class defines a message queue entry
-   MsgQThread(std::string threadName, int threadMsgQDepth);
+    /// This class defines a message queue entry
+    MsgQThread(std::string threadName, int threadMsgQDepth);
 
-   /// Send a message to a thread
-   void Send(MsgQEntry msgQEntry);
+    /// Send a message to a thread
+    void Send(MsgQEntry msgQEntry);
 
-   /// Get the thread listener
-   Listener* GetThrdListener()
-   {
-      return m_ThrdLis.get();
-   }
+    /// Get the thread listener
+    Listener* GetThrdListener()
+    {
+        return m_ThrdLis.get();
+    }
 
-   BlockingMsgQPtr GetListeningQ()
-   {
-      return m_RequestQ;
-   }
+    BlockingMsgQPtr GetListeningQ()
+    {
+        return m_RequestQ;
+    }
 
-   MsgQEntry TakeNext()
-   {
-      return m_RequestQ.get()->Take();
-   }
+    MsgQEntry TakeNext()
+    {
+        return m_RequestQ.get()->Take();
+    }
 
-   /// Unhandled message
-   void ProcessUnHandledMsg(MsgPtr msg);
+    /// Unhandled message
+    void ProcessUnHandledMsg(MsgPtr msg);
 
 protected:
-   /// Blocking Queue is going to be waiting for
-   BlockingMsgQPtr    m_RequestQ;
+    /// Blocking Queue is going to be waiting for
+    BlockingMsgQPtr    m_RequestQ;
 
-   MsgQListenerPtr m_ThrdLis;
+    MsgQListenerPtr m_ThrdLis;
 };
 
 
@@ -150,33 +150,33 @@ template<class T>
 class MsgQThreadPoolLis : public Listener
 {
 public:
-   /// This class defines a message queue entry
-   MsgQThreadPoolLis(T** threadPoolPtr=nullptr, int N=0)
-   {
-      Construct(threadPoolPtr, N);
-   }
+    /// This class defines a message queue entry
+    MsgQThreadPoolLis(T **threadPoolPtr = nullptr, int N = 0)
+    {
+        Construct(threadPoolPtr, N);
+    }
 
-   void Construct(T** threadPoolPtr, int N)
-   {
-      m_ThreadsPtr = threadPoolPtr;
-      m_NextThread = 0;
-      m_NumThreads = N;
-   }
-   
-   virtual void Notify(MsgPtr msg)
-   {
-      std::mutex m_Mutex;
-      if (m_NextThread >= m_NumThreads)
-      {
-         m_NextThread=0;
-      }
-      m_ThreadsPtr[m_NextThread++]->Send(MsgQEntry(msg, nullptr));
-   }
+    void Construct(T **threadPoolPtr, int N)
+    {
+        m_ThreadsPtr = threadPoolPtr;
+        m_NextThread = 0;
+        m_NumThreads = N;
+    }
+
+    virtual void Notify(MsgPtr msg)
+    {
+        std::mutex m_Mutex;
+        if (m_NextThread >= m_NumThreads)
+        {
+            m_NextThread = 0;
+        }
+        m_ThreadsPtr[m_NextThread++]->Send(MsgQEntry(msg, nullptr));
+    }
 
 protected:
-   T   **m_ThreadsPtr;
-   int m_NumThreads;
-   int m_NextThread;
+    T   **m_ThreadsPtr;
+    int m_NumThreads;
+    int m_NextThread;
 };
 
 
@@ -185,24 +185,48 @@ protected:
 class WorkerThread : public Thread
 {
 public:
-   BlockingMsgQPtr  m_RequestQ;
+    BlockingMsgQPtr  m_RequestQ;
 
-   // Constructor
-   WorkerThread(std::string threadname, BlockingMsgQPtr  requestQ) : Thread(threadname)
-   {
-      m_RequestQ = requestQ;
-   }
+    // Constructor
+    WorkerThread(std::string threadname, BlockingMsgQPtr  requestQ) : Thread(threadname)
+    {
+        m_RequestQ = requestQ;
+    }
 
 
-   // Start the scheduler thread
-   void Start()
-   {
-      m_thread = new std::thread(&WorkerThread::Run, *this);
-   }
+    // Start the scheduler thread
+    void Start()
+    {
+        m_thread = new std::thread(&WorkerThread::Run, *this);
+    }
 
 private:
-   // Actual Scheduler thread
-   void Run();
+    // Actual Scheduler thread
+    void Run();
+};
+
+
+class WorkerThreadList
+{
+public:
+    // This class defines a message queue entry
+    WorkerThreadList(int numThreads, int qD);
+
+    void Start();
+
+    void Send(int threadId, MsgQEntry msgQEntry)
+    {
+        m_RequestQ[threadId]->Put(msgQEntry);
+    }
+
+    BlockingMsgQPtr GetListeningQ(int threadId)
+    {
+        return m_RequestQ[threadId];
+    }
+
+protected :
+    std::vector<BlockingMsgQPtr> m_RequestQ;
+    std::vector<WorkerThread *>  m_WorkerThreads;
 };
 
 
@@ -210,25 +234,28 @@ private:
 class ThreadPoolManager
 {
 public:
-   // This class defines a message queue entry
-   ThreadPoolManager(int numThreads, BlockingMsgQPtr blockingQ);
+    // This class defines a message queue entry
+    ThreadPoolManager(int numThreads, BlockingMsgQPtr blockingQ);
 
-   void Start();
+    void Start();
 
-   void Send(MsgQEntry msgQEntry)
-   {
-      m_RequestQ->Put(msgQEntry);
-   }
+    void Send(MsgQEntry msgQEntry)
+    {
+        m_RequestQ->Put(msgQEntry);
+    }
 
-   BlockingMsgQPtr GetListeningQ()
-   {
-      return m_RequestQ;
-   }
+    BlockingMsgQPtr GetListeningQ()
+    {
+        return m_RequestQ;
+    }
 
 protected :
-   BlockingMsgQPtr   m_RequestQ;
-   std::vector<WorkerThread *>  m_WorkerThreads;
+    BlockingMsgQPtr   m_RequestQ;
+    std::vector<WorkerThread *>  m_WorkerThreads;
 };
+
+
+
 
 
 

@@ -60,9 +60,11 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     }
 
     // Send the response to the master scheduler.
-    //PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId());
-    //respMsg->SetAppTag(pRequestMsg->GetAppTag());
-    //Worker::Instance().GetConnectionToMaster()->SendMsg(respMsg, nullptr);
+    // PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(), 
+    //                                                                               pRequestMsg->GetRequest(m_requestIndex)->m_ScenePixelOffset,  
+    //                                                                               pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
+    // respMsg->SetAppTag(pRequestMsg->GetAppTag());
+    // Worker::Instance().GetConnectionToMaster()->SendMsg(respMsg, nullptr);
 }
 
 
