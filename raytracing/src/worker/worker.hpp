@@ -68,6 +68,9 @@ protected:
     /// Scene produce request message
     void OnSceneProduceRequestMsg(MsgPtr msg);
 
+    /// Scene produce cleanup message
+    void OnSceneProduceCleanupMsg(MsgPtr msg);
+
     /// Scene produce request message
     void OnPixelProduceRequestMsg(MsgPtr msg);
 

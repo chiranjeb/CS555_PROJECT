@@ -24,7 +24,7 @@ protected:
 class TCPSendMsg : public Msg
 {
 public:
-   TCPSendMsg(WireMsgPtr wireMsgPtr, Listener *lis)
+   TCPSendMsg(WireMsgPtr wireMsgPtr, ListenerPtr lis)
       : Msg(MsgIdTCPSend), m_WireMsg(wireMsgPtr), m_p_lis(lis)
    { }
 
@@ -33,14 +33,14 @@ public:
       return m_WireMsg;
    }
 
-   Listener* GetLis()
+   ListenerPtr GetLis()
    {
       return m_p_lis;
    }
 
 protected:
    WireMsgPtr m_WireMsg;
-   Listener  *m_p_lis;
+   ListenerPtr m_p_lis;
 };
 
 class TCPRecvMsg : public Msg

@@ -11,15 +11,23 @@ ResourceTracker& ResourceTracker::Instance()
 /// Add entry
 void HwThreadMgr::AddJob(std::size_t sceneId, uint32_t pixelOffset, uint32_t numPixels)
 {
-    m_OutstandingRequestMap.insert(std::pair<std::string, uint32_t>(std::to_string(sceneId) + std::to_string(pixelOffset), numPixels));
+    m_OutstandingRequestMap.insert(std::pair<std::string, uint32_t>(std::to_string(sceneId) + ":" + std::to_string(pixelOffset), numPixels));
 }
 
 /// Remove entry
 void HwThreadMgr::RemoveJob(std::size_t sceneId, uint32_t pixelOffset)
 {
-    m_OutstandingRequestMap.erase(std::to_string(sceneId) + std::to_string(pixelOffset));
+    DEBUG_TRACE_APPLICATION("HwThreadMgr::Remove");
+    m_OutstandingRequestMap.erase(std::to_string(sceneId) + ":" + std::to_string(pixelOffset));
 }
 
+void HwThreadMgr::Dump()
+{
+    for (auto iter = m_OutstandingRequestMap.begin(); iter != m_OutstandingRequestMap.end(); ++iter)
+    {
+        DEBUG_TRACE("\t" << "scene:pixeloffset: " << iter->first << ", numPixels: " << iter->second)
+    }
+}
 
 uint32_t ResourceTracker::GetWorkEstimationForNewScene(uint32_t totalNumOfPixels)
 {
@@ -48,7 +56,7 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
     for (uint16_t index = 0; index < numAvailableHwExecutionThread; ++index)
     {
         HwThreadMgr *p_thread_mgr = new HwThreadMgr(host_name, index);
-        m_WorkerThreads.insert(std::pair<std::string, HwThreadMgr *>(host_name + std::to_string(index), p_thread_mgr));
+        m_WorkerThreads.insert(std::pair<std::string, HwThreadMgr *>(host_name + ":" + std::to_string(index), p_thread_mgr));
     }
 
     /// Dump the worker lists
@@ -64,7 +72,7 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
 void ResourceTracker::TrackJob(std::string hostname, uint16_t thread_id, std::size_t sceneId, uint32_t pixelOffset, uint32_t numPixels)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-    HwThreadMgr *pHwThreadMgr = m_WorkerThreads[hostname + std::to_string(thread_id)];
+    HwThreadMgr *pHwThreadMgr = m_WorkerThreads[hostname +  ":" + std::to_string(thread_id)];
     pHwThreadMgr->AddJob(sceneId, pixelOffset,  numPixels);
 }
 
@@ -72,6 +80,22 @@ void ResourceTracker::TrackJob(std::string hostname, uint16_t thread_id, std::si
 void ResourceTracker::NotifyJobDone(std::string hostname, uint16_t thread_id, std::size_t sceneId, uint32_t pixelOffset)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-    HwThreadMgr *pHwThreadMgr = m_WorkerThreads[hostname + std::to_string(thread_id)];
+    DEBUG_TRACE_APPLICATION("ResourceTracker::NotifyJobDone" << ", thread_id:" << thread_id << ", sceneId:" <<sceneId << ", pixelOffset:" << pixelOffset);
+    HwThreadMgr *pHwThreadMgr = m_WorkerThreads[hostname + ":" + std::to_string(thread_id)];
     pHwThreadMgr->RemoveJob(sceneId, pixelOffset);
 }
+
+
+
+
+void ResourceTracker::Dump()
+{
+    DEBUG_TRACE("ResourceTracker::Dump ");
+    auto iter = m_WorkerThreads.begin();
+    for (; iter != m_WorkerThreads.end(); ++iter)
+    {
+        DEBUG_TRACE("Hw Thread Name: " << iter->first);
+        iter->second->Dump();
+    }
+}
+

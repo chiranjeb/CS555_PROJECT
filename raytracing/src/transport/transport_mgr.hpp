@@ -46,7 +46,7 @@ public:
     TCPIOConnection* FindConnection(std::string &unique_hostname);
 
     /// Create a TCP server
-    void CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler);
+    void CreateTCPServer(int listeningPort, int listeningDepth, ListenerPtr serverResponseHandler);
 
     /// Process unsolicited message
     void ProcessUnsolicitedMsg(TCPIOConnection *p_connection, WireMsgPtr wireMsgPtr);
@@ -56,7 +56,7 @@ public:
 
 
     /// Establish connection to a server
-    void EstablishNewConnection(std::string &serverIP, int serverPort, Listener *p_lis, bool retryUntillConnected);
+    void EstablishNewConnection(std::string &serverIP, int serverPort, ListenerPtr p_lis, bool retryUntillConnected);
 
 protected:
     TransportMgr();
@@ -68,7 +68,7 @@ protected:
     TCPIOServer *m_perver;
 
     /// Server command handler
-    Listener *m_lis;
+    ListenerPtr m_lis;
 
     /// Connection list
     std::map<std::string, TCPIOConnection *> m_Connections;

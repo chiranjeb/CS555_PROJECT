@@ -64,7 +64,13 @@ public:
     /// Process Msg
     virtual void ProcessMsg(MsgPtr msg);
 
+    void SaveMemento(ListenerPtr context)
+    {
+        m_MyLisPtr = context;
+    }
+
 protected:
+    ListenerPtr        m_MyLisPtr;
     BlockingMsgQPtr    m_RequestQ;
 };
 
@@ -118,9 +124,9 @@ public:
     void Send(MsgQEntry msgQEntry);
 
     /// Get the thread listener
-    Listener* GetThrdListener()
+    ListenerPtr GetThrdListener()
     {
-        return m_ThrdLis.get();
+        return m_ThrdLis;
     }
 
     BlockingMsgQPtr GetListeningQ()

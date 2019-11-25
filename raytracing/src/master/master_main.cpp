@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
    Master::Instance().Start();
 
    /// Create master server
-   TransportMgr::Instance().CreateTCPServer(master_port, master_server_listening_q_d, *Master::Instance().GetLis());
+   TransportMgr::Instance().CreateTCPServer(master_port, master_server_listening_q_d, Master::Instance().GetLis());
 
    /// Put the master to sleep
    while (1)

@@ -11,6 +11,8 @@ struct PixelProduceRequest
 
    uint32_t GetNumPixels() { return m_NumPixels;}
    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset; }
+   int GetAppTag() { return m_AppTag; }
+   void SetupAppTag(int appTag) { m_AppTag = appTag;}
 
    uint16_t m_ThreadId;
    uint16_t m_startY;
@@ -19,6 +21,7 @@ struct PixelProduceRequest
    uint16_t m_endX;
    uint32_t m_NumPixels;
    uint32_t m_ScenePixelOffset;
+   int m_AppTag;
 };
 
 
@@ -46,6 +49,11 @@ public:
    void SetPixelDomain(int index, uint32_t offset, uint32_t numPixels)
    {
       m_pPixelProduceRequest[index].SetPixelDomain(offset, numPixels);
+   }
+
+   void SetupAppTag(int index, int appTag)
+   {
+       m_pPixelProduceRequest[index].SetupAppTag(appTag);
    }
 
    /// Return request
@@ -79,8 +87,8 @@ class PixelProduceResponseMsg : public WireMsg
 {
 public:
    /// PixelProduceRequestMsg message constructor
-   PixelProduceResponseMsg(std::size_t sceneId, uint32_t numPixels, uint32_t scenePixelOffset):
-       WireMsg(MsgIdPixelProduceResponse), m_SceneId(sceneId), m_NumPixels(numPixels), m_ScenePixelOffset(m_ScenePixelOffset)
+   PixelProduceResponseMsg(std::size_t sceneId, uint32_t numPixels, uint32_t scenePixelOffset, uint16_t  threadId):
+       WireMsg(MsgIdPixelProduceResponse), m_SceneId(sceneId), m_NumPixels(numPixels), m_ScenePixelOffset(scenePixelOffset), m_ThreadId(threadId)
    {
    }
 
@@ -98,11 +106,18 @@ public:
    /// PixelProduceRequestMsg message destructor
    ~PixelProduceResponseMsg()
    {
-      DEBUG_TRACE("PixelProduceResponseMsg: Destructor");
+      DEBUG_TRACE_WIRE_MSG("PixelProduceResponseMsg: Destructor");
    }
 
-   uint16_t GetThreadId() { return m_ThreadId;}
-   uint32_t GetNumPixels() { return m_NumPixels;}
+   void Dump()
+   {
+       DEBUG_TRACE_WIRE_MSG("PixelProduceResponseMsg::Dump - " << ", m_AppTag:" << m_ApplicationTag 
+                   <<  ", m_SceneId:" << m_SceneId << ", m_ThreadId:" << m_ThreadId << ", m_ScenePixelOffset: " << m_ScenePixelOffset);
+   }
+
+   std::size_t GetSceneId() { return m_SceneId;}
+   uint16_t GetThreadId()   { return m_ThreadId;}
+   uint32_t GetNumPixels()  { return m_NumPixels;}
    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset;}
 
 protected:

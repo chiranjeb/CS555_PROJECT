@@ -15,11 +15,11 @@ public:
    WorkerRegistrationMsg(std::string hostname, int port, uint16_t hw_thread_concurrency_level) :
       WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(hostname), m_Port(port), m_hw_thread_concurrency_level(hw_thread_concurrency_level)
    {
-      DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
    }
    WorkerRegistrationMsg() : WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(""), m_Port(0), m_hw_thread_concurrency_level(0)
    {
-      DEBUG_TRACE("WorkerRegistrationMsg: Constructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
    }
 
    uint16_t GetNumHwExecutionThread()
@@ -35,7 +35,7 @@ public:
 
    ~WorkerRegistrationMsg()
    {
-      DEBUG_TRACE("WorkerRegistrationMsg: Destructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Destructor");
    }
 
    std::string m_hostname;   //  server name
@@ -53,13 +53,13 @@ public:
    WorkerRegistrationRespMsg(ErrorCode_t errorCode) :
       WireMsg(MsgIdWorkerRegistrationResponse), m_ErrorCode(errorCode)
    {
-      DEBUG_TRACE("WorkerRegistrationRespMsg: Constructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
    }
 
    WorkerRegistrationRespMsg() :
       WireMsg(MsgIdWorkerRegistrationResponse)
    {
-      DEBUG_TRACE("WorkerRegistrationRespMsg: Constructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
    }
 
    /// Custom Message serializer
@@ -71,7 +71,7 @@ public:
 
    ~WorkerRegistrationRespMsg()
    {
-      DEBUG_TRACE("WorkerRegistrationRespMsg: Destructor");
+      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Destructor");
    }
 
    int m_ErrorCode;  // Error code

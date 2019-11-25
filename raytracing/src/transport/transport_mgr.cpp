@@ -10,9 +10,9 @@ TransportMgr::TransportMgr()
     m_hostname = std::string(hostbuffer);
 }
 
-void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, Listener &serverResponseHandler)
+void TransportMgr::CreateTCPServer(int listeningPort, int listeningDepth, ListenerPtr serverResponseHandler)
 {
-    m_lis = &serverResponseHandler;
+    m_lis = serverResponseHandler;
 
     /// Create a IO Server thread
     m_perver = new TCPIOServer();
@@ -64,7 +64,7 @@ void TransportMgr::ServiceNewConnection(TCPIOConnection *p_connection)
 ///
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-void TransportMgr::EstablishNewConnection(std::string &serverIP, int serverPort, Listener *p_lis, bool retryUntillConnected)
+void TransportMgr::EstablishNewConnection(std::string &serverIP, int serverPort, ListenerPtr p_lis, bool retryUntillConnected)
 {
     auto entry = m_Connections.find(UniqueServerId(serverIP, serverPort).toString());
     if (entry == m_Connections.end())

@@ -67,9 +67,9 @@ public:
    void Start();
 
    /// Return listener for the unsolicited message notification.
-   Listener* GetLis()
+   ListenerPtr GetLis()
    {
-      return &m_ThreadPoolLis;
+      return m_ThreadPoolLisPtr;
    }
 
 protected:
@@ -78,5 +78,6 @@ protected:
 
    MasterSchedulerThread **m_pMasterSchedulerThread;
    int m_num_ray_scheduling_master_threads;
-   MsgQThreadPoolLis<MasterSchedulerThread> m_ThreadPoolLis;
+   std::shared_ptr<MsgQThreadPoolLis<MasterSchedulerThread> > m_ThreadPoolLisPtr;
+   //MsgQThreadPoolLis<MasterSchedulerThread> m_ThreadPoolLis;
 };

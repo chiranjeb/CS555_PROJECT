@@ -61,7 +61,7 @@ void Worker::Initialize(std::string master_address,
 
 
 Worker::Worker(std::string master_address, int master_port, int workerCmdProcessorQDepth,
-               int numPixelProducers, int pixelProducerQDepth) : 
+               int numPixelProducers, int pixelProducerQDepth) :
     MsgQThread("Worker", workerCmdProcessorQDepth),
     m_PixelProducerThreads(numPixelProducers, pixelProducerQDepth)
 {
@@ -97,13 +97,8 @@ void Worker::Dump()
 /// Return scene descriptor
 SceneDescriptorPtr Worker::GetSceneDescriptor(std::size_t sceneId)
 {
-    DEBUG_TRACE("GetSceneDescriptor: " << sceneId);
     Dump();
-    SceneProduceRequestMsgPtr request = m_SceneFileMap[sceneId];
-    DEBUG_TRACE("SceneProduceRequestMsgPtr: " << std::hex << request.get());
-    SceneDescriptorPtr descript  = request->GetSceneDescriptor();
-    DEBUG_TRACE("SceneDescriptorPtr: " << std::hex << descript.get());
-    return descript;
+    return m_SceneFileMap[sceneId]->GetSceneDescriptor();
 }
 
 
@@ -115,6 +110,7 @@ void Worker::Run()
     while (1)
     {
         MsgQEntry msgQEntry = TakeNext();
+        RELEASE_TRACE("Worker::Run("<< std::hex << this << ") - Received MsgId: " << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
         MsgPtr msgPtr = msgQEntry.m_Msg;
         if (msgQEntry.m_Cmd.get() != nullptr)
         {
@@ -155,7 +151,6 @@ void Worker::Run()
 
 void Worker::OnTCPRecvMsg(MsgPtr msg)
 {
-    DEBUG_TRACE("On TCP Recv Message(this:" << std::hex << this << ")");
     TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
     WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
 
@@ -170,6 +165,12 @@ void Worker::OnTCPRecvMsg(MsgPtr msg)
        case MsgIdPixelProduceRequest:
            {
                OnPixelProduceRequestMsg(wireMsgPtr);
+               break;
+           }
+
+       case MsgIdSceneProduceCleanup:
+           {
+               OnSceneProduceCleanupMsg(wireMsgPtr);
                break;
            }
        default:
@@ -258,35 +259,31 @@ void Worker::OnSceneProduceRequestMsg(MsgPtr msg)
     TransportMgr::Instance().EstablishNewConnection(requestMsgPtr->GetClientAddress(), requestMsgPtr->GetClientPort(), GetThrdListener(), true);
 }
 
-void Worker::OnSceneProduceDone(MsgPtr msg)
+void Worker::OnSceneProduceCleanupMsg(MsgPtr msg)
 {
-    /*
-    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: ");
-    SceneProduceCleanupMsgPtr requestMsgPtr  = dynamic_pointer_cast<SceneProduceCleanupMsg>(msg);
- 
-    m_SceneFileMap.erase(requestMsgPtr->GetSceneId());
- 
-    /// Client to scene look up
-    m_Client2SceneId.erase(m_SceneId2Client[requestMsgPtr->GetSceneId()]);
- 
-    /// Scene to client for forward look up
-    m_SceneId2Client.erase(requestMsgPtr->GetSceneId());
- 
-    /// Remove scene Id to connection
-    m_SceneId2Connection.erase(requestMsgPtr->GetSceneId());*/
+    SceneProduceCleanupMsgPtr requestMsgPtr  = std::dynamic_pointer_cast<SceneProduceCleanupMsg>(msg);
+    RELEASE_TRACE("Worker::OnSceneProduceCleanupMsg(this:" << std::hex << this << ") - Cleaning up scene artifacts, scene Id:" << requestMsgPtr->GetSceneId());
+    auto iter = m_SceneFileMap.find(requestMsgPtr->GetSceneId());
+    if (iter != m_SceneFileMap.end())
+    {
+        m_SceneFileMap.erase(requestMsgPtr->GetSceneId());
+        m_Client2SceneId.erase(m_SceneId2Client[requestMsgPtr->GetSceneId()]);
+        m_SceneId2Client.erase(requestMsgPtr->GetSceneId());
+        m_SceneId2Connection.erase(requestMsgPtr->GetSceneId());
+    }
+    Dump();
+
 }
 
 void Worker::OnPixelProduceRequestMsg(MsgPtr msg)
 {
     /// Now we will start producing pixels for which we have already established all the contexts.
-
-    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg");
     PixelProduceRequestMsgPtr requestMsgPtr  = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
     TCPIOConnection *pConnection = m_SceneId2Connection[requestMsgPtr->GetSceneId()];
     for (int index = 0; index < requestMsgPtr->GetNumRequests(); ++index)
     {
         PixelProduceRequest *pRequest = requestMsgPtr->GetRequest(index);
-        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_PixelProducerThreads.GetListeningQ(pRequest->m_ThreadId), pConnection, index);
+        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_PixelProducerThreads.GetListeningQ(pRequest->m_ThreadId), pConnection, m_p_ConnectionToMaster, index);
         m_PixelProducerThreads.Send(pRequest->m_ThreadId, MsgQEntry(requestMsgPtr, cmdPtr));
         if (pConnection == nullptr)
         {

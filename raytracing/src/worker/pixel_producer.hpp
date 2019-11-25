@@ -6,8 +6,8 @@ class TCPIOConnection;
 class PixelProducer : public Command
 {
 public:
-   PixelProducer(BlockingMsgQPtr pQ, TCPIOConnection *p_clientConnection, uint16_t requestIndex) :
-      Command(pQ), m_p_clientConnection(p_clientConnection), m_requestIndex(requestIndex)
+   PixelProducer(BlockingMsgQPtr pQ, TCPIOConnection *p_clientConnection, TCPIOConnection *p_MasterConnection, uint16_t requestIndex) :
+      Command(pQ), m_p_clientConnection(p_clientConnection), m_pConnectionToMaster(p_MasterConnection), m_requestIndex(requestIndex)
    {
    }
 
@@ -27,6 +27,7 @@ protected:
    void OnSceneProduceDone(MsgPtr msg);
 
    TCPIOConnection *m_p_clientConnection;
+   TCPIOConnection *m_pConnectionToMaster;
 
    uint16_t m_requestIndex;
 };
