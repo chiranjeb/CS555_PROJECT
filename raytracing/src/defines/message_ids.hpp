@@ -8,8 +8,11 @@ enum MsgIds
    MsgIdSceneSegmentProduceResponse = 0x04,
    MsgIdSceneProduceRequestAck      = 0x05,
 
-   MsgIdPixelProduceRequest     = 0x07,
-   MsgIdPixelProduceResponse    = 0x08,
+   MsgIdPixelProduceRequest         = 0x07,
+   MsgIdPixelProduceResponse        = 0x08,
+
+
+   MsgIdSceneProduceCleanup         = 0x09,
 
    MsgIdConnectionEstablishmentResponse,
    MsgIdTCPSend,

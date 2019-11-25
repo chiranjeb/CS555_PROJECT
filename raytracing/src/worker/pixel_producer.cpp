@@ -12,20 +12,21 @@ void PixelProducer::ProcessMsg(MsgPtr msg)
     RELEASE_TRACE("PixelProducer::ReceivedMsg: " << msg->GetId());
     switch (msg->GetId())
     {
-        case MsgIdPixelProduceRequest:
-        {
-            OnPixelProduceRequestMsg(msg);
-            break;
-        }
-        default:
-            break;
+       case MsgIdPixelProduceRequest:
+           {
+               OnPixelProduceRequestMsg(msg);
+               break;
+           }
+       default:
+           break;
     }
 }
 
 void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 {
-    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Start");
+    RELEASE_TRACE("Start Pixel Production( Obj:" << std::hex << this << ")");
     PixelProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
+
     SceneSegmentProduceResponseMsgPtr respMsgPtr = std::make_shared<SceneSegmentProduceResponseMsg>(pRequestMsg->GetSceneId(),
                                                                                                     pRequestMsg->GetNumPixels(m_requestIndex),
                                                                                                     pRequestMsg->GetScenePixelOffset(m_requestIndex));
@@ -35,7 +36,7 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     std::ostream ostrm(&streambuff);
 
 
-    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
+    DEBUG_TRACE_APPLICATION("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
     SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
 
     /// Produce pixels
@@ -45,14 +46,16 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 
     /// Update valid buffer
     respMsgPtr->UpdateValidBuffer(streambuff.Tellp());
-    DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: Done" << streambuff.Tellp());
+
+
+    RELEASE_TRACE("Pixel Production( Obj: " << std::hex << this << ") Done....Produced Buffer size: " << streambuff.Tellp());
 
     /// Pack partial stuff.
     respMsgPtr->PackPartial();
     if (m_p_clientConnection != nullptr)
     {
         /// Ship the result to client. We are not waiting for the response.
-        m_p_clientConnection->SendMsg(respMsgPtr, nullptr);
+        m_p_clientConnection->SendMsg(respMsgPtr, ListenerPtr(nullptr));
     }
     else
     {
@@ -60,11 +63,12 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
     }
 
     // Send the response to the master scheduler.
-    // PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(), 
-    //                                                                               pRequestMsg->GetRequest(m_requestIndex)->m_ScenePixelOffset,  
-    //                                                                               pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
-    // respMsg->SetAppTag(pRequestMsg->GetAppTag());
-    // Worker::Instance().GetConnectionToMaster()->SendMsg(respMsg, nullptr);
+    PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(),
+                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_NumPixels,
+                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_ScenePixelOffset,
+                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
+    respMsg->SetAppTag(pRequestMsg->GetRequest(m_requestIndex)->m_AppTag);
+    m_pConnectionToMaster->SendMsg(respMsg, ListenerPtr(nullptr));
 }
 
 

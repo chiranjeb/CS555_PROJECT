@@ -9,32 +9,43 @@ class TCPIOConnection;
 class SceneScheduler : public Command
 {
 public:
-   SceneScheduler(BlockingMsgQPtr pQ) : Command(pQ)
-   {
-   }
+    SceneScheduler(BlockingMsgQPtr pQ) : Command(pQ)
+    {
+    }
 
-   /// Actual Scheduler thread
-   void ProcessMsg(MsgPtr msg);
+    /// Actual Scheduler thread
+    void ProcessMsg(MsgPtr msg);
+
+    ~SceneScheduler()
+    {
+        DEBUG_TRACE("***SceneScheduler - Destructor*****" << std::hex << this)
+    }
+
 protected:
 
-   /// Scene produce request message handler.
-   void OnSceneProduceRequestMsg(MsgPtr msg);
+    /// Scene produce request message handler.
+    void OnSceneProduceRequestMsg(MsgPtr msg);
 
-   /// Pixel produce response message.
-   void OnPixelProduceResponseMsg(MsgPtr msg);
+    /// Pixel produce response message.
+    void OnPixelProduceResponseMsg(MsgPtr msg);
 
-   /// Different chunking of the work.
-   void KickOffSceneScheduling();
+    /// Different chunking of the work.
+    void KickOffSceneScheduling();
 
-   uint32_t m_NumPendingCompletionResponse;
-   std::map<std::string, bool> m_workOrder;
-   TCPIOConnection *m_p_client_connection;
-   std::vector<std::string> m_workerList;
 
-   std::size_t m_SceneId;
-   uint32_t  m_NX, m_NY;
-   uint32_t m_TotalNumPixelsToProduce;
-   uint32_t m_CurrentPixelOffset;
+
+    uint32_t m_NumPendingCompletionResponse;
+    std::map<std::string, bool> m_workOrder;
+    TCPIOConnection *m_p_client_connection;
+    std::vector<std::string> m_workerList;
+
+    std::size_t m_SceneId;
+    uint32_t m_NX, m_NY;
+    uint32_t m_TotalNumPixelsToProduce;
+    uint32_t m_CurrentPixelOffset;
+    uint32_t m_MultiRequestAppTag;
+
+    ListenerPtr m_LisPtr;
 };
 
 typedef std::shared_ptr<SceneScheduler> SceneSchedulerPtr;

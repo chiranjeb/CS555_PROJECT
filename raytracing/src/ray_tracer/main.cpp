@@ -101,7 +101,7 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
                    camera *p_camera, hitable *world, std::ostream& os)
 {
    DEBUG_TRACE("ProducePixels: " << "NY_end: " << NY_end << ", NY_start: " << NY_start << ", NX_start: " << NX_start << ", NX_end" << NX_end);
-   DEBUG_TRACE("ProducePixels: " << "nx: " << nx << ", ny: " << ny << ", ns: " << ns);
+   DEBUG_TRACE_APPLICATION("ProducePixels: " << "nx: " << nx << ", ny: " << ny << ", ns: " << ns);
 
    vec3 curAlbedo;
    int start = (int)NY_start;

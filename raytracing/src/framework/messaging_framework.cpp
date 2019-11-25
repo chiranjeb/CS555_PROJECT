@@ -9,7 +9,7 @@ Command::Command(BlockingMsgQPtr q)
 
 void Command::Notify(MsgPtr msg)
 {
-    m_RequestQ->Put(MsgQEntry(msg, CommandPtr(this)));
+    m_RequestQ->Put(MsgQEntry(msg, std::dynamic_pointer_cast<Command>(m_MyLisPtr) ));
 }
 
 /** 

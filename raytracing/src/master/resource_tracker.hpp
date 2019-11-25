@@ -44,6 +44,8 @@ struct HwThreadMgr
     /// Remove a job
     void RemoveJob(std::size_t sceneId, uint32_t pixelOffset);
 
+    void Dump();
+
 
     std::string m_UniqueHostName;   ///< hostname
     uint32_t m_ThreadId;              ///< thread id
@@ -97,6 +99,8 @@ public:
 
     /// Notify job done
     void NotifyJobDone(std::string hostname, uint16_t thread_id, std::size_t sceneId, uint32_t pixelOffset);
+
+    void Dump();
 
 protected:
     uint32_t m_total_num_hw_threads;

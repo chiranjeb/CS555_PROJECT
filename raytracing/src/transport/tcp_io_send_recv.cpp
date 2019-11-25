@@ -73,7 +73,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
 
         // We may need to revisit this when are done identifying all the messages.
         std::pair<uint8_t *, int> buffer = tcpSendMsg->GetWireMsg().get()->GetPackedBytes(&m_MsgBuffer[0], MAX_MSG_BUFFER_SIZE_IN_BYTES);
-        DEBUG_TRACE("Sending wire message Message(MsgId:" << tcpSendMsg->GetWireMsg().get()->GetId() << "), " << "buffer_length:" << buffer.second);
+        DEBUG_TRACE_TRANSPORT("Sending wire message Message(MsgId:" << tcpSendMsg->GetWireMsg().get()->GetId() << "), " << "buffer_length:" << buffer.second);
 
         PacketLength packetLength(buffer.second);
         if ((errorCode = SendData(packetLength.Data(), packetLength.Size())) == STATUS_SUCCESS)
@@ -113,7 +113,7 @@ void TCPIOReceiver::Run()
         uint8_t *xfer_buffer = (uint8_t *)malloc(sizeof(uint8_t) * packetLength.Get());
 
         numOfBytesReceived = 0;
-        DEBUG_TRACE("Successfully received the data length: " << packetLength.Get());
+        DEBUG_TRACE_TRANSPORT("Successfully received the data length: " << packetLength.Get());
         while (packetLength.Get() !=numOfBytesReceived)
         {
            // We received the message length. Now, transfer the actual message.
@@ -124,12 +124,13 @@ void TCPIOReceiver::Run()
                HandleException();
                break;
            }
-           DEBUG_TRACE("Successfully received data: " << numOfBytesReceived);
+           DEBUG_TRACE_TRANSPORT("Successfully received data: " << numOfBytesReceived);
            // Construct the message and send it to the upper layer.
         }
-        DEBUG_TRACE("Successfully received all the data: " << numOfBytesReceived);
+        DEBUG_TRACE_TRANSPORT("Successfully received all the data: " << numOfBytesReceived);
         WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(xfer_buffer, numOfBytesReceived);
         wireMsgPtr->SetBufferContainer(xfer_buffer, packetLength.Get());
+        //wireMsgPtr->Dump();
         m_p_connection->ProcessReceivedMsg(wireMsgPtr);
     }
 

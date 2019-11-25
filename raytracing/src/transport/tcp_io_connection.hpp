@@ -28,6 +28,7 @@ public:
    /// Allocate App tag
    int AllocateAppTag()
    {
+       std::unique_lock<std::mutex> lck(m_Mutex);
        int tag = m_AppTagQ.front();
        m_AppTagQ.pop();
        return tag;
@@ -36,12 +37,16 @@ public:
    /// Free app tag
    void FreeAppTag(int appTag)
    {
+       std::unique_lock<std::mutex> lck(m_Mutex);
        m_ClientRespRoutingMap.erase(appTag);
        m_AppTagQ.push(appTag);
    } 
 
+   /// Regiser for notification
+   void RegisterNotification(int appTag, ListenerPtr p_lis);
+
    /// Send message
-   void SendMsg(WireMsgPtr wireMsg, Listener *p_lis);
+   void SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis);
 
    /// Process received message
    void ProcessReceivedMsg(WireMsgPtr wireMsg);
@@ -88,8 +93,9 @@ private:
 
    /// App Tag Q
    std::queue<int> m_AppTagQ;
-   std::map<int, Listener *> m_ClientRespRoutingMap;
+   std::map<int, ListenerPtr> m_ClientRespRoutingMap;
    BlockingQueue<MsgPtr> m_SendQ;
 
+   std::mutex m_Mutex;
    struct sockaddr_in m_server;
 };

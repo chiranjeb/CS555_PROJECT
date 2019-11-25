@@ -53,6 +53,15 @@ void TCPIOConnection::Start()
     m_pIOSender->Start();
 }
 
+
+
+void TCPIOConnection::RegisterNotification(int appTag, ListenerPtr plis)
+{
+    std::unique_lock<std::mutex> lck(m_Mutex);
+    DEBUG_TRACE_TRANSPORT("TCPIOConnection::RegisterNotification - apptag: " << appTag <<", lis:" << plis);
+    m_ClientRespRoutingMap.insert(std::pair<int, ListenerPtr>(appTag, plis));
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 /// Send a message over a connection
 ///
@@ -63,13 +72,13 @@ void TCPIOConnection::Start()
 ///       2. If requester is asking for an explicit response of the message being sent out.
 ///
 ///////////////////////////////////////////////////////////////////////////////////////////
-void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, Listener *p_lis)
+void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis)
 {
     MsgPtr msg(nullptr);
-    DEBUG_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
-    if ((p_lis != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
+    RELEASE_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
+    if ((p_lis.get() != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
     {
-        m_ClientRespRoutingMap.insert(std::pair<int, Listener *>(wireMsg.get()->GetAppTag(), p_lis));
+        RegisterNotification(wireMsg.get()->GetAppTag(), p_lis);
         m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, nullptr)));
     }
     else
@@ -89,17 +98,16 @@ void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, Listener *p_lis)
 ///////////////////////////////////////////////////////////////////////////////////////////
 void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
 {
-    WireMsg *pWireMsg = wireMsgPtr.get();
-    pWireMsg->SetConnection(this);
-    if (m_ClientRespRoutingMap.find(pWireMsg->GetAppTag()) != m_ClientRespRoutingMap.end())
+    wireMsgPtr->SetConnection(this);
+    if (m_ClientRespRoutingMap.find(wireMsgPtr->GetAppTag()) != m_ClientRespRoutingMap.end())
     {
-        DEBUG_TRACE("Received a solicited message: " << wireMsgPtr.get()->GetId());
+        DEBUG_TRACE_TRANSPORT("Received a solicited message: " << wireMsgPtr->GetId());
         // Give this to tag based handler
-        m_ClientRespRoutingMap[pWireMsg->GetAppTag()]->Notify(wireMsgPtr);
+        m_ClientRespRoutingMap[wireMsgPtr->GetAppTag()]->Notify(wireMsgPtr);
     }
     else
     {
-        DEBUG_TRACE("Received a unsolicited message: " << wireMsgPtr.get()->GetId());
+        DEBUG_TRACE_TRANSPORT("Received a unsolicited message: " << wireMsgPtr->GetId());
         TransportMgr::Instance().ProcessUnsolicitedMsg(this, wireMsgPtr);
     }
 }
@@ -113,7 +121,7 @@ void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
 ///
 ///
 /////////////////////////////////////////////////////////////////////////////////////////
-bool TCPIOConnection::Start(std::string &serverName, int port, bool retryUntillConnected)
+bool TCPIOConnection::Start(std::string& serverName, int port, bool retryUntillConnected)
 {
     m_socket = MakeConnection(serverName, port, retryUntillConnected);
     if (m_socket != -1)
@@ -137,7 +145,7 @@ bool TCPIOConnection::Start(std::string &serverName, int port, bool retryUntillC
 ///
 ///
 /////////////////////////////////////////////////////////////////////////////////////////
-int TCPIOConnection::MakeConnection(std::string &server, int serverPort, bool retryUntilConnected)
+int TCPIOConnection::MakeConnection(std::string& server, int serverPort, bool retryUntilConnected)
 {
     ErrorCode_t errorCode;
     while (true)
@@ -177,7 +185,8 @@ int TCPIOConnection::MakeConnection(std::string &server, int serverPort, bool re
                 break;
             }
             errorCode = STATUS_SUCCESS;
-        }while (0);
+        }
+        while (0);
 
 
         if (errorCode == STATUS_SUCCESS)

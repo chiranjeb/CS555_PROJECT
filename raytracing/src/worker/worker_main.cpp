@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
                       scene_producer_q_depth);
 
    /// Start worker server
-   TransportMgr::Instance().CreateTCPServer(0, worker_server_listening_q_depth, *Worker::Instance().GetThrdListener());
+   TransportMgr::Instance().CreateTCPServer(0, worker_server_listening_q_depth, Worker::Instance().GetThrdListener());
 
    /// Put the main thread to sleep.
    while (1)

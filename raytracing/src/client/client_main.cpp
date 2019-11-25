@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
    // Start a server
    const int SERVER_LISTENING_Q_DEPTH = 10;
-   TransportMgr::Instance().CreateTCPServer(0, SERVER_LISTENING_Q_DEPTH, *Client::Instance().GetThrdListener());
+   TransportMgr::Instance().CreateTCPServer(0, SERVER_LISTENING_Q_DEPTH, Client::Instance().GetThrdListener());
 
    while (1)
    {

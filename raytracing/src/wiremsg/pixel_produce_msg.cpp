@@ -24,13 +24,14 @@ void PixelProduceRequest::Pack(std::ostream& ostrm)
    ostrm << m_NumPixels << " ";
    ostrm << m_ScenePixelOffset << " ";
    ostrm << m_ThreadId << " ";
+   ostrm << m_AppTag << " ";
 }
 
 void PixelProduceRequest::Unpack(std::istream& istrm)
 {
    istrm >> m_startY >> m_startX >> m_endY 
          >> m_endX >> m_NumPixels 
-         >> m_ScenePixelOffset >> m_ThreadId;
+         >> m_ScenePixelOffset >> m_ThreadId >> m_AppTag;
 }
 
 /// PixelProduceRequestMsg message constructor
@@ -43,7 +44,7 @@ PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkL
    {
        m_pPixelProduceRequest[index].m_ThreadId = index;
    }
-   DEBUG_TRACE("PixelProduceRequestMsg: Constructor");
+   DEBUG_TRACE_WIRE_MSG("PixelProduceRequestMsg: Constructor");
 }
 
 
@@ -56,7 +57,7 @@ PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkL
 ///////////////////////////////////////////////////////////////////////////
 void PixelProduceRequestMsg::Pack(std::ostream& ostrm)
 {
-   DEBUG_TRACE("PixelProduceRequestMsg:Pack");
+   DEBUG_TRACE_WIRE_MSG("PixelProduceRequestMsg:Pack");
    WireMsg::Pack(ostrm);
    ostrm << m_SceneId << " ";
    ostrm << m_NumRequest << " ";
@@ -87,7 +88,7 @@ void PixelProduceRequestMsg::Unpack(std::istream& istrm)
 
 PixelProduceRequestMsg::~PixelProduceRequestMsg()
 {
-   DEBUG_TRACE("PixelProduceRequestMsg: Destructor");
+   DEBUG_TRACE_WIRE_MSG("PixelProduceRequestMsg: Destructor");
    free(m_pPixelProduceRequest);
 }
 
@@ -100,13 +101,12 @@ PixelProduceRequestMsg::~PixelProduceRequestMsg()
 ///////////////////////////////////////////////////////////////////////////
 void PixelProduceResponseMsg::Pack(std::ostream& ostrm)
 {
-   DEBUG_TRACE("PixelProduceResponseMsg:Pack");
+   DEBUG_TRACE_WIRE_MSG("PixelProduceResponseMsg:Pack");
    WireMsg::Pack(ostrm);
    ostrm << m_SceneId << " ";
    ostrm << m_NumPixels << " ";
    ostrm << m_ScenePixelOffset << " ";
    ostrm << m_ThreadId << " ";
-
 }
 
 ///////////////////////////////////////////////////////////////////////////

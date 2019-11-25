@@ -34,7 +34,7 @@ void MasterSchedulerThread::Run()
    while (1)
    {
       MsgQEntry msgQEntry = TakeNext();
-      DEBUG_TRACE("Got a message:" << std::hex << this);
+      RELEASE_TRACE("MasterSchedulerThread::Run("<< std::hex << this << ") - Received MsgId: " << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
       MsgPtr msgPtr = msgQEntry.m_Msg;
       if (msgQEntry.m_Cmd.get() != nullptr)
       {
@@ -61,7 +61,7 @@ void MasterSchedulerThread::Run()
 
 void MasterSchedulerThread::OnTCPRecvMsg(MsgPtr msg)
 {
-   DEBUG_TRACE("On TCP Recv Message");
+   DEBUG_TRACE_APPLICATION("On TCP Recv Message");
    TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
    WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
 
@@ -93,7 +93,7 @@ void MasterSchedulerThread::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
    reigstrationRespMsgPtr.get()->SetAppTag(registrationMsgPtr->GetAppTag());
 
    /// We are not expecting any response back. So, pass a nullptr.
-   registrationMsgPtr->GetConnection()->SendMsg(reigstrationRespMsgPtr, nullptr);
+   registrationMsgPtr->GetConnection()->SendMsg(reigstrationRespMsgPtr, ListenerPtr(nullptr));
 
    ResourceTracker::Instance().AddWorker(unique_hostname, registrationMsgPtr->GetNumHwExecutionThread());
 }
@@ -102,12 +102,13 @@ void MasterSchedulerThread::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
 
 void MasterSchedulerThread::OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr)
 {
-   DEBUG_TRACE("MasterSchedulerThread::OnSceneProduceRequestMsg" << std::hex << this);
+   DEBUG_TRACE_APPLICATION("MasterSchedulerThread::OnSceneProduceRequestMsg" << std::hex << this);
 
    // Check current scheduling policy. Create a command and attach it to this Q.
    if (SchedulingPolicyParam::Get().ConfiguredAsStaticScheduler())
    {
       SceneSchedulerPtr cmdPtr = std::make_shared<SceneScheduler>(GetListeningQ());
+      cmdPtr->SaveMemento(cmdPtr);
       cmdPtr->ProcessMsg(wireMsgPtr);
    }
    else
@@ -126,7 +127,8 @@ Master::Master(int num_ray_scheduling_master_threads, int scheduling_thread_q_de
    {
       m_pMasterSchedulerThread[index] = new MasterSchedulerThread(scheduling_thread_q_depth);
    }
-   m_ThreadPoolLis.Construct(m_pMasterSchedulerThread, num_ray_scheduling_master_threads);
+   m_ThreadPoolLisPtr = std::make_shared<MsgQThreadPoolLis<MasterSchedulerThread> >();
+   m_ThreadPoolLisPtr->Construct(m_pMasterSchedulerThread, num_ray_scheduling_master_threads);
 }
 
 

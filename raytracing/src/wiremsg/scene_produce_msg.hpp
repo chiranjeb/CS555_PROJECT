@@ -10,7 +10,7 @@ public:
     SceneProduceRequestMsg(SceneDescriptorPtr sceneDescriptorPtr) :
         WireMsg(MsgIdSceneProduceRequest), m_SceneDescriptorPtr(sceneDescriptorPtr)
     {
-        DEBUG_TRACE("MsgIdSceneProduceRequest: Constructor");
+        DEBUG_TRACE_WIRE_MSG("MsgIdSceneProduceRequest: Constructor");
         m_PackedMsgBufferLength = sizeof(uint8_t) * 32 * 1024;
         m_PackedMsgBuffer = (uint8_t *)malloc(m_PackedMsgBufferLength);
     }
@@ -29,7 +29,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     void Pack(std::ostream &ostrm)
     {
-        DEBUG_TRACE("SceneProduceRequestMsg:Pack");
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestMsg:Pack");
         WireMsg::Pack(ostrm);
         ostrm << m_NX << " ";
         ostrm << m_NY << " ";
@@ -98,7 +98,7 @@ public:
 
     ~SceneProduceRequestMsg()
     {
-        DEBUG_TRACE("SceneProduceRequestMsg: Destructor");
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestMsg: Destructor");
     }
 
     uint32_t m_NX;
@@ -124,7 +124,7 @@ public:
         uint32_t totalPackSizeinBytes = sizeof(*this) + 128 + m_BufferLength;
         m_PackedMsgBuffer = (uint8_t *)malloc(totalPackSizeinBytes);
         m_PackedMsgBufferLength = totalPackSizeinBytes;
-        DEBUG_TRACE("SceneSegmentProduceResponseMsg: Constructor: " << m_PackedMsgBufferLength);
+        DEBUG_TRACE_WIRE_MSG("SceneSegmentProduceResponseMsg: Constructor: " << m_PackedMsgBufferLength);
     }
 
     void UpdateValidBuffer(uint32_t validBufferLength)
@@ -146,7 +146,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     void Pack(std::ostream &ostrm)
     {
-        DEBUG_TRACE("SceneSegmentProduceResponseMsg:Pack");
+        DEBUG_TRACE_WIRE_MSG("SceneSegmentProduceResponseMsg:Pack");
         WireMsg::Pack(ostrm);
         ostrm << m_SceneId << " " << m_NumPixels << " " << m_ScenePixelOffset << " " << m_BufferLength << " ";
     }
@@ -176,7 +176,7 @@ public:
 
     ~SceneSegmentProduceResponseMsg()
     {
-        DEBUG_TRACE("SceneSegmentProduceResponseMsg: Destructor");
+        DEBUG_TRACE_WIRE_MSG("SceneSegmentProduceResponseMsg: Destructor");
     }
 
     std::pair<uint8_t *, uint32_t> GetSceneBuffer()
@@ -224,7 +224,7 @@ public:
     SceneProduceRequestAckMsg(int appTag, ErrorCode_t errorCode) :
         WireMsg(MsgIdSceneProduceRequestAck)
     {
-        DEBUG_TRACE("MsgIdSceneProduceRequest: Constructor");
+        DEBUG_TRACE_WIRE_MSG("MsgIdSceneProduceRequest: Constructor");
         SetAppTag(appTag);
         m_errorCode = errorCode;
     }
@@ -243,7 +243,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     void Pack(std::ostream &ostrm)
     {
-        DEBUG_TRACE("SceneProduceRequestAckMsg:Pack");
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestAckMsg:Pack");
         WireMsg::Pack(ostrm);
         ostrm << int(m_errorCode) << " ";
     }
@@ -270,7 +270,7 @@ public:
 
     ~SceneProduceRequestAckMsg()
     {
-        DEBUG_TRACE("SceneProduceRequestAckMsg: Destructor");
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestAckMsg: Destructor");
     }
 
     ErrorCode_t m_errorCode;
@@ -278,9 +278,60 @@ public:
 
 
 
+class SceneProduceCleanupMsg : public WireMsg
+{
+public:
+    /** 
+    * SceneProduceCleanupMsg message constructor
+    *  
+    */
+    SceneProduceCleanupMsg(std::size_t sceneId) :
+        WireMsg(MsgIdSceneProduceCleanup)
+    {
+        DEBUG_TRACE_WIRE_MSG("SceneProduceCleanupMsg: Constructor");
+        m_SceneId = sceneId;
+    }
+
+    /// Scene distribution message.
+    SceneProduceCleanupMsg() : WireMsg(MsgIdSceneProduceCleanup)
+    {
+        DEBUG_TRACE_WIRE_MSG("SceneProduceCleanupMsg: Constructor");
+    }
+
+    /// Custom Message serializer
+    void Pack(std::ostream &ostrm)
+    {
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestAckMsg:Pack");
+        WireMsg::Pack(ostrm);
+        ostrm << m_SceneId << " ";
+    }
+
+    /// Custom message deserializer
+    void Unpack(std::istream &istrm)
+    {
+        WireMsg::Unpack(istrm);
+        istrm >> m_SceneId;
+    }
+
+    std::size_t GetSceneId()
+    {
+        return m_SceneId;
+    }
+
+    ~SceneProduceCleanupMsg()
+    {
+        DEBUG_TRACE_WIRE_MSG("SceneProduceRequestAckMsg: Destructor");
+    }
+
+    std::size_t m_SceneId;
+};
+
+
 
 
 
 typedef std::shared_ptr<SceneProduceRequestMsg> SceneProduceRequestMsgPtr;
 typedef std::shared_ptr<SceneProduceRequestAckMsg> SceneProduceRequestAckMsgPtr;
+typedef std::shared_ptr<SceneProduceCleanupMsg> SceneProduceCleanupMsgPtr;
+
 

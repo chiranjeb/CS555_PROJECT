@@ -21,7 +21,7 @@ std::pair<uint8_t *, int> WireMsg::GetPackedBytes(uint8_t *pre_allocated_buffer,
 {
    if (m_PackedMsgBuffer == nullptr)
    {
-      //DEBUG_TRACE("m_PackedMsgBuffer is null" << std::hex << std::endl);
+      //DEBUG_TRACE_WIRE_MSG("m_PackedMsgBuffer is null" << std::hex << std::endl);
       PreAllocatedStreamBuffer streambuff(reinterpret_cast<char*>(pre_allocated_buffer), size);
       std::ostream ostrm(&streambuff);
       Pack(ostrm);
@@ -29,7 +29,7 @@ std::pair<uint8_t *, int> WireMsg::GetPackedBytes(uint8_t *pre_allocated_buffer,
    }
    else
    {
-      //DEBUG_TRACE("m_BufferValid:" << m_BufferValid << std::endl);
+      //DEBUG_TRACE_WIRE_MSG("m_BufferValid:" << m_BufferValid << std::endl);
       if (m_BufferValid)
       {
          return std::pair<uint8_t *, int>(m_PackedMsgBuffer, m_PackedMsgBufferLength);
