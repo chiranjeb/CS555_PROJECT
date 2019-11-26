@@ -13,6 +13,7 @@ struct PixelProduceRequest
    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset; }
    int GetAppTag() { return m_AppTag; }
    void SetupAppTag(int appTag) { m_AppTag = appTag;}
+   void SetThreadId(uint16_t threadId) { m_ThreadId = threadId; }
 
    uint16_t m_ThreadId;
    uint16_t m_startY;
@@ -38,6 +39,8 @@ public:
 
    /// Return number of request
    uint16_t GetNumRequests() { return m_NumRequest; }
+
+   PixelProduceRequest* Request(int index) { return &m_pPixelProduceRequest[index];}
 
    /// Generate Work order.
    void GenerateWork(int index, uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX)
@@ -79,6 +82,7 @@ protected:
    uint32_t m_NumRequest;
    uint32_t m_NX;
    uint32_t m_NY;
+   uint32_t m_NextRequestIndex;
 };
 
 

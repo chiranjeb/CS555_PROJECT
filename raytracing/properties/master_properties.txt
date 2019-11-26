@@ -1,7 +1,27 @@
+## This file contains configurable parameters for the master.
+
+## Machines where master will be running
 master_host=albany
+
+## This is the port where master will be listening to
 master_listening_port=8050
+
+## Master server connection backlogs
 master_server_listening_q_depth=40
-num_ray_scheduling_master_threads=32
+
+## Number of logical threads to schedule tasks
+num_ray_scheduling_master_threads=8
+
+## Q depth of the scheduling threads
 scheduling_thread_q_depth=128
+
+## Different scheduling policy: static => 0, dynamic => 1
+## static : The amount of work which will be assigned to each worker are predefined.
+## dynamic : The amount of work which will be assigned to each worker are dynamic.
 scheduling_policy=0
+
+## different static scheduling policy:  sequential => 0, random => 1,
+## sequential: A worker is assigned to sequential chunk of pixels for all the CPU threads.
+## random: A worker is assigned to random pixel chunks.
+static_scheduling_policy=0
 

@@ -6,19 +6,21 @@
 #include<map>
 
 class TCPIOConnection;
-class SceneScheduler : public Command
+class SceneSchedulerStatic : public Command
 {
 public:
-    SceneScheduler(BlockingMsgQPtr pQ) : Command(pQ)
+    /// Constructor
+    SceneSchedulerStatic(BlockingMsgQPtr pQ) : Command(pQ)
     {
     }
 
     /// Actual Scheduler thread
     void ProcessMsg(MsgPtr msg);
 
-    ~SceneScheduler()
+    /// Destructor
+    ~SceneSchedulerStatic()
     {
-        DEBUG_TRACE("***SceneScheduler - Destructor*****" << std::hex << this)
+        DEBUG_TRACE("***SceneSchedulerStatic - Destructor*****" << std::hex << this)
     }
 
 protected:
@@ -33,19 +35,12 @@ protected:
     void KickOffSceneScheduling();
 
 
-
+    /// attributes
     uint32_t m_NumPendingCompletionResponse;
-    std::map<std::string, bool> m_workOrder;
     TCPIOConnection *m_p_client_connection;
-    std::vector<std::string> m_workerList;
-
     std::size_t m_SceneId;
     uint32_t m_NX, m_NY;
     uint32_t m_TotalNumPixelsToProduce;
-    uint32_t m_CurrentPixelOffset;
-    uint32_t m_MultiRequestAppTag;
-
-    ListenerPtr m_LisPtr;
 };
 
-typedef std::shared_ptr<SceneScheduler> SceneSchedulerPtr;
+typedef std::shared_ptr<SceneSchedulerStatic> SceneSchedulerStaticPtr;

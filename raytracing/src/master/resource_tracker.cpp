@@ -39,7 +39,9 @@ uint32_t ResourceTracker::GetWorkEstimationForNewScene(uint32_t totalNumOfPixels
     }
     else
     {
-        return 0;
+        /// todo : for dynamic schedule, we can evaluate based on the current load about how much to schedule.
+        /// Let's give a flat 4096 number of pixels to begin with and then we will adjust.
+        return 2048 * m_total_num_hw_threads;
     }
 }
 

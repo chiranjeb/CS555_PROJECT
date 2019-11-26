@@ -1,4 +1,4 @@
-#include "scene_scheduler.hpp"
+#include "scene_scheduler_static.hpp"
 #include "transport/transport_mgr.hpp"
 #include "transport/transport_msgs.hpp"
 #include "transport/tcp_io_connection.hpp"
@@ -6,26 +6,31 @@
 #include "wiremsg/pixel_produce_msg.hpp"
 #include "ray_tracer/scene_descriptor.hpp"
 #include "resource_tracker.hpp"
+#include "master_scheduler.hpp"
+#include <iostream>
+#include <algorithm>
+#include <random>
+#include <chrono>
 
-void SceneScheduler::ProcessMsg(MsgPtr msg)
+void SceneSchedulerStatic::ProcessMsg(MsgPtr msg)
 {
     switch (msg->GetId())
     {
-       case MsgIdSceneProduceRequest:
-           OnSceneProduceRequestMsg(msg);
-           break;
+        case MsgIdSceneProduceRequest:
+            OnSceneProduceRequestMsg(msg);
+            break;
 
-       case MsgIdPixelProduceResponse:
-           OnPixelProduceResponseMsg(msg);
-           break;
+        case MsgIdPixelProduceResponse:
+            OnPixelProduceResponseMsg(msg);
+            break;
 
-       default:
-           break;
+        default:
+            break;
     }
 }
 
 
-void SceneScheduler::OnSceneProduceRequestMsg(MsgPtr msg)
+void SceneSchedulerStatic::OnSceneProduceRequestMsg(MsgPtr msg)
 {
     SceneProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<SceneProduceRequestMsg>(msg);
     std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
@@ -40,7 +45,7 @@ void SceneScheduler::OnSceneProduceRequestMsg(MsgPtr msg)
     int appTag = pRequestMsg->GetAppTag();
     pRequestMsg->SetAppTag(0);
 
-    ///j We need to reserialize the first few bytes....
+    ///We need to reserialize the first few bytes....
     pRequestMsg->Repack();
 
     /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
@@ -61,17 +66,31 @@ void SceneScheduler::OnSceneProduceRequestMsg(MsgPtr msg)
 
 
 
-void SceneScheduler::KickOffSceneScheduling()
+void SceneSchedulerStatic::KickOffSceneScheduling()
 {
     /// Now submit the pixel generation request.
-    m_CurrentPixelOffset = 0;
+    int currentPixelOffset = 0;
     m_TotalNumPixelsToProduce = m_NX * m_NY;
     m_NumPendingCompletionResponse = 0;
 
     uint32_t totalAvailableHwThreads = ResourceTracker::Instance().GetTotalNumberOfHwThreads();
     uint32_t numPixelsTobeSchehduled = ResourceTracker::Instance().GetWorkEstimationForNewScene(m_TotalNumPixelsToProduce);
-    uint32_t workloadInPixels = (numPixelsTobeSchehduled + totalAvailableHwThreads - 1) / totalAvailableHwThreads;
+    uint32_t pixelChunkSize = (numPixelsTobeSchehduled + totalAvailableHwThreads - 1) / totalAvailableHwThreads;
 
+    /// Prepare pixel chunk indexes.
+    std::vector<uint32_t> pixelChunkIndexArray;
+    for (int index = 0; index < totalAvailableHwThreads; index++)
+    {
+        pixelChunkIndexArray.push_back(index);
+    }
+
+    if (SchedulingPolicyParam::Get().m_StaticSchedulePolicy == SchedulingPolicyParam::STATIC_SCHEDULE_RANDOM_CHUNK_TO_WORKER)
+    {
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::shuffle(pixelChunkIndexArray.begin(), pixelChunkIndexArray.end(), std::default_random_engine(seed));
+    }
+
+    int currentPixelChunkIndex = 0;
     DEBUG_TRACE("m_NX:" << m_NX << ", m_NY:" << m_NY);
     std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
     for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
@@ -82,39 +101,52 @@ void SceneScheduler::KickOffSceneScheduling()
         PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
         for (int hwExecutionThreadId = 0; hwExecutionThreadId < numberOfHwExecutionThreadsForCurrentWorker; ++hwExecutionThreadId)
         {
-            uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).Y;
-            uint16_t startX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).X;
+            currentPixelOffset = pixelChunkIndexArray[currentPixelChunkIndex] * pixelChunkSize;
 
-            int workload = workloadInPixels;
-            if ((workerIndex == (workerList.size() - 1)) &&
-                (hwExecutionThreadId == (numberOfHwExecutionThreadsForCurrentWorker - 1)))
+            uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, currentPixelOffset).Y;
+            uint16_t startX = Pixel2XYMapper(m_NY, m_NX, currentPixelOffset).X;
+
+            int workload = pixelChunkSize;
+
+            if (SchedulingPolicyParam::Get().m_StaticSchedulePolicy == SchedulingPolicyParam::STATIC_SCHEDULE_RANDOM_CHUNK_TO_WORKER)
             {
-                workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
+                if (pixelChunkIndexArray[currentPixelChunkIndex] == (pixelChunkIndexArray.size() - 1))
+                {
+                    workload = m_TotalNumPixelsToProduce - currentPixelOffset;
+                }
+            }
+            else
+            {
+                if (currentPixelChunkIndex == (pixelChunkIndexArray.size() - 1))
+                {
+                    workload = m_TotalNumPixelsToProduce - currentPixelOffset;
+                }
             }
 
-            uint16_t startY = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).Y;
-            uint16_t endX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).X;
 
-            
-            RELEASE_TRACE( "Submitting Job to: "<< (workerList[workerIndex]->m_UniqueHostName + ":" + std::to_string(hwExecutionThreadId))  
-                           << "Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX 
-                           << ", endX:" << endX << "Num Pixels:" << workload);
+            uint16_t startY = Pixel2XYMapper(m_NY, m_NX, currentPixelOffset + workload - 1).Y;
+            uint16_t endX = Pixel2XYMapper(m_NY, m_NX, currentPixelOffset + workload - 1).X;
+
+
+            RELEASE_TRACE("Submitting Job to: " << (workerList[workerIndex]->m_UniqueHostName + ":" + std::to_string(hwExecutionThreadId))
+                          << "Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
+                          << ", endX:" << endX << "Num Pixels:" << workload);
 
             /// Update work set
-            pixelProduceRequestMsg->GenerateWork(hwExecutionThreadId, startY, startX,  endY, endX);
-            pixelProduceRequestMsg->SetPixelDomain(hwExecutionThreadId, m_CurrentPixelOffset, workload);
-
             int appTag = p_connection->AllocateAppTag();
-            pixelProduceRequestMsg->SetupAppTag(hwExecutionThreadId, appTag);
+            pixelProduceRequestMsg->Request(hwExecutionThreadId)->GenerateWork(startY, startX,  endY, endX);
+            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetPixelDomain(currentPixelOffset, workload);
+            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetupAppTag(appTag);
+            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetThreadId(hwExecutionThreadId);
+
             p_connection->RegisterNotification(appTag, m_MyLisPtr);
 
             /// Track the job
             ResourceTracker::Instance().TrackJob(workerList[workerIndex]->m_UniqueHostName, hwExecutionThreadId,
-                                                 m_SceneId, m_CurrentPixelOffset, workload);
+                                                 m_SceneId, currentPixelOffset, workload);
 
-            /// Update the pixel offset
-            m_CurrentPixelOffset += workloadInPixels;
             m_NumPendingCompletionResponse++;
+            currentPixelChunkIndex++;
         }
 
         /// Send scene production message. Now we will wait for the response.
@@ -125,9 +157,9 @@ void SceneScheduler::KickOffSceneScheduling()
 }
 
 
-void SceneScheduler::OnPixelProduceResponseMsg(MsgPtr msg)
+void SceneSchedulerStatic::OnPixelProduceResponseMsg(MsgPtr msg)
 {
-    DEBUG_TRACE_APPLICATION("SceneScheduler::OnPixelProduceResponseMsg:");
+    DEBUG_TRACE_APPLICATION("SceneSchedulerStatic::OnPixelProduceResponseMsg:");
 
     /// Pixel produce response message
     PixelProduceResponseMsgPtr pRespMsg = std::dynamic_pointer_cast<PixelProduceResponseMsg>(msg);

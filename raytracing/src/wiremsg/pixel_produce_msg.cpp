@@ -40,6 +40,7 @@ PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkL
    m_SceneId = sceneId;
    m_NumRequest = numWorkLoad;
    m_pPixelProduceRequest = (PixelProduceRequest *)malloc(sizeof(PixelProduceRequest) * m_NumRequest);
+   m_NextRequestIndex = 0;
    for (uint16_t index = 0; index < m_NumRequest; ++index)
    {
        m_pPixelProduceRequest[index].m_ThreadId = index;
