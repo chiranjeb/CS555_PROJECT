@@ -16,18 +16,20 @@ int main(int argc, char *argv[])
    int master_server_listening_q_d = std::stoi(properties["master_server_listening_q_depth"]);
    int scheduling_thread_q_depth = std::stoi(properties["scheduling_thread_q_depth"]);
    int scheduling_policy = std::stoi(properties["scheduling_policy"]);
-
+   int static_schedule_policy = std::stoi(properties["static_scheduling_policy"]);
    RELEASE_TRACE("[Master Properties] Starting master on: " << master_port);
    RELEASE_TRACE("[Master Properties] Number of scheduling threads: " << num_ray_scheduling_master_threads);
    RELEASE_TRACE("[Master Properties] Master server listening queue depth: " << master_server_listening_q_d);
    RELEASE_TRACE("[Master Properties] Master scheduling threadQ depth: " << scheduling_thread_q_depth);
-   RELEASE_TRACE("[Master Properties] Master scheduling policy: " << scheduling_policy);
+   RELEASE_TRACE("[Master Properties] Master scheduling policy(static-0, dynamic-1): " << scheduling_policy);
+   RELEASE_TRACE("[Master Properties] Master static schedule policy: " << static_schedule_policy);
+
+   /// Update scheduling policy.
+   SchedulingPolicyParam::Get().SetSchedulingPolicy(scheduling_policy);
+   SchedulingPolicyParam::Get().SetStaticSchedulingPolicy(static_schedule_policy);
 
    /// Initialize the master
-   Master::Instantiate(num_ray_scheduling_master_threads, scheduling_thread_q_depth, scheduling_policy);
-
-   /// Start the master
-   Master::Instance().Start();
+   Master::Instantiate(num_ray_scheduling_master_threads, scheduling_thread_q_depth);
 
    /// Create master server
    TransportMgr::Instance().CreateTCPServer(master_port, master_server_listening_q_d, Master::Instance().GetLis());

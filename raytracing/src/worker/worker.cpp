@@ -90,6 +90,17 @@ void Worker::Dump()
     {
         DEBUG_TRACE("SceneProduceRequestMsgPtr: " << iter->first << " " << iter->second.get());
     }
+
+    for (std::map<std::size_t, TCPIOConnection*>::iterator iter = m_SceneId2Connection.begin(); iter != m_SceneId2Connection.end(); ++iter)
+    {
+        DEBUG_TRACE("m_SceneId2Connection: " << iter->first << " " << iter->second);
+    }
+
+    for (std::map<std::string, std::size_t>::iterator iter = m_Client2SceneId.begin(); iter != m_Client2SceneId.end(); ++iter)
+    {
+        DEBUG_TRACE("m_Client2SceneId: " << iter->first << " " << iter->second);
+    }
+    
     DEBUG_TRACE("Dump::End");
 }
 
@@ -210,7 +221,7 @@ void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
     {
         UniqueServerId serverId(p_responseMsg->GetServerAddress(), p_responseMsg->GetServerPort());
         std::size_t sceneId = m_Client2SceneId[serverId.toString()];
-        m_SceneId2Connection.insert(std::pair<std::size_t, TCPIOConnection *>(sceneId, p_responseMsg->GetConnection()));
+        m_SceneId2Connection.insert(std::pair<std::size_t, TCPIOConnection* >(sceneId, p_responseMsg->GetConnection()));
 
         /// Get all the pixel producers waiting for connection setup
         auto it = m_WaitersForConnectionSetup.equal_range(sceneId);
@@ -279,7 +290,8 @@ void Worker::OnPixelProduceRequestMsg(MsgPtr msg)
 {
     /// Now we will start producing pixels for which we have already established all the contexts.
     PixelProduceRequestMsgPtr requestMsgPtr  = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
-    TCPIOConnection *pConnection = m_SceneId2Connection[requestMsgPtr->GetSceneId()];
+    auto it = m_SceneId2Connection.find(requestMsgPtr->GetSceneId());    
+    TCPIOConnection *pConnection = (it == m_SceneId2Connection.end()) ? nullptr: it->second ;
     for (int index = 0; index < requestMsgPtr->GetNumRequests(); ++index)
     {
         PixelProduceRequest *pRequest = requestMsgPtr->GetRequest(index);

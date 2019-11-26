@@ -136,7 +136,7 @@ public:
 
     MsgQEntry TakeNext()
     {
-        return m_RequestQ.get()->Take();
+        return m_RequestQ->Take();
     }
 
     /// Unhandled message

@@ -24,8 +24,6 @@ protected:
 
    void OnPixelProduceRequestMsg(MsgPtr msg);
 
-   void OnSceneProduceDone(MsgPtr msg);
-
    TCPIOConnection *m_p_clientConnection;
    TCPIOConnection *m_pConnectionToMaster;
 

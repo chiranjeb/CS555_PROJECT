@@ -6,7 +6,8 @@
 #include "wiremsg/worker_registration_msg.hpp"
 #include "wiremsg/scene_produce_msg.hpp"
 #include "ray_tracer/scene_descriptor.hpp"
-#include "scene_scheduler.hpp"
+#include "scene_scheduler_static.hpp"
+#include "scene_scheduler_dynamic.hpp"
 
 namespace
 {
@@ -26,6 +27,7 @@ MasterSchedulerThread::MasterSchedulerThread(int scheduling_thread_q_depth) : Ms
 
 void MasterSchedulerThread::Start()
 {
+   DEBUG_TRACE("Tid: " << std::hex << std::this_thread::get_id() << ", MasterSchedulerThread::Start(" << std::hex << this << ")");
    m_thread = new std::thread(&MasterSchedulerThread::Run, *this);
 }
 
@@ -34,7 +36,8 @@ void MasterSchedulerThread::Run()
    while (1)
    {
       MsgQEntry msgQEntry = TakeNext();
-      RELEASE_TRACE("MasterSchedulerThread::Run("<< std::hex << this << ") - Received MsgId: " << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
+      RELEASE_TRACE("Tid: " << std::hex << std::this_thread::get_id() << ", MasterSchedulerThread::Run(" << std::hex << this << ") - Received MsgId: "
+                      << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
       MsgPtr msgPtr = msgQEntry.m_Msg;
       if (msgQEntry.m_Cmd.get() != nullptr)
       {
@@ -105,16 +108,17 @@ void MasterSchedulerThread::OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr)
    DEBUG_TRACE_APPLICATION("MasterSchedulerThread::OnSceneProduceRequestMsg" << std::hex << this);
 
    // Check current scheduling policy. Create a command and attach it to this Q.
+    CommandPtr cmdPtr(nullptr);
    if (SchedulingPolicyParam::Get().ConfiguredAsStaticScheduler())
    {
-      SceneSchedulerPtr cmdPtr = std::make_shared<SceneScheduler>(GetListeningQ());
-      cmdPtr->SaveMemento(cmdPtr);
-      cmdPtr->ProcessMsg(wireMsgPtr);
+        cmdPtr = std::make_shared<SceneSchedulerStatic>(GetListeningQ());
    }
    else
    {
-      /// dynamic scheduling code goes here
+        cmdPtr = std::make_shared<SceneSchedulerDynamic>(GetListeningQ());
    }
+    cmdPtr->SaveMemento(cmdPtr);
+    cmdPtr->ProcessMsg(wireMsgPtr);
 }
 
 
@@ -146,10 +150,9 @@ void Master::Start()
    }
 }
 
-void Master::Instantiate(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth, int scheduling_policy)
+void Master::Instantiate(int num_ray_scheduling_master_threads, int scheduling_thread_q_depth)
 {
    g_pMaster = new Master(num_ray_scheduling_master_threads, scheduling_thread_q_depth);
-   g_SchedulingPolicyParam.m_Policy = scheduling_policy;
    g_pMaster->Start();
 }
 

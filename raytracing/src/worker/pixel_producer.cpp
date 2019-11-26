@@ -64,19 +64,11 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 
     // Send the response to the master scheduler.
     PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(),
-                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_NumPixels,
-                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_ScenePixelOffset,
+                                                                                   pRequestMsg->GetNumPixels(m_requestIndex),
+                                                                                   pRequestMsg->GetScenePixelOffset(m_requestIndex),
                                                                                    pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
     respMsg->SetAppTag(pRequestMsg->GetRequest(m_requestIndex)->m_AppTag);
     m_pConnectionToMaster->SendMsg(respMsg, ListenerPtr(nullptr));
 }
-
-
-
-void PixelProducer::OnSceneProduceDone(MsgPtr msg)
-{
-}
-
-
 
 
