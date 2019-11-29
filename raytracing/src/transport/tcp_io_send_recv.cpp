@@ -7,7 +7,7 @@
 
 void TCPIOSender::Run()
 {
-    RELEASE_TRACE("Started TCPIOSender::Run thread.");
+    DEBUG_TRACE("Started TCPIOSender::Run thread.");
     while (1)
     {
         m_State = STATE_RUNNING;
@@ -98,7 +98,7 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
 
 void TCPIOReceiver::Run()
 {
-    RELEASE_TRACE("TCPIOReceiver::Run");
+    DEBUG_TRACE("TCPIOReceiver::Run");
     while (true)
     {
         // transfer the length first

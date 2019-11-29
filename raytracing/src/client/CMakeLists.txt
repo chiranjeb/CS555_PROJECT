@@ -1,4 +1,5 @@
 list(APPEND RAY_TRACER_CLIENT_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/client.cpp
+	${CMAKE_CURRENT_LIST_DIR}/scene_writer.cpp
 	)
 

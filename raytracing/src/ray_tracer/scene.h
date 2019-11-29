@@ -124,8 +124,8 @@ hitable* myScene(camera& cam, int& nx, int& ny, int& ns)
   nx = 64;
   ny = 64;
 
-  //nx = 4096;
-  //ny = 4096;
+  nx = 4096;
+  ny = 4096;
 
   ns = 20; 
   int n = 0;

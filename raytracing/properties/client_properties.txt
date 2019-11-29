@@ -1,0 +1,8 @@
+## This file contains configurable parameters for the client
+
+## Client server connection backlogs
+client_server_listening_q_depth=256
+
+## Q depth of the scheduling threads
+client_thread_q_depth=4096
+

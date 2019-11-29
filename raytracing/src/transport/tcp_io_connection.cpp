@@ -75,7 +75,7 @@ void TCPIOConnection::RegisterNotification(int appTag, ListenerPtr plis)
 void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis)
 {
     MsgPtr msg(nullptr);
-    RELEASE_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
+    DEBUG_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
     if ((p_lis.get() != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
     {
         RegisterNotification(wireMsg.get()->GetAppTag(), p_lis);

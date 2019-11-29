@@ -3,34 +3,26 @@
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
 #include "wiremsg/scene_produce_msg.hpp"
-#include <fstream>
+#include "scene_writer.hpp"
 
 class TCPIOConnection;
 class Client : public MsgQThread
 {
-    static const int WORKER_CMD_PROCESSOR_MSG_Q_DEPTH = 128;
 public:
-    Client() : MsgQThread("Client", WORKER_CMD_PROCESSOR_MSG_Q_DEPTH)
-    {
-    }
+    /// Instantiate the Client
+    static void Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name);
+    
+    /// Return the singleton instance of the client.
+    static Client& Instance();
 
-    /// Get the Worker
-    static Client &Instance()
+protected:
+    /// Client constructor
+    Client(int clientThreadQDepth) : MsgQThread("Client", clientThreadQDepth)
     {
-        static Client s_Client;
-        return s_Client;
     }
 
     /// Start the worker thread
     void Start();
-
-    /// setup scene name.
-    void SetupSceneName(std::string scene_name);
-
-    /// Setup master info
-    void SetupMasterInfo(std::string master_address, int master_port);
-
-protected:
 
     /// Run the worker thread
     void Run();
@@ -49,6 +41,9 @@ protected:
     /// Scene segment produce response message
     void OnSceneSegmentProduceRespMsg(MsgPtr msg);
 
+    /// Scene file close response.
+    void OnSceneFileCloseResponse(MsgPtr msg);
+
     TCPIOConnection *m_p_ConnectionToMaster;
     std::string m_master_address;
     int m_master_port;
@@ -59,8 +54,13 @@ protected:
     uint32_t m_CurrentPixelToWrite;
     uint32_t m_SceneSizeInPixels;
 
+    CommandPtr  m_SceneWriterPtr;
+    BlockingMsgQPtr m_SceneWriterMsgQ;
 
     // scene segment response
     std::set<MsgPtr, SceneSegmentProduceResponseMsgCompare> m_SceneSegmentResponseSet;
+
+
+    static std::mutex m_Mutex;
 
 };
