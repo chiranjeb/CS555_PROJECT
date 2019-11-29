@@ -7,191 +7,261 @@
 #include <functional>
 
 
+WorkerThread *g_pWorkerThread;
+Client *m_pClient = nullptr;
+std::mutex Client::m_Mutex;
 
-// file stream pointer
-std::ofstream m_file_output_stream;
-
-void Client::SetupSceneName(std::string scene_name)
+////////////////////////////////////////////////////////////////////////////////////////
+/// Return the singletone instance of the client
+///
+///////////////////////////////////////////////////////////////////////////////////////
+Client& Client::Instance()
 {
-   m_scene_name = scene_name;
+    return  *m_pClient;
 }
 
-/// Setup master info
-void Client::SetupMasterInfo(std::string master_address, int master_port)
+////////////////////////////////////////////////////////////////////////////////////////
+/// Instantiate client
+///
+///////////////////////////////////////////////////////////////////////////////////////
+void Client::Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name)
 {
-   m_master_address = master_address;
-   m_master_port = master_port;
+    std::unique_lock<std::mutex> lck(m_Mutex);
+    if (m_pClient == nullptr)
+    {
+        m_pClient = new Client(clientThreadQDepth);
+        m_pClient->m_master_address = master_address;
+        m_pClient->m_master_port = master_port;
+        m_pClient->m_scene_name = scene_name;
+        m_pClient->m_SceneWriterMsgQ = std::make_shared<BlockingQueue<MsgQEntry> >(clientThreadQDepth);
+        m_pClient->Start();
+    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Client response handler main thread
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::Run()
 {
-   RELEASE_TRACE("Started Client thread");
-   while (1)
-   {
-      MsgQEntry msgQEntry = TakeNext();
-      MsgPtr msgPtr = msgQEntry.m_Msg;
-      DEBUG_TRACE("Client ProcessMsg: " << std::hex << msgQEntry.m_Msg.get()->GetId());
-      if (msgQEntry.m_Cmd.get() != nullptr)
-      {
-         msgQEntry.m_Cmd.get()->ProcessMsg(msgQEntry.m_Msg);
-      }
-      else
-      {
-         switch (msgQEntry.m_Msg.get()->GetId())
-         {
-            case MsgIdServerConstructResponse:
-               {
-                  OnCreateServerResponse(msgQEntry.m_Msg);
-                  break;
-               }
-            case MsgIdConnectionEstablishmentResponse:
-               {
-                  OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
-                  break;
-               }
-            case MsgIdSceneProduceRequestAck:
-               {
-                  OnSceneProduceRequestAckMsg(msgQEntry.m_Msg);
-                  break;
-               }
-            case MsgIdSceneSegmentProduceResponse:
-               {
-                  OnSceneSegmentProduceRespMsg(msgQEntry.m_Msg);
-                  break;
-               }
+    DEBUG_TRACE("Started Client thread");
+    while (1)
+    {
+        MsgQEntry msgQEntry = TakeNext();
+        MsgPtr msgPtr = msgQEntry.m_Msg;
+        DEBUG_TRACE("Tid: " << std::hex << std::this_thread::get_id() << ", Client::Run(" << std::hex << this << ") - Received MsgId: "
+                    << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
+        if (msgQEntry.m_Cmd.get() != nullptr)
+        {
+            msgQEntry.m_Cmd.get()->ProcessMsg(msgQEntry.m_Msg);
+        }
+        else
+        {
+            switch (msgQEntry.m_Msg->GetId())
+            {
+               case MsgIdServerConstructResponse:
+                   {
+                       OnCreateServerResponse(msgQEntry.m_Msg);
+                       break;
+                   }
+               case MsgIdConnectionEstablishmentResponse:
+                   {
+                       OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
+                       break;
+                   }
+               case MsgIdSceneProduceRequestAck:
+                   {
+                       OnSceneProduceRequestAckMsg(msgQEntry.m_Msg);
+                       break;
+                   }
+               case MsgIdSceneSegmentProduceResponse:
+                   {
+                       OnSceneSegmentProduceRespMsg(msgQEntry.m_Msg);
+                       break;
+                   }
 
-            case MsgIdTCPRecv:
-               {
-                  OnTCPRecvMsg(msgQEntry.m_Msg);
-                  break;
-               }
+               case MsgIdSceneFileCloseResponse:
+                   {
+                       OnSceneFileCloseResponse(msgQEntry.m_Msg);
+                       break;
+                   }
 
-            default:
-               break;
-         }
-      }
-   }
+               case MsgIdTCPRecv:
+                   {
+                       OnTCPRecvMsg(msgQEntry.m_Msg);
+                       break;
+                   }
+
+               default:
+                   break;
+            }
+        }
+    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Unsolicited response handler. All  pixel generation response from workers
+/// are handled as unsolicited response to simplify things.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnTCPRecvMsg(MsgPtr msg)
 {
-   DEBUG_TRACE("On TCP Recv Message(this:" << std::hex << this << ")");
-   TCPRecvMsg *p_recvMsg =  static_cast<TCPRecvMsg *>(msg.get());
-   WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
+    DEBUG_TRACE("On TCP Recv Message(this:" << std::hex << this << ")");
+    std::shared_ptr<TCPRecvMsg> p_recvMsg =  std::dynamic_pointer_cast<TCPRecvMsg>(msg);
+    WireMsgPtr wireMsgPtr = p_recvMsg->GetWireMsg();
 
-   switch (wireMsgPtr.get()->GetId())
-   {
-      case MsgIdSceneSegmentProduceResponse:
-         {
-            OnSceneSegmentProduceRespMsg(wireMsgPtr);
-            break;
-         }
-      default:
-         break;
-   }
+    switch (wireMsgPtr->GetId())
+    {
+       case MsgIdSceneSegmentProduceResponse:
+           {
+               OnSceneSegmentProduceRespMsg(wireMsgPtr);
+               break;
+           }
+       default:
+           break;
+    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Start the client thread
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::Start()
 {
-   m_thread = new std::thread(&Client::Run, *this);
+    g_pWorkerThread = new WorkerThread("File-writer", m_SceneWriterMsgQ);
+    g_pWorkerThread->Start();
+    m_thread = new std::thread(&Client::Run, *this);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Client server start response handler
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnCreateServerResponse(MsgPtr msg)
 {
-   DEBUG_TRACE("Worker::OnCreateServerResponse");
-   TCPServerConstructStatusMsg *p_responseMsg =  static_cast<TCPServerConstructStatusMsg *>(msg.get());
-   m_listening_port  = p_responseMsg->GetPort();
+    DEBUG_TRACE("Worker::OnCreateServerResponse");
+    TCPServerConstructStatusMsg *p_responseMsg =  static_cast<TCPServerConstructStatusMsg *>(msg.get());
+    m_listening_port  = p_responseMsg->GetPort();
 
-   // Let's establish a connection
-   TransportMgr::Instance().EstablishNewConnection(m_master_address, m_master_port, GetThrdListener(), true);
+    /// Let's establish a connection
+    TransportMgr::Instance().EstablishNewConnection(m_master_address, m_master_port, GetThrdListener(), true);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Connection establishment(to master) response handler
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
 {
-   RELEASE_TRACE("Successfully established connection");
-   TCPConnectionEstablishRespMsg *p_responseMsg =  static_cast<TCPConnectionEstablishRespMsg *>(msg.get());
-   m_p_ConnectionToMaster = p_responseMsg->GetConnection();
-   SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_scene_name);
+    DEBUG_TRACE("Successfully established connection");
+    TCPConnectionEstablishRespMsg *p_responseMsg =  static_cast<TCPConnectionEstablishRespMsg *>(msg.get());
+    m_p_ConnectionToMaster = p_responseMsg->GetConnection();
+    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_scene_name);
 
-   // Create the output file pointer.
-   m_file_output_stream.open(m_scene_name + ".ppm");
+    /// scene size in pixels.
+    m_SceneSizeInPixels = sceneDescriptorPtr->GetNX() * sceneDescriptorPtr->GetNY();
 
+    /// Create a scene writer.
+    m_SceneWriterPtr = std::make_shared<SceneWriter>(m_SceneWriterMsgQ, m_scene_name, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
 
-   m_SceneSizeInPixels = sceneDescriptorPtr->GetNX() * sceneDescriptorPtr->GetNY();
+    /// Create the scene produce request message.
+    SceneProduceRequestMsgPtr requestMsg = std::make_shared<SceneProduceRequestMsg>(sceneDescriptorPtr);
 
-   /// write header
-   m_file_output_stream << "P3\n" << sceneDescriptorPtr->GetNX() << " " << sceneDescriptorPtr->GetNY() << "\n255\n";
+    time_t _tm = time(NULL);
+    struct tm *curtime = localtime(&_tm);
+    std::size_t scene_id = std::hash<std::string>
+    {}
+    (m_scene_name + asctime(curtime));
 
-   // Create the scene produce request message.
-   SceneProduceRequestMsgPtr requestMsg = std::make_shared<SceneProduceRequestMsg>(sceneDescriptorPtr);
+    requestMsg->SetSceneId(scene_id);
 
-   time_t _tm = time(NULL);
-   struct tm *curtime = localtime(&_tm);
-   std::size_t scene_id = std::hash<std::string>
-   {}
-   (m_scene_name + asctime(curtime));
-
-   requestMsg->SetSceneId(scene_id);
-
-   DEBUG_TRACE("sceneDescriptorPtr->GetNY():" << sceneDescriptorPtr->GetNY() << "sceneDescriptorPtr->GetNX():" << sceneDescriptorPtr->GetNX());
-   requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
-   requestMsg->SetAnswerBackAddress(TransportMgr::Instance().MyName(), m_listening_port);
-   requestMsg->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
-   m_p_ConnectionToMaster->SendMsg(requestMsg, GetThrdListener());
+    DEBUG_TRACE("sceneDescriptorPtr->GetNY():" << sceneDescriptorPtr->GetNY() << "sceneDescriptorPtr->GetNX():" << sceneDescriptorPtr->GetNX());
+    requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
+    requestMsg->SetAnswerBackAddress(TransportMgr::Instance().MyName(), m_listening_port);
+    requestMsg->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
+    m_p_ConnectionToMaster->SendMsg(requestMsg, GetThrdListener());
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Scene Produce request acknowledgement request[from master] handler
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
 {
-   RELEASE_TRACE("Client::OnSceneProduceRequestAckMsg");
-   WireMsgPtr respMsgPtr = std::dynamic_pointer_cast<WireMsg>(msg);
-   respMsgPtr->GetConnection()->FreeAppTag(respMsgPtr->GetAppTag());
+    DEBUG_TRACE("Client::OnSceneProduceRequestAckMsg");
+    WireMsgPtr respMsgPtr = std::dynamic_pointer_cast<WireMsg>(msg);
+    respMsgPtr->GetConnection()->FreeAppTag(respMsgPtr->GetAppTag());
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Scene segment produce response [from client] handler
+///
+///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 {
-   SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
-   RELEASE_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
+    SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
+    RELEASE_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
-   if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
-   {
-      RELEASE_TRACE("m_CurrentPixelToWrite:" << m_CurrentPixelToWrite << "respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
+    if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
+    {
+        DEBUG_TRACE("m_CurrentPixelToWrite:" << m_CurrentPixelToWrite << "respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
-      // write out the file.
-      std::pair<uint8_t *, uint32_t> sceneSegmentBuffer = respMsgPtr->GetSceneBuffer();
-      m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
-      m_CurrentPixelToWrite += respMsgPtr->GetNumPixels();
+        /// Send file write request
+        m_SceneWriterMsgQ->Put(MsgQEntry(respMsgPtr, m_SceneWriterPtr));
+        m_CurrentPixelToWrite += respMsgPtr->GetNumPixels();
 
-      // The pixels are produced in the final format which contains space and end lines. We can remove them and transfer over
-      // the network to reduce network I/O. For time being, let's just stich using the final format.
-      for (std::set<MsgPtr>::iterator iter = m_SceneSegmentResponseSet.begin(); iter != m_SceneSegmentResponseSet.end();)
-      {
-         SceneSegmentProduceResponseMsgPtr segmentMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>((*iter));
-         if (segmentMsgPtr->GetScenePixelOffset() == m_CurrentPixelToWrite)
-         {
-            sceneSegmentBuffer = segmentMsgPtr->GetSceneBuffer();
-            m_file_output_stream.write(reinterpret_cast<char *>(sceneSegmentBuffer.first), sceneSegmentBuffer.second);
-            m_CurrentPixelToWrite += segmentMsgPtr->GetNumPixels();
+        /// The pixels are produced in the final format which contains space and end lines. We can remove them and transfer over
+        /// the network to reduce network I/O. For time being, let's just stich using the final format.
+        for (std::set<MsgPtr>::iterator iter = m_SceneSegmentResponseSet.begin(); iter != m_SceneSegmentResponseSet.end();)
+        {
+            SceneSegmentProduceResponseMsgPtr segmentMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>((*iter));
+            if (segmentMsgPtr->GetScenePixelOffset() == m_CurrentPixelToWrite)
+            {
+                m_SceneWriterMsgQ->Put(MsgQEntry(segmentMsgPtr, m_SceneWriterPtr));
+                m_CurrentPixelToWrite += segmentMsgPtr->GetNumPixels();
 
-            iter = m_SceneSegmentResponseSet.erase(iter);
-         }
-         else
-         {
-            iter++;
-         }
-      }
+                iter = m_SceneSegmentResponseSet.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
+        }
 
-      if (m_CurrentPixelToWrite == m_SceneSizeInPixels)
-      {
-         // We are done. close connections and exit.
-         RELEASE_TRACE("Successfully produced the image.");
-         m_file_output_stream.close();
-         exit(0);
-      }
-   }
-   else
-   {
-      // We can get out of order response.. So, we need to handle this carefully. Keep it in sorted
-      // based on the offset and release it as soon as we have enough sequential stuff.
-      m_SceneSegmentResponseSet.insert(respMsgPtr);
-   }
+        if (m_CurrentPixelToWrite == m_SceneSizeInPixels)
+        {
+            /// We are done. close connections and exit.
+            m_SceneWriterMsgQ->Put(MsgQEntry(std::make_shared<Msg>(MsgIdSceneFileCloseRequest), m_SceneWriterPtr));
+        }
+    }
+    else
+    {
+        /// We can get out of order response.. So, we need to handle this carefully. Keep it in sorted
+        /// based on the offset and release it as soon as we have enough sequential stuff.
+        m_SceneSegmentResponseSet.insert(respMsgPtr);
+    }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Final response handler from scene writer
+///
+///////////////////////////////////////////////////////////////////////////////////////
+void Client::OnSceneFileCloseResponse(MsgPtr msg)
+{
+    RELEASE_TRACE("Successfully produced the image.");
+    /// NOTE :  We are not cleaning things up interms of shutting down threads and freeing
+    /// some dynamically allocated memory explicitly. Exiting from the program will
+    /// automatically return the resources to the system.
+    exit(0);
+}
+

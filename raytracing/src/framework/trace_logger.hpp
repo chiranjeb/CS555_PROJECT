@@ -5,7 +5,7 @@
 #include <sstream>
 
 /// Set this to 1 to turn off all the DEBUG STREAMS.
-#define RELEASE_BUILD 0
+#define RELEASE_BUILD 1
 #define VERVOSE_BUILD 0
 #define ENABLE_TRANSPORT_DEBUG_TRACE 0
 #define ENABLE_APPLICATION_DEBUG_TRACE 0

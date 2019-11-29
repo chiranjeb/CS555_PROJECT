@@ -29,6 +29,7 @@ WireMsgPtr WireMsgFactory::ConstructMsg(uint8_t *buffer, int dataLength)
 
     switch (msgId)
     {
+#if !defined(__Make_client)
        case MsgIdWorkerRegistrationRequest:
            wireMsg = std::make_shared<WorkerRegistrationMsg>();
            break;
@@ -36,7 +37,7 @@ WireMsgPtr WireMsgFactory::ConstructMsg(uint8_t *buffer, int dataLength)
        case MsgIdWorkerRegistrationResponse:
            wireMsg = std::make_shared<WorkerRegistrationRespMsg>();
            break;
-
+#endif
        case MsgIdSceneProduceRequest:
            wireMsg = std::make_shared<SceneProduceRequestMsg>();
            break;

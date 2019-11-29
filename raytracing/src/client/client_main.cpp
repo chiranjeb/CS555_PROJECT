@@ -8,28 +8,40 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-   // Setup master info
-   std::string master_properties = argv[1];
-   PropertiesReader  properties(master_properties);
-   std::string master_address = properties["master_host"];
-   int master_port = std::stoi(properties["master_listening_port"]);
-   Client::Instance().SetupMasterInfo(master_address, master_port);
+    if (argc == 4)
+    {
+       /// Read master server address
+       std::string master_properties_file = argv[1];
+       PropertiesReader  master_properties(master_properties_file);
+       std::string master_address = master_properties["master_host"];
+       int master_port = std::stoi(master_properties["master_listening_port"]);
+       RELEASE_TRACE("Master server and port address: " << master_address << "," << master_port);
 
 
-   std::string scene_name = argv[2];
-   Client::Instance().SetupSceneName(scene_name);
+       std::string worker_properties_file_name = argv[2];
+       PropertiesReader  worker_properties(worker_properties_file_name);
+       int client_thread_q_depth = std::stoi(worker_properties["client_thread_q_depth"]);
+       int client_server_listening_q_depth = std::stoi(worker_properties["client_server_listening_q_depth"]);
 
-   // Start the worker.
-   Client::Instance().Start();
+       /// Instantiate and start the client
+       std::string scene_name = argv[3];
+       RELEASE_TRACE("[Client Properties] Client server listening queue depth: " << client_server_listening_q_depth);
+       RELEASE_TRACE("[Client Properties] Client threadQ depth: " << client_thread_q_depth);
+       RELEASE_TRACE("Producing scene: " << scene_name);
+       Client::Instance().Instantiate(master_address, master_port, client_thread_q_depth, scene_name);
 
-   // Start a server
-   const int SERVER_LISTENING_Q_DEPTH = 10;
-   TransportMgr::Instance().CreateTCPServer(0, SERVER_LISTENING_Q_DEPTH, Client::Instance().GetThrdListener());
+       /// Start the client server where the pixels will be sent to
+       TransportMgr::Instance().CreateTCPServer(0, client_server_listening_q_depth, Client::Instance().GetThrdListener());
 
-   while (1)
-   {
-      //put the main thread to sleep.
-      std::this_thread::sleep_for(std::chrono::milliseconds(60000));
-   }
+       /// Put the main thread to sleep.
+       while (1)
+       {
+          std::this_thread::sleep_for(std::chrono::milliseconds(60000));
+       }
+    }
+    else
+    {
+        RELEASE_TRACE("Usage: ./build/client properties/master_properties.txt properties/client_properties.txt <scene_name> ");
+    }
 }
 
