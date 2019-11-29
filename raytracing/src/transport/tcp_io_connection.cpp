@@ -152,7 +152,7 @@ int TCPIOConnection::MakeConnection(std::string& server, int serverPort, bool re
     {
         do
         {
-            DEBUG_TRACE("Attempting to connect: " << server << ", port:" << serverPort);
+            RELEASE_TRACE("Attempting to connect: " << server << ", port:" << serverPort);
             m_socket = socket(AF_INET, SOCK_STREAM, 0);
             if (m_socket == -1) //socket failed
             {
