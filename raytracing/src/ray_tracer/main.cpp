@@ -133,7 +133,6 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
          }
          col /= float(ns);
          col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
-         if (col[0] > 1 || col[2] > 1 || col[3] > 1) cout << "there is a problem here: " << i << endl;
          short int ir = 255.99 * col[0];
          short int ig = 255.99 * col[1];
          short int ib = 255.99 * col[2];
