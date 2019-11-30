@@ -93,12 +93,14 @@ public:
       SceneDescriptor *pDescriptor = sceneDescriptorPtr.get();
       camera& cam = *pDescriptor->m_Camera.get();
 
+       /// save the dimensions and rays per pixel
+       pDescriptor->m_nX = nx;
+       pDescriptor->m_nY = ny;
+       pDescriptor->m_RPP = ns;
+
       /// Lets create get our scene.
       extern hitable* myScene(camera& cam, int& nx, int& ny, std::string scene_name);
       hitable *world = myScene(cam, pDescriptor->m_nX, pDescriptor->m_nY, scene_name);
-
-      /// save the rays per pixel
-      pDescriptor->m_RPP = ns;
 
       /// Now save the hitable list
       pDescriptor->m_HitableList = HitablePtr(world);
