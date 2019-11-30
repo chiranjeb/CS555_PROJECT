@@ -39,10 +39,8 @@ brill
 bugatti
 bullhead
 buttermilk
-butternut
 buzz
 cairo
-capn
 carson-city
 char
 charleston

@@ -20,6 +20,7 @@ struct PixelProduceRequest
    uint16_t m_startX;
    uint16_t m_endY;
    uint16_t m_endX;
+   uint32_t m_RPP;
    uint32_t m_NumPixels;
    uint32_t m_ScenePixelOffset;
    int m_AppTag;

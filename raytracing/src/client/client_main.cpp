@@ -8,7 +8,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if (argc == 4)
+    if (argc == 7)
     {
        /// Read master server address
        std::string master_properties_file = argv[1];
@@ -17,18 +17,21 @@ int main(int argc, char *argv[])
        int master_port = std::stoi(master_properties["master_listening_port"]);
        RELEASE_TRACE("Master server and port address: " << master_address << "," << master_port);
 
-
        std::string worker_properties_file_name = argv[2];
-       PropertiesReader  worker_properties(worker_properties_file_name);
-       int client_thread_q_depth = std::stoi(worker_properties["client_thread_q_depth"]);
-       int client_server_listening_q_depth = std::stoi(worker_properties["client_server_listening_q_depth"]);
+       PropertiesReader  client_properties(worker_properties_file_name);
+       int client_thread_q_depth = std::stoi(client_properties["client_thread_q_depth"]);
+       int client_server_listening_q_depth = std::stoi(client_properties["client_server_listening_q_depth"]);
 
        /// Instantiate and start the client
-       std::string scene_name = argv[3];
+        std::string scene_name = argv[3];
+        std::uint32_t width = stoi(argv[4]);
+        std::uint32_t height = stoi(argv[5]);
+        std::uint32_t rpp = stoi(argv[6]);
+
        RELEASE_TRACE("[Client Properties] Client server listening queue depth: " << client_server_listening_q_depth);
        RELEASE_TRACE("[Client Properties] Client threadQ depth: " << client_thread_q_depth);
        RELEASE_TRACE("Producing scene: " << scene_name);
-       Client::Instance().Instantiate(master_address, master_port, client_thread_q_depth, scene_name);
+       Client::Instance().Instantiate(master_address, master_port, client_thread_q_depth, scene_name, width, height, rpp);
 
        /// Start the client server where the pixels will be sent to
        TransportMgr::Instance().CreateTCPServer(0, client_server_listening_q_depth, Client::Instance().GetThrdListener());

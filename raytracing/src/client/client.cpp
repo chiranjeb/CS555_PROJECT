@@ -24,7 +24,8 @@ Client& Client::Instance()
 /// Instantiate client
 ///
 ///////////////////////////////////////////////////////////////////////////////////////
-void Client::Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name)
+void Client::Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name,
+                         std::uint32_t width, std::uint32_t height, std::uint32_t rpp)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
     if (m_pClient == nullptr)
@@ -33,6 +34,9 @@ void Client::Instantiate(std::string master_address, int master_port, int client
         m_pClient->m_master_address = master_address;
         m_pClient->m_master_port = master_port;
         m_pClient->m_scene_name = scene_name;
+        m_pClient->m_width = width;
+        m_pClient->m_height = height;
+        m_pClient->m_rpp = rpp;
         m_pClient->m_SceneWriterMsgQ = std::make_shared<BlockingQueue<MsgQEntry> >(clientThreadQDepth);
         m_pClient->Start();
     }
@@ -161,7 +165,7 @@ void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
     DEBUG_TRACE("Successfully established connection");
     TCPConnectionEstablishRespMsg *p_responseMsg =  static_cast<TCPConnectionEstablishRespMsg *>(msg.get());
     m_p_ConnectionToMaster = p_responseMsg->GetConnection();
-    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_scene_name);
+    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_scene_name, m_width, m_height, m_rpp);
 
     /// scene size in pixels.
     m_SceneSizeInPixels = sceneDescriptorPtr->GetNX() * sceneDescriptorPtr->GetNY();
@@ -181,7 +185,7 @@ void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
     requestMsg->SetSceneId(scene_id);
 
     DEBUG_TRACE("sceneDescriptorPtr->GetNY():" << sceneDescriptorPtr->GetNY() << "sceneDescriptorPtr->GetNX():" << sceneDescriptorPtr->GetNX());
-    requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY());
+    requestMsg->SetImageDimension(sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), sceneDescriptorPtr->GetRPP());
     requestMsg->SetAnswerBackAddress(TransportMgr::Instance().MyName(), m_listening_port);
     requestMsg->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
     m_p_ConnectionToMaster->SendMsg(requestMsg, GetThrdListener());
