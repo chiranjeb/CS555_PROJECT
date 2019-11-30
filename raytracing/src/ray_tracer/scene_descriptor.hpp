@@ -21,8 +21,9 @@ public:
    void Pack(std::ostream& os)
    {
       os << m_nX << " ";
-      os << m_nY << " ";
-      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << std::endl);
+       os << m_nY << " ";
+       os << m_RPP << " ";
+      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << "m_RPP:" << m_RPP << std::endl);
 
       os << (*m_Camera.get()) << " "; 
       DEBUG_TRACE_VERBOSE("Camera:" << (*m_Camera.get()) << std::endl);
@@ -36,8 +37,8 @@ public:
    void Unpack(std::istream& is)
    {
       int hitableSize;
-      is >> m_nX >> m_nY ;
-      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << std::endl);
+      is >> m_nX >> m_nY >> m_RPP ;
+      DEBUG_TRACE_VERBOSE("m_nx:" << m_nX << "m_nY:" << m_nY << "m_RPP:" << m_RPP << std::endl);
 
       is >> (*m_Camera.get());
       DEBUG_TRACE_VERBOSE("Camera:" << (*m_Camera.get()));
@@ -51,7 +52,8 @@ public:
    }
 
    int GetNX() { return m_nX; }
-   int GetNY() { return m_nY; }
+    int GetNY() { return m_nY; }
+    int GetRPP() { return m_RPP; }
 
    CameraPtr GetCameraPtr() { return m_Camera; }
    HitablePtr GetWorld() { return m_HitableList;}
@@ -61,6 +63,7 @@ public:
 protected:
    int m_nX;                            // Image width
    int m_nY;                            // Image height
+   int m_RPP;                           // Rays Per Pixel
    CameraPtr m_Camera;                  // Camera
    HitablePtr m_HitableList;            // hitableList pointer
 };
@@ -73,14 +76,14 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
 
 inline void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start, SceneDescriptorPtr sceneDescriptorPtr, std::ostream &os)
 {
-   ProducePixels(NY_end, NY_start, NX_end, NX_start, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), 20,
+   ProducePixels(NY_end, NY_start, NX_end, NX_start, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), sceneDescriptorPtr->GetRPP(),
                  sceneDescriptorPtr->GetCameraPtr().get(), sceneDescriptorPtr->GetWorld().get(), os);
 }
 
 class SceneFactory
 {
 public:
-   static SceneDescriptorPtr GetScene(std::string scene_name)
+   static SceneDescriptorPtr GetScene(std::string scene_name, int nx, int ny, int ns)
    {
       /// Currently we have only one scene. When we have lot of scenes, this function
       /// can chose scenes randomly.
@@ -90,17 +93,15 @@ public:
       SceneDescriptor *pDescriptor = sceneDescriptorPtr.get();
       camera& cam = *pDescriptor->m_Camera.get();
 
-      int nS;
+      /// Lets create get our scene.
+      extern hitable* myScene(camera& cam, int& nx, int& ny, std::string scene_name);
+      hitable *world = myScene(cam, pDescriptor->m_nX, pDescriptor->m_nY, scene_name);
 
-      if (scene_name == "random_scene")
-      {
-          /// Lets create get our scene.
-          extern hitable* myScene(camera& cam, int& nx, int& ny, int& ns);
-          hitable *world = myScene(cam, pDescriptor->m_nX, pDescriptor->m_nY, nS);
+      /// save the rays per pixel
+      pDescriptor->m_RPP = ns;
 
-          /// Now save the hitable list
-          pDescriptor->m_HitableList = HitablePtr(world);
-      }
+      /// Now save the hitable list
+      pDescriptor->m_HitableList = HitablePtr(world);
 
       /// Finally return the scene descriptor pointer.
       return sceneDescriptorPtr;

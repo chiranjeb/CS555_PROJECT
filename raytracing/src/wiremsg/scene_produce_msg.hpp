@@ -33,6 +33,7 @@ public:
         WireMsg::Pack(ostrm);
         ostrm << m_NX << " ";
         ostrm << m_NY << " ";
+        ostrm << m_RPP << " ";
         ostrm << m_SceneId << " ";
         ostrm << m_IPAddress << " ";
         ostrm << m_Port << " ";
@@ -49,10 +50,11 @@ public:
     }
 
     /// Set image dimension
-    void SetImageDimension(uint32_t NX, uint32_t NY)
+    void SetImageDimension(uint32_t NX, uint32_t NY, uint32_t RPP)
     {
         m_NX = NX;
         m_NY = NY;
+        m_RPP = RPP;
     }
 
     /// Set scene id
@@ -82,7 +84,7 @@ public:
     void Unpack(std::istream &istrm)
     {
         WireMsg::Unpack(istrm);
-        istrm >> m_NX >> m_NY >> m_SceneId >> m_IPAddress;
+        istrm >> m_NX >> m_NY >> m_RPP >> m_SceneId >> m_IPAddress;
         istrm >> m_Port >> m_BufferLength;
 
 #if !defined(__Make_master)
@@ -103,6 +105,7 @@ public:
 
     uint32_t m_NX;
     uint32_t m_NY;
+    uint32_t m_RPP;
     std::size_t m_SceneId;
     std::string m_IPAddress;
     uint32_t m_Port;

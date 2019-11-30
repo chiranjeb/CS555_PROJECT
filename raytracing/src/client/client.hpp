@@ -10,7 +10,8 @@ class Client : public MsgQThread
 {
 public:
     /// Instantiate the Client
-    static void Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name);
+    static void Instantiate(std::string master_address, int master_port, int clientThreadQDepth, std::string scene_name,
+            std::uint32_t width, std::uint32_t height, std::uint32_t rpp);
     
     /// Return the singleton instance of the client.
     static Client& Instance();
@@ -49,7 +50,9 @@ protected:
     int m_master_port;
     int m_listening_port;
     std::string m_scene_name;
-
+    std::uint32_t m_width;
+    std::uint32_t m_height;
+    std::uint32_t m_rpp;
 
     uint32_t m_CurrentPixelToWrite;
     uint32_t m_SceneSizeInPixels;
