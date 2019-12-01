@@ -10,6 +10,7 @@
 WorkerThread *g_pWorkerThread;
 Client *m_pClient = nullptr;
 std::mutex Client::m_Mutex;
+std::chrono::time_point<std::chrono::system_clock> start_time;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// Return the singletone instance of the client
@@ -39,6 +40,9 @@ void Client::Instantiate(std::string master_address, int master_port, int client
         m_pClient->m_rpp = rpp;
         m_pClient->m_SceneWriterMsgQ = std::make_shared<BlockingQueue<MsgQEntry> >(clientThreadQDepth);
         m_pClient->Start();
+
+        //store current time to determine total scene completion time
+        start_time = std::chrono::system_clock::now();
     }
 }
 
@@ -262,7 +266,8 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 ///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnSceneFileCloseResponse(MsgPtr msg)
 {
-    RELEASE_TRACE("Successfully produced the image.");
+    auto elapsed = std::chrono::system_clock::now() - start_time;
+    RELEASE_TRACE("Successfully produced the image in " + std::to_string(elapsed.count()) + " s");
     /// NOTE :  We are not cleaning things up interms of shutting down threads and freeing
     /// some dynamically allocated memory explicitly. Exiting from the program will
     /// automatically return the resources to the system.
