@@ -182,7 +182,7 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnection *p_connection, uint32_t 
         int appTag = p_connection->AllocateAppTag();
 
         /// Update work set
-        pixelProduceRequestMsg->Request(hwExecutionThreadId-startThread)->GenerateWork(startY, startX,  endY, endX, m_RPP);
+        pixelProduceRequestMsg->Request(hwExecutionThreadId-startThread)->GenerateWork(startY, startX,  endY, endX);
         pixelProduceRequestMsg->Request(hwExecutionThreadId-startThread)->SetPixelDomain(m_CurrentPixelOffset, workload);
         pixelProduceRequestMsg->Request(hwExecutionThreadId-startThread)->SetupAppTag(appTag);
         pixelProduceRequestMsg->Request(hwExecutionThreadId-startThread)->SetThreadId(hwExecutionThreadId);
