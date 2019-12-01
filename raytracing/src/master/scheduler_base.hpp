@@ -31,6 +31,6 @@ protected:
     uint32_t m_NumPendingCompletionResponse;
     TCPIOConnectionPtr m_p_client_connection;
     std::size_t m_SceneId;
-    uint32_t m_NX, m_NY;
+    uint32_t m_NX, m_NY, m_RPP;
     std::map<uint32_t, uint32_t> m_FailedJobs;
 };
