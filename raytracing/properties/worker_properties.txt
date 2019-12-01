@@ -1,5 +1,29 @@
+## Worker server connection backlogs
 worker_server_listening_q_depth=40
+
+#Q depth of worker command processor
 worker_cmd_processor_q_depth=128
+
+# Worker comes up and automatically detects the h/w concurrency level. 
+# Then it checks what is the maximum level of concurrency it wants to expose 
+# to the master controlled by the following parameter.  Worker ensures that 
+# it has created the exact same number of pixel production pipelines.  Master 
+# will manage these many worker execution pipelines directly. E.g. Let's say we 
+# start a worker on lincoln. Worker will detect 16 cores(through c++ library call). 
+# Now, it will check "max_advertised_hw_concurrency_level" set in the properties file.  
+# If it is set to 100, worker will tell master that it has 16 h/w execution threads as 
+# part of registration. If you set the max_advertised_hw_concurrency_level" to 50, 
+# it will report 8 to the master. Now, master will directly manage all those pixel production 
+# pipelines reported by the worker while scheduling tasks. This is better than using OMP for 
+# efficient scheduling.It is better for the master to mange the worker's execution pipeline directly.  
+# With this approach, each pixel production pipeline finishes work independently(sends the produced 
+# pixels to worker as well as the completion notification to the master independently) and asks for 
+# more work from the master as opposed to waiting for all the threads to be done before asking for 
+# more work. Another way to think of this would be - master doesn't manage a worker, it manages the
+# advertised concurrent execution pipeline.  
 max_advertised_hw_concurrency_level=100
+
+
+# Scene producer request q depth
 scene_producer_q_depth=64
 
