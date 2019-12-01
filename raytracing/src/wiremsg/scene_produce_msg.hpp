@@ -71,6 +71,7 @@ public:
     /// Get NX and NY
     uint32_t GetNX() { return m_NX;}
     uint32_t GetNY() { return m_NY;}
+    uint32_t GetRPP() { return m_RPP;}
     std::string &GetClientAddress() { return m_IPAddress; }
     int GetClientPort() { return m_Port; }
 

@@ -4,7 +4,7 @@
 
 struct PixelProduceRequest
 {
-   void GenerateWork(uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX);
+   void GenerateWork(uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX, uint32_t rpp);
    void SetPixelDomain(uint32_t offset, uint32_t numPixels);
    void Pack(std::ostream& ostrm);
    void Unpack(std::istream& istrm);
@@ -44,9 +44,9 @@ public:
    PixelProduceRequest* Request(int index) { return &m_pPixelProduceRequest[index];}
 
    /// Generate Work order.
-   void GenerateWork(int index, uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX)
+   void GenerateWork(int index, uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX, uint32_t rpp)
    {
-      m_pPixelProduceRequest[index].GenerateWork(startY, startX, endY, endX);
+      m_pPixelProduceRequest[index].GenerateWork(startY, startX, endY, endX, rpp);
    }
 
    /// Set pixel domain

@@ -1,12 +1,13 @@
 #include "pixel_produce_msg.hpp"
 
 
-void PixelProduceRequest::GenerateWork(uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX)
+void PixelProduceRequest::GenerateWork(uint16_t startY, uint16_t startX, uint16_t endY, uint16_t endX, uint32_t rpp)
 {
    m_startY = startY;
    m_startX = startX;
    m_endY = endY;
    m_endX = endX;
+   m_RPP = rpp;
 }
 
 void PixelProduceRequest::SetPixelDomain(uint32_t offset, uint32_t numPixels)

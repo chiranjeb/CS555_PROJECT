@@ -24,6 +24,7 @@ tmux send-keys -t cs555proj "ssh -t $(hostname).cs.colostate.edu 'cd $projHome; 
   ./build/master properties/master_properties.txt'" Enter
 tmux split-window -t cs555proj
 echo "Starting client@$(hostname)"
+sleep 2
 tmux send-keys -t cs555proj "ssh -t $(hostname).cs.colostate.edu 'cd $projHome; \
-  ./build/client properties/master_properties.txt properties/client_properties.txt random 1000 1000 1000'" Enter
+  ./build/client properties/master_properties.txt properties/client_properties.txt random $2 $3 $4'" Enter
 tmux attach -t cs555proj
