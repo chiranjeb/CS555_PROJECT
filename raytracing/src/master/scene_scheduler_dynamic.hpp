@@ -41,7 +41,7 @@ protected:
     uint32_t m_NumPendingCompletionResponse;
     TCPIOConnection *m_p_client_connection;
     std::size_t m_SceneId;
-    uint32_t m_NX, m_NY;
+    uint32_t m_NX, m_NY, m_RPP;
     uint32_t m_CurrentPixelOffset;
     uint32_t m_TotalNumPixelsToProduce;
     uint32_t m_workload;

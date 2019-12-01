@@ -37,6 +37,7 @@ void SceneSchedulerStatic::OnSceneProduceRequestMsg(MsgPtr msg)
 
     m_NX = pRequestMsg->GetNX();
     m_NY = pRequestMsg->GetNY();
+    m_RPP = pRequestMsg->GetRPP();
     m_SceneId = pRequestMsg->GetSceneId();
 
     DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << workerList.size());
@@ -134,7 +135,7 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
 
             /// Update work set
             int appTag = p_connection->AllocateAppTag();
-            pixelProduceRequestMsg->Request(hwExecutionThreadId)->GenerateWork(startY, startX,  endY, endX);
+            pixelProduceRequestMsg->Request(hwExecutionThreadId)->GenerateWork(startY, startX,  endY, endX, m_RPP);
             pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetPixelDomain(currentPixelOffset, workload);
             pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetupAppTag(appTag);
             pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetThreadId(hwExecutionThreadId);

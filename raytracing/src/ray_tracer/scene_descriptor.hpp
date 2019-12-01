@@ -74,9 +74,9 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
                    uint32_t nx, uint32_t ny, uint32_t ns, 
                    camera *p_camera, hitable* world, std::ostream &os);
 
-inline void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start, SceneDescriptorPtr sceneDescriptorPtr, std::ostream &os)
+inline void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t NX_start, uint32_t RPP, SceneDescriptorPtr sceneDescriptorPtr, std::ostream &os)
 {
-   ProducePixels(NY_end, NY_start, NX_end, NX_start, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), sceneDescriptorPtr->GetRPP(),
+   ProducePixels(NY_end, NY_start, NX_end, NX_start, sceneDescriptorPtr->GetNX(), sceneDescriptorPtr->GetNY(), RPP,
                  sceneDescriptorPtr->GetCameraPtr().get(), sceneDescriptorPtr->GetWorld().get(), os);
 }
 

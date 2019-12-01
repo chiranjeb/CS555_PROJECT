@@ -41,7 +41,7 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 
     /// Produce pixels
     PixelProduceRequest *pRequest = pRequestMsg->GetRequest(m_requestIndex);
-    ProducePixels(pRequest->m_endY, pRequest->m_startY, pRequest->m_endX, pRequest->m_startX,
+    ProducePixels(pRequest->m_endY, pRequest->m_startY, pRequest->m_endX, pRequest->m_startX, pRequest->m_RPP,
                   sceneDescriptorPtr, ostrm);
 
     /// Update valid buffer
