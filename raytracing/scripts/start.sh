@@ -20,7 +20,7 @@ do
 		if [ $i -eq $1 ]; then
 		  break
 		fi
-done < "275machines.txt"
+done < "$(dirname $0)/275machines.txt"
 tmux send-keys -t cs555proj "exit" Enter
 tmux select-layout -t cs555proj even-vertical
 tmux new-window -t cs555proj
