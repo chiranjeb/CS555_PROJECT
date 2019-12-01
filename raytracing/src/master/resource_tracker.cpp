@@ -96,6 +96,8 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
         DEBUG_TRACE_APPLICATION("worker: " << (*iter)->m_UniqueHostName);
     }
 
+    Dump();
+
 }
 
 void ResourceTracker::NotifyHostFailure(std::string hostname)
@@ -188,11 +190,11 @@ void ResourceTracker::NotifyJobDone(std::string hostname, uint16_t thread_id, st
 
 void ResourceTracker::Dump()
 {
-    DEBUG_TRACE("ResourceTracker::Dump ");
+    DEBUG_TRACE_APPLICATION("ResourceTracker::Dump ");
     auto iter = m_WorkerThreads.begin();
     for (; iter != m_WorkerThreads.end(); ++iter)
     {
-        DEBUG_TRACE("Hw Thread Name: " << iter->first);
+        DEBUG_TRACE_APPLICATION("Hw Thread Name: " << iter->first);
         iter->second->Dump();
     }
 }

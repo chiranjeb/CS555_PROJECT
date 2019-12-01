@@ -6,10 +6,6 @@
 #include "transport/transport_mgr.hpp"
 #include "wiremsg/pixel_produce_msg.hpp"
 
-#define SCENE_PRODUCER_Q_DEPTH 32
-#define NUM_SCENE_PRODUCER 16
-
-
 namespace
 {
 Worker *g_pWorker;
@@ -189,12 +185,33 @@ void Worker::OnTCPRecvMsg(MsgPtr msg)
     }
 }
 
+void Worker::DeterminePixelGenerationRateBasedonKnownScene()
+{
+    /*
+    RELEASE_TRACE("Pixel generation Start");
+    int nx = 256, ny = 256;
+    int numPixels = nx * ny;
+    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GenerateKnownScene(nx, ny);
+
+    /// Produce pixels
+    char *p_buffer = (char *)malloc(sizeof(char) * numPixels);
+    PreAllocatedStreamBuffer streambuff(p_buffer, numPixels);
+    std::ostream ostrm(&streambuff);
+
+    ProducePixels(ny, 0, nx, 0, sceneDescriptorPtr, ostrm);
+    RELEASE_TRACE("Pixel generation End");
+
+    free(p_buffer);
+    */
+}
+
 void Worker::OnCreateServerResponse(MsgPtr msg)
 {
     DEBUG_TRACE("Worker::OnCreateServerResponse(this:" << std::hex << this << ")");
     TCPServerConstructStatusMsg *p_responseMsg =  static_cast<TCPServerConstructStatusMsg *>(msg.get());
     m_listening_port  = p_responseMsg->GetPort();
 
+    //DeterminePixelGenerationRateBasedonKnownScene();
 
     // Let's establish a connection
     m_p_ConnectionToMaster = nullptr;

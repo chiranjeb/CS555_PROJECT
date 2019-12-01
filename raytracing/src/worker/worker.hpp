@@ -76,6 +76,9 @@ protected:
     /// On scene production completion
     void OnSceneProduceDone(MsgPtr msg);
 
+    /// Determine pixel generation rate based on known scene
+    void DeterminePixelGenerationRateBasedonKnownScene();
+
     TCPIOConnectionPtr m_p_ConnectionToMaster;
     std::string m_master_address;
     int m_master_port;
