@@ -1,6 +1,6 @@
 all:
 	mkdir -p build
-	(cd build && cmake .. && make)
+	(cd build && cmake .. && make -j${nproc --all})
 
 clean:
 	rm -rf build
