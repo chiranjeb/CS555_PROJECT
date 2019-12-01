@@ -15,16 +15,16 @@
 #include <iostream>
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
+#include "tcp_io_connection.hpp"
 
 #define MAX_PACKET_SIZE 4096
 
-class TCPIOConnection;
 class TCPIOServer : public Thread
 {
 public:
    ErrorCode_t Construct(int listeningPort, int listeningDepth);
 
-   TCPIOConnection* AcceptConnection();
+   TCPIOConnectionPtr AcceptConnection();
 
    void Start()
    {

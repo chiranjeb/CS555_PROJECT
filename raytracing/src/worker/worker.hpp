@@ -4,8 +4,7 @@
 #include "defines/defines_includes.hpp"
 #include "wiremsg/scene_produce_msg.hpp"
 #include "pixel_producer.hpp"
-
-class TCPIOConnection;
+#include "transport/tcp_io_connection.hpp"
 
 struct WorkerCapabilities
 {
@@ -34,7 +33,7 @@ public:
     SceneDescriptorPtr GetSceneDescriptor(std::size_t sceneId);
 
     /// Return connection to master.
-    TCPIOConnection* GetConnectionToMaster()
+    TCPIOConnectionPtr GetConnectionToMaster()
     {
         return m_p_ConnectionToMaster;
     }
@@ -77,13 +76,13 @@ protected:
     /// On scene production completion
     void OnSceneProduceDone(MsgPtr msg);
 
-    TCPIOConnection *m_p_ConnectionToMaster;
+    TCPIOConnectionPtr m_p_ConnectionToMaster;
     std::string m_master_address;
     int m_master_port;
     int m_listening_port;
 
     std::map<std::size_t, SceneProduceRequestMsgPtr> m_SceneFileMap; /// scene Id to scene description.
-    std::map<std::size_t, TCPIOConnection *> m_SceneId2Connection;     /// scene id to connection map.
+    std::map<std::size_t, TCPIOConnectionPtr> m_SceneId2Connection;     /// scene id to connection map.
     std::map<std::string, std::size_t> m_Client2SceneId;             /// Client to tcp connection
     std::map<std::size_t, std::string> m_SceneId2Client;            /// scene id to client map. A scene could be requested by multiple client
 

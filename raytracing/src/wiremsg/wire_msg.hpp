@@ -2,12 +2,11 @@
 #include<memory>
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
-
+#include "transport/tcp_io_connection.hpp"
 /**
  * Base class for all wire message.
  *  
  */
-class TCPIOConnection;
 class WireMsg : public Msg
 {
 public:
@@ -49,13 +48,13 @@ public:
     void Unpack(std::istream &istrm);
 
     /// Set TCP connection associated with this wire message
-    void SetConnection(TCPIOConnection *p_connection)
+    void SetConnection(TCPIOConnectionPtr p_connection)
     {
         m_p_tcp_connection = p_connection;
     }
 
     /// Return TCP connection associated with this wire message
-    TCPIOConnection* GetConnection()
+    TCPIOConnectionPtr GetConnection()
     {
         return m_p_tcp_connection;
     }
@@ -72,6 +71,7 @@ public:
         {
             free(m_PackedMsgBuffer);
         }
+        m_p_tcp_connection = nullptr;
     }
 
     uint8_t* m_PackedMsgBuffer;
@@ -79,7 +79,7 @@ public:
     bool m_BufferValid;
 
     int m_ApplicationTag;                    //<< Application tag associated with this message
-    TCPIOConnection *m_p_tcp_connection;     //<< TCP IP connection associated with the message
+    TCPIOConnectionPtr m_p_tcp_connection;     //<< TCP IP connection associated with the message
 };
 
 typedef std::shared_ptr<WireMsg> WireMsgPtr;

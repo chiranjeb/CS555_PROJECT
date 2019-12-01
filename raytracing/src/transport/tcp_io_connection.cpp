@@ -21,14 +21,23 @@
 TCPIOConnection::TCPIOConnection(int socket, std::string clientIpAddress)
     : m_socket(socket), m_ip(clientIpAddress), m_SendQ(10)
 {
+    DEBUG_TRACE_TRANSPORT("TCPIOConnection Constructor");
+    m_Closed = false;
     for (int index = 1; index < 5000; index++)
     {
         m_AppTagQ.push(index);
     }
 }
 
+TCPIOConnection::~TCPIOConnection()
+{
+    DEBUG_TRACE_TRANSPORT("TCPIOConnection Destructor");
+}
+
 TCPIOConnection::TCPIOConnection() : m_SendQ(10)
 {
+    DEBUG_TRACE_TRANSPORT("TCPIOConnection Constructor");
+    m_Closed = false;
     for (int index = 1; index < 5000; index++)
     {
         m_AppTagQ.push(index);
@@ -40,13 +49,11 @@ TCPIOConnection::TCPIOConnection() : m_SendQ(10)
 /// Establish a connection initiated by client.
 ///
 ////////////////////////////////////////////////////////////////////////////////////
-void TCPIOConnection::Start()
+void TCPIOConnection::Start(TCPIOReceiver *pReceiver, TCPIOSender *pSender)
 {
-    m_pIOSender = nullptr;
-
     // Create the receiver and sender
-    m_pIOReceiver = new TCPIOReceiver(this, m_socket);
-    m_pIOSender = new TCPIOSender(this, m_socket, m_SendQ);
+    m_pIOReceiver = pReceiver;
+    m_pIOSender = pSender;
 
     // Start receiver and sender
     m_pIOReceiver->Start();
@@ -58,32 +65,50 @@ void TCPIOConnection::Start()
 void TCPIOConnection::RegisterNotification(int appTag, ListenerPtr plis)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-    DEBUG_TRACE_TRANSPORT("TCPIOConnection::RegisterNotification - apptag: " << appTag <<", lis:" << plis);
+    RegisterNotification_nolock(appTag, plis);
+}
+
+
+void TCPIOConnection::RegisterNotification_nolock(int appTag, ListenerPtr plis)
+{
+    DEBUG_TRACE_TRANSPORT("TCPIOConnection::RegisterNotification - apptag: " << appTag << ", lis:" << plis);
     m_ClientRespRoutingMap.insert(std::pair<int, ListenerPtr>(appTag, plis));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 /// Send a message over a connection
 ///
-/// @param [wireMsg] Pointer to the wire message
+/// @param [msg] Pointer to the wire message
 /// @param [p_lis] Listener which will be notified -
 ///       1. If a valid app tag is present in the message. Remote receiver is expected
 ///          to put the app tag back in the response message.
 ///       2. If requester is asking for an explicit response of the message being sent out.
 ///
 ///////////////////////////////////////////////////////////////////////////////////////////
-void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis)
+void TCPIOConnection::SendMsg(MsgPtr msg, ListenerPtr p_lis)
 {
-    MsgPtr msg(nullptr);
-    DEBUG_TRACE("Sending TCP IP message: " << wireMsg.get()->GetId() << ", AppTag: " << wireMsg.get()->GetAppTag());
-    if ((p_lis.get() != nullptr) && wireMsg.get()->ExpectingRecvRecvResponse())
+    WireMsgPtr wireMsg = std::dynamic_pointer_cast<WireMsg>(msg);
+    std::unique_lock<std::mutex> lck(m_Mutex);
+    if (m_Closed == false)
     {
-        RegisterNotification(wireMsg.get()->GetAppTag(), p_lis);
-        m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, nullptr)));
+        RELEASE_TRACE("Sending TCP IP message: " << wireMsg->GetId() << ", AppTag: " << wireMsg->GetAppTag());
+        if ((p_lis.get() != nullptr) && wireMsg->ExpectingRecvRecvResponse())
+        {
+            RegisterNotification_nolock(wireMsg->GetAppTag(), p_lis);
+            m_pIOSender->SendMsg(std::make_shared<TCPSendMsg>(wireMsg, nullptr));
+        }
+        else
+        {
+            m_pIOSender->SendMsg(std::make_shared<TCPSendMsg>(wireMsg, p_lis));
+        }
     }
-    else
+    else if (p_lis != nullptr)
     {
-        m_pIOSender->SendMsg(MsgPtr(new TCPSendMsg(wireMsg, p_lis)));
+        if (!wireMsg->ExpectingRecvRecvResponse())
+        {
+            TCPIOConnectionPtr connectionPtr = TransportMgr::Instance().FindConnection(m_UniqueHostName);
+            p_lis->Notify(std::make_shared<TCPConnectionExceptionMsg>(connectionPtr));
+        }
     }
 }
 
@@ -96,9 +121,9 @@ void TCPIOConnection::SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis)
 /// @param [wireMsgPtr] Pointer to the wire message
 ///
 ///////////////////////////////////////////////////////////////////////////////////////////
-void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
+void TCPIOConnection::ProcessReceivedMsg(MsgPtr msg)
 {
-    wireMsgPtr->SetConnection(this);
+    WireMsgPtr wireMsgPtr = std::dynamic_pointer_cast<WireMsg>(msg);
     if (m_ClientRespRoutingMap.find(wireMsgPtr->GetAppTag()) != m_ClientRespRoutingMap.end())
     {
         DEBUG_TRACE_TRANSPORT("Received a solicited message: " << wireMsgPtr->GetId());
@@ -108,7 +133,7 @@ void TCPIOConnection::ProcessReceivedMsg(WireMsgPtr wireMsgPtr)
     else
     {
         DEBUG_TRACE_TRANSPORT("Received a unsolicited message: " << wireMsgPtr->GetId());
-        TransportMgr::Instance().ProcessUnsolicitedMsg(this, wireMsgPtr);
+        TransportMgr::Instance().ProcessUnsolicitedMsg(wireMsgPtr);
     }
 }
 
@@ -126,7 +151,6 @@ bool TCPIOConnection::Start(std::string& serverName, int port, bool retryUntillC
     m_socket = MakeConnection(serverName, port, retryUntillConnected);
     if (m_socket != -1)
     {
-        Start();
         return true;
     }
     else
@@ -200,3 +224,36 @@ int TCPIOConnection::MakeConnection(std::string& server, int serverPort, bool re
     }
     return -1;
 }
+
+/// Closes the connection
+void TCPIOConnection::Close()
+{
+    std::unique_lock<std::mutex> lck(m_Mutex);
+    if (m_Closed == false)
+    {
+        /// close the socket.
+        m_Closed = true;
+        close(m_socket);
+        // if we are initiating this, this will trigger the sender and receiver to see exception.
+    }
+
+    /// Request sender thread to come out
+    if (m_pIOSender)
+    {
+        m_pIOSender->SendMsg(std::make_shared<Msg>(MsgIdTCPShutDownSender));
+    }
+
+    TCPIOConnectionPtr connectionPtr = TransportMgr::Instance().FindConnection(m_UniqueHostName);
+    TransportMgr::Instance().RemoveConnection(m_UniqueHostName);
+    DEBUG_TRACE("TCPIOConnectionPtr:" << std::hex << connectionPtr.get())
+    /// Clean up all pending response stuff....
+    for (auto client2RespRoutingMapIter = m_ClientRespRoutingMap.begin();
+         client2RespRoutingMapIter != m_ClientRespRoutingMap.end();
+         ++client2RespRoutingMapIter)
+    {
+        client2RespRoutingMapIter->second->Notify(std::make_shared<TCPConnectionExceptionMsg>(connectionPtr));
+    }
+    m_ClientRespRoutingMap.clear();
+}
+
+

@@ -5,7 +5,6 @@
 #include "wiremsg/scene_produce_msg.hpp"
 #include "scene_writer.hpp"
 
-class TCPIOConnection;
 class Client : public MsgQThread
 {
 public:
@@ -44,7 +43,7 @@ protected:
     /// Scene file close response.
     void OnSceneFileCloseResponse(MsgPtr msg);
 
-    TCPIOConnection *m_p_ConnectionToMaster;
+    TCPIOConnectionPtr m_p_ConnectionToMaster;
     std::string m_master_address;
     int m_master_port;
     int m_listening_port;

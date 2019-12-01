@@ -36,27 +36,35 @@ public:
     }
 
     /// Save a connection.
-    void SaveConnection(std::string &unique_hostname, TCPIOConnection *p_connection)
+    void SaveConnection(std::string &unique_hostname, TCPIOConnectionPtr p_connection)
     {
-        p_connection->SetRemoteHostName(unique_hostname);
+        p_connection->SetUniqueHostName(unique_hostname);
         m_Connections[unique_hostname] = p_connection;
     }
 
+    void RemoveConnection(std::string &unique_hostname)
+    {
+        m_Connections.erase(unique_hostname);    
+    }
+
     /// Find connection
-    TCPIOConnection* FindConnection(std::string &unique_hostname);
+    TCPIOConnectionPtr FindConnection(std::string &unique_hostname);
 
     /// Create a TCP server
     void CreateTCPServer(int listeningPort, int listeningDepth, ListenerPtr serverResponseHandler);
 
     /// Process unsolicited message
-    void ProcessUnsolicitedMsg(TCPIOConnection *p_connection, WireMsgPtr wireMsgPtr);
+    void ProcessUnsolicitedMsg(WireMsgPtr wireMsgPtr);
 
     /// Service new connection
-    void ServiceNewConnection(TCPIOConnection *p_connection);
+    void ServiceNewConnection(TCPIOConnectionPtr p_connection);
 
 
     /// Establish connection to a server
     void EstablishNewConnection(std::string &serverIP, int serverPort, ListenerPtr p_lis, bool retryUntillConnected);
+
+    /// notify connection exception
+    void NotifyConnectionException(TCPIOConnectionPtr pConnection);
 
 protected:
     TransportMgr();
@@ -71,5 +79,5 @@ protected:
     ListenerPtr m_lis;
 
     /// Connection list
-    std::map<std::string, TCPIOConnection *> m_Connections;
+    std::map<std::string, TCPIOConnectionPtr> m_Connections;
 };
