@@ -2,7 +2,7 @@
 #include "transport_mgr.hpp"
 using namespace std;
 
-TCPIOConnection* TCPIOServer::AcceptConnection()
+TCPIOConnectionPtr TCPIOServer::AcceptConnection()
 {
     socklen_t sosize  = sizeof(m_clientAddress);
 
@@ -14,7 +14,7 @@ TCPIOConnection* TCPIOServer::AcceptConnection()
     }
 
     // Create a connection.
-    return new TCPIOConnection(file_descriptor, inet_ntoa(m_clientAddress.sin_addr));
+    return std::make_shared<TCPIOConnection>(file_descriptor, inet_ntoa(m_clientAddress.sin_addr));
 }
 
 
@@ -28,7 +28,7 @@ void TCPIOServer::Run()
     {
         DEBUG_TRACE("TCPIOServer::Wait for a new connection");
         // Accept a new connection
-        TCPIOConnection *p_connection = AcceptConnection();
+        TCPIOConnectionPtr p_connection = AcceptConnection();
 
         // Punt it up and request to service new connection
         TransportMgr::Instance().ServiceNewConnection(p_connection);

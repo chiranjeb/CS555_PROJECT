@@ -40,9 +40,12 @@ struct HwThreadMgr
 
     /// Add a new job
     void AddJob(std::size_t sceneId, uint32_t pixelOffset, uint32_t numPixels); 
-
+    
     /// Remove a job
-    void RemoveJob(std::size_t sceneId, uint32_t pixelOffset);
+    void RemoveCompletedJob(std::size_t sceneId, uint32_t pixelOffset);
+
+    void RemoveFailedgJobs(std::size_t sceneId, std::map<uint32_t, uint32_t>& pixelOffsetToCount);
+
 
     void Dump();
 
@@ -99,6 +102,12 @@ public:
 
     /// Notify job done
     void NotifyJobDone(std::string hostname, uint16_t thread_id, std::size_t sceneId, uint32_t pixelOffset);
+
+    /// Remove outstanding jobs
+    void RemoveFailedJobs(std::string hostname, std::size_t sceneId, std::map<uint32_t, uint32_t>& outstandingJobs);
+
+    /// Recompute number of active threads
+    void NotifyHostFailure(std::string hostname);
 
     void Dump();
 

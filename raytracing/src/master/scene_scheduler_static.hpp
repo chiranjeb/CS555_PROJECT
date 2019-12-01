@@ -3,14 +3,15 @@
 #include "defines/defines_includes.hpp"
 #include "wiremsg/worker_registration_msg.hpp"
 #include "transport/transport_mgr.hpp"
+#include "scheduler_base.hpp"
 #include<map>
 
 class TCPIOConnection;
-class SceneSchedulerStatic : public Command
+class SceneSchedulerStatic : public SchedulerBase
 {
 public:
     /// Constructor
-    SceneSchedulerStatic(BlockingMsgQPtr pQ) : Command(pQ)
+    SceneSchedulerStatic(BlockingMsgQPtr pQ) : SchedulerBase(pQ)
     {
     }
 
@@ -34,13 +35,12 @@ protected:
     /// Different chunking of the work.
     void KickOffSceneScheduling();
 
+    /// Handle xmit status.
+    void OnXmitStatus(MsgPtr msg);
 
-    /// attributes
-    uint32_t m_NumPendingCompletionResponse;
-    TCPIOConnection *m_p_client_connection;
-    std::size_t m_SceneId;
-    uint32_t m_NX, m_NY;
-    uint32_t m_TotalNumPixelsToProduce;
+    /// TCP Connection exception message handler.
+    void OnTCPConnectionException(MsgPtr msg);
+
 };
 
 typedef std::shared_ptr<SceneSchedulerStatic> SceneSchedulerStaticPtr;

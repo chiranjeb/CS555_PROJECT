@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include "defines/defines_includes.hpp"
 #include "framework/framework_includes.hpp"
-#include "wiremsg/wire_msg.hpp"
+#include <memory>
 
 class TCPIOSender;
 class TCPIOReceiver;
@@ -18,6 +18,7 @@ public:
    /// Constructor
    TCPIOConnection(int socket, std::string clientIpAddress);
    TCPIOConnection();
+   ~TCPIOConnection();
 
    /// Return the remote address.
    std::string GetRemoteAddress()
@@ -46,13 +47,13 @@ public:
    void RegisterNotification(int appTag, ListenerPtr p_lis);
 
    /// Send message
-   void SendMsg(WireMsgPtr wireMsg, ListenerPtr p_lis);
+   void SendMsg(MsgPtr wireMsg, ListenerPtr p_lis);
 
    /// Process received message
-   void ProcessReceivedMsg(WireMsgPtr wireMsg);
+   void ProcessReceivedMsg(MsgPtr wireMsg);
 
    /// Connection is already established. Start the sender and receiver.
-   void Start();
+   void Start(TCPIOReceiver* pReceiver, TCPIOSender* pSender);
 
    /// Establish connection and then start the sender and receiver.
    bool Start(std::string& serverName, int port, bool retryUntillConnected);
@@ -64,23 +65,36 @@ public:
    }
 
    /// Get remote hostname.
-   std::string& GetRemoteHostName()
+   std::string& GetUniqueHostName()
    {
-       return m_HostName;
+       return m_UniqueHostName;
    }
 
    /// Set remote hostname.
-   void SetRemoteHostName(std::string hostname)
+   void SetUniqueHostName(std::string hostname)
    {
-       m_HostName = hostname;
+       m_UniqueHostName = hostname;
    }
 
-private:
+   /// Close the connection.
+   void Close();
+
+   /// Notify connection exception
+   void NotifyException();
+
+   BlockingQueue<MsgPtr>& GetSendQ()
+   {
+       return m_SendQ;
+   }
+
    /// Make connection
    int MakeConnection(std::string& server, int serverPort, bool retryUntilConnected);
 
+private:
+   void RegisterNotification_nolock(int appTag, ListenerPtr plis);
+
    /// Remote ip connected to this machine.
-   std::string m_ip, m_HostName;
+   std::string m_ip, m_UniqueHostName;
 
    /// Asscociated socket with this TCP connection
    int m_socket;
@@ -98,4 +112,7 @@ private:
 
    std::mutex m_Mutex;
    struct sockaddr_in m_server;
+   bool m_Closed;
 };
+
+typedef std::shared_ptr<TCPIOConnection> TCPIOConnectionPtr;

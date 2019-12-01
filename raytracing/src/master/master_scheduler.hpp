@@ -69,6 +69,9 @@ private:
 
     /// Scene produce request message
     void OnSceneProduceRequestMsg(WireMsgPtr wireMsgPtr);
+
+    /// TCP connection exception.
+    void OnTCPConnectionException(MsgPtr msg);
 };
 
 class Master

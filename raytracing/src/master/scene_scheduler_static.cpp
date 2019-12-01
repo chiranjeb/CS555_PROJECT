@@ -16,16 +16,17 @@ void SceneSchedulerStatic::ProcessMsg(MsgPtr msg)
 {
     switch (msg->GetId())
     {
-        case MsgIdSceneProduceRequest:
-            OnSceneProduceRequestMsg(msg);
-            break;
+       case MsgIdSceneProduceRequest:
+           OnSceneProduceRequestMsg(msg);
+           break;
 
-        case MsgIdPixelProduceResponse:
-            OnPixelProduceResponseMsg(msg);
-            break;
+       case MsgIdPixelProduceResponse:
+           OnPixelProduceResponseMsg(msg);
+           break;
 
-        default:
-            break;
+       default:
+           SchedulerBase::ProcessMsg(msg);
+           break;
     }
 }
 
@@ -95,7 +96,7 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
     std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
     for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
     {
-        TCPIOConnection *p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
+        TCPIOConnectionPtr p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
         uint32_t numberOfHwExecutionThreadsForCurrentWorker = workerList[workerIndex]->m_NumAvailableHwExecutionThread;
 
         PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
@@ -165,11 +166,11 @@ void SceneSchedulerStatic::OnPixelProduceResponseMsg(MsgPtr msg)
     PixelProduceResponseMsgPtr pRespMsg = std::dynamic_pointer_cast<PixelProduceResponseMsg>(msg);
 
     /// Get the connection from the response message
-    TCPIOConnection *pConnection = pRespMsg->GetConnection();
+    TCPIOConnectionPtr pConnection = pRespMsg->GetConnection();
 
 
     /// Notify that the job is done
-    ResourceTracker::Instance().NotifyJobDone(pConnection->GetRemoteHostName(),
+    ResourceTracker::Instance().NotifyJobDone(pConnection->GetUniqueHostName(),
                                               pRespMsg->GetThreadId(),
                                               m_SceneId,
                                               pRespMsg->GetScenePixelOffset());
@@ -177,23 +178,32 @@ void SceneSchedulerStatic::OnPixelProduceResponseMsg(MsgPtr msg)
     /// Decrement pending responses.
     m_NumPendingCompletionResponse--;
 
-    if (m_NumPendingCompletionResponse == 0)
+    if (!m_FailedJobs.empty())
     {
-        ResourceTracker::Instance().Dump();
-        RELEASE_TRACE("Scene scheduling has been finished, scene id: " << m_SceneId);
-        std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
-        for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
+        auto failedPixelOffset2Count = m_FailedJobs.begin();
+        SendNextFailedJob(pConnection, pRespMsg->GetThreadId(),
+                          failedPixelOffset2Count->first, failedPixelOffset2Count->second);
+        m_FailedJobs.erase(failedPixelOffset2Count);
+    }
+    else
+    {
+
+        if (m_NumPendingCompletionResponse == 0)
         {
-            /// Send scene production message. Now we will wait for the response.
-            TCPIOConnection *p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
-            p_connection->SendMsg(std::make_shared<SceneProduceCleanupMsg>(m_SceneId), ListenerPtr(nullptr));
+            ResourceTracker::Instance().Dump();
+            RELEASE_TRACE("Scene scheduling has been finished, scene id: " << m_SceneId);
+            std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
+            for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
+            {
+                /// Send scene production message. Now we will wait for the response.
+                TCPIOConnectionPtr p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
+                p_connection->SendMsg(std::make_shared<SceneProduceCleanupMsg>(m_SceneId), ListenerPtr(nullptr));
+            }
+            // This static scheduling command will now go automatically free itself.
+            // We are not closing connection from the client. Once the client closes the connection
+            // then we will clean things up.
+            m_MyLisPtr = ListenerPtr(nullptr);
         }
-        // This static scheduling command will now go automatically free itself.
-        // We are not closing connection from the client. Once the client closes the connection
-        // then we will clean things up.
-        // Close the connection.
-        // m_p_client_connection->Close();
-        m_MyLisPtr = ListenerPtr(nullptr);
     }
 
 

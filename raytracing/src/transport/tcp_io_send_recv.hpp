@@ -2,8 +2,7 @@
 #include<iostream>
 #include "framework/framework_includes.hpp"
 #include "defines/defines_includes.hpp"
-
-class TCPIOConnection;
+#include "tcp_io_connection.hpp"
 
 // Consider changing this.
 static const int MAX_MSG_BUFFER_SIZE_IN_BYTES = 4096;
@@ -44,7 +43,7 @@ struct PacketLength
 class TCPIOSender : public Thread
 {
 public:
-    TCPIOSender(TCPIOConnection *p_connection, int socket, BlockingQueue<MsgPtr> &sendQ) :
+    TCPIOSender(TCPIOConnectionPtr p_connection, int socket, BlockingQueue<MsgPtr> &sendQ) :
         m_socket(socket), m_p_connection(p_connection),  m_SendQ(sendQ)
     {
     }
@@ -73,7 +72,7 @@ protected:
     void Run();
 
     int m_socket;
-    TCPIOConnection *m_p_connection;
+    TCPIOConnectionPtr m_p_connection;
     BlockingQueue<MsgPtr> &m_SendQ;
     bool m_Stop;
     State m_State;
@@ -83,7 +82,7 @@ protected:
 class TCPIOReceiver  : public Thread
 {
 public:
-    TCPIOReceiver(TCPIOConnection *p_connection, int socket) :
+    TCPIOReceiver(TCPIOConnectionPtr p_connection, int socket) :
         m_p_connection(p_connection), m_socket(socket)
     {
     }
@@ -99,5 +98,5 @@ protected:
     uint8_t m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
 
     int m_socket;
-    TCPIOConnection *m_p_connection;
+    TCPIOConnectionPtr m_p_connection;
 };

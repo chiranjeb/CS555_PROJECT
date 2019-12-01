@@ -19,6 +19,7 @@ enum MsgIds
     MsgIdTCPRecv,
     MsgIdXmitStatus,
     MsgIdTCPShutDownSender,
+    MsgIdTCPConnectionException,
     MsgIdServerConstructResponse,
 
     MsgIdSceneFileCloseRequest,
