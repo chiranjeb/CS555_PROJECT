@@ -30,6 +30,36 @@ To kick off worker(from directory raytracing):
 To kick off client(from directory raytracing):
    * ./build/client properties/master_properties.txt "random_scene"
   
+  
+## Start Script
+To run the start script (from directory raytracing):
+
+`./scripts/start.sh 16 1024 768 200`
+
+This will ssh into the first `16` machines in `scripts/275machines.txt` 
+and start worker processes, then start a master on the __current__ machine,
+then start a client on the __current__ machine, specifying an image of 
+`1024 x 768` with `200` rays per pixel.
+Because master and client are started on the current machine, change 
+master_properties.txt->master_host to reflect that.
+You may specify any number of machines, though a maximum of ~273 will 
+be started. 
+
+Each session/process is displayed in a tmux session, which can be 
+configured to allow mouse input by running the following command 
+(before starting the script):
+
+`echo "setw -g mouse on" >> ~/.tmux.conf`
+
+To close the session, press `Ctrl+B, :` to enter command mode (bottom left)
+Then type `kill-session` and Enter. This should kill all running processes.
+
+If you're concerned there are still running processes, just run 
+
+`./scripts/kill.sh scripts/275machines.txt`
+
+It will ssh into each machine in the department and kill any processes 
+running under your name with `build/worker` in the command.
 
 
 
