@@ -20,10 +20,11 @@ int main()
 int ray_tracer_produce_scene()
 {
    int nx, ny, ns, i = 0, j = 0, s;
+   string scene;
    camera cam;
    vec3 curAlbedo;
    float u,v;
-   hitable *world = myScene(cam, nx, ny, ns);
+   hitable *world = myScene(cam, nx, ny, scene);
    int frame[ny][nx][3];
 
    cout << "P3\n" << nx << " " << ny << "\n255\n";
@@ -123,7 +124,7 @@ void ProducePixels(uint32_t NY_end, uint32_t NY_start, uint32_t NX_end, uint32_t
       for (; i < endx; ++i)
       {
          vec3 col(0, 0, 0);
-         for (int s = 0; s < 20; s++)
+         for (int s = 0; s < ns; s++)
          {
             float u = float(i + drand48()) / float(nx);
             float v = float(j + drand48()) / float(ny);

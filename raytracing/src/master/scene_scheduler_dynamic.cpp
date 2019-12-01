@@ -38,6 +38,7 @@ void SceneSchedulerDynamic::OnSceneProduceRequestMsg(MsgPtr msg)
 
     m_NX = pRequestMsg->GetNX();
     m_NY = pRequestMsg->GetNY();
+    m_RPP = pRequestMsg->GetRPP();
     m_SceneId = pRequestMsg->GetSceneId();
 
     DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << workerList.size());

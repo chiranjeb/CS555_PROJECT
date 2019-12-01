@@ -30,7 +30,7 @@ void PixelProduceRequest::Pack(std::ostream& ostrm)
 void PixelProduceRequest::Unpack(std::istream& istrm)
 {
    istrm >> m_startY >> m_startX >> m_endY 
-         >> m_endX >> m_NumPixels 
+         >> m_endX >> m_NumPixels
          >> m_ScenePixelOffset >> m_ThreadId >> m_AppTag;
 }
 
