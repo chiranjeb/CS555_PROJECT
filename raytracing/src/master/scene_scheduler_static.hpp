@@ -40,7 +40,6 @@ protected:
 
     /// TCP Connection exception message handler.
     void OnTCPConnectionException(MsgPtr msg);
-
 };
 
 typedef std::shared_ptr<SceneSchedulerStatic> SceneSchedulerStaticPtr;
