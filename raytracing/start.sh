@@ -1,6 +1,7 @@
 #!/bin/bash
 projHome=/s/red/b/nobackup/data/portable/CS555_PROJECT/raytracing
 totalPanes=0
+i=0
 tmux new -s cs555proj -d
 while read machine
 do
@@ -8,6 +9,7 @@ do
     tmux send-keys -t cs555proj "ssh -t ${machine}.cs.colostate.edu 'cd $projHome; \
       ./build/worker properties/master_properties.txt properties/worker_properties.txt'" Enter
 		totalPanes=$((totalPanes+1))
+		i=$((i+1))
 		if [ $totalPanes -eq "8" ]; then
 		  tmux new-window -t cs555proj
 		  totalPanes=0
@@ -15,7 +17,10 @@ do
 		  tmux split-window -t cs555proj
 		  tmux select-layout -t cs555proj even-vertical
 		fi
-done < $1
+		if [ $i -eq $1 ]; then
+		  break
+		fi
+done < "275machines.txt"
 tmux send-keys -t cs555proj "exit" Enter
 tmux select-layout -t cs555proj even-vertical
 tmux new-window -t cs555proj
