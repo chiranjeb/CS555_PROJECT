@@ -40,9 +40,6 @@ void Client::Instantiate(std::string master_address, int master_port, int client
         m_pClient->m_rpp = rpp;
         m_pClient->m_SceneWriterMsgQ = std::make_shared<BlockingQueue<MsgQEntry> >(clientThreadQDepth);
         m_pClient->Start();
-
-        //store current time to determine total scene completion time
-        start_time = std::chrono::system_clock::now();
     }
 }
 
@@ -75,6 +72,9 @@ void Client::Run()
                case MsgIdConnectionEstablishmentResponse:
                    {
                        OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
+
+                       //store current time to determine total scene completion time
+                       start_time = std::chrono::system_clock::now();
                        break;
                    }
                case MsgIdSceneProduceRequestAck:
@@ -219,8 +219,10 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
     SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
     RELEASE_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
+    std::cout << "spo " << respMsgPtr->GetScenePixelOffset() << " scenewritermsgq " << m_SceneWriterMsgQ.get() << std::endl;
     if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
     {
+        std::cout << "cp " << m_CurrentPixelToWrite << " this " << this << std::endl;
         DEBUG_TRACE("m_CurrentPixelToWrite:" << m_CurrentPixelToWrite << "respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
         /// Send file write request
@@ -253,6 +255,7 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
     }
     else
     {
+        std::cout << "cp " << m_CurrentPixelToWrite << " this " << this << std::endl;
         /// We can get out of order response.. So, we need to handle this carefully. Keep it in sorted
         /// based on the offset and release it as soon as we have enough sequential stuff.
         m_SceneSegmentResponseSet.insert(respMsgPtr);
@@ -266,11 +269,12 @@ void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 ///////////////////////////////////////////////////////////////////////////////////////
 void Client::OnSceneFileCloseResponse(MsgPtr msg)
 {
-    auto elapsed = std::chrono::system_clock::now() - start_time;
-    RELEASE_TRACE("Successfully produced the image in " + std::to_string(elapsed.count()) + " s");
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time);
+    RELEASE_TRACE("Successfully produced the image in " + std::to_string(elapsed.count()) + " milliseconds");
     /// NOTE :  We are not cleaning things up interms of shutting down threads and freeing
     /// some dynamically allocated memory explicitly. Exiting from the program will
     /// automatically return the resources to the system.
+    std::cout << "DONE!" << std::endl;
     exit(0);
 }
 
