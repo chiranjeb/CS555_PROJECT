@@ -20,6 +20,7 @@ protected:
     /// Client constructor
     Client(int clientThreadQDepth) : MsgQThread("Client", clientThreadQDepth)
     {
+        m_CurrentPixelToWrite = 0;
     }
 
     /// Start the worker thread
