@@ -78,7 +78,8 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
 
     uint32_t totalAvailableHwThreads = ResourceTracker::Instance().GetTotalNumberOfHwThreads();
     uint32_t numPixelsTobeSchehduled = ResourceTracker::Instance().GetWorkEstimationForNewScene(m_TotalNumPixelsToProduce);
-    uint32_t pixelChunkSize = (numPixelsTobeSchehduled + totalAvailableHwThreads - 1) / totalAvailableHwThreads;
+    uint32_t pixelChunkSize = numPixelsTobeSchehduled / totalAvailableHwThreads;
+    pixelChunkSize = pixelChunkSize > 0 ? pixelChunkSize : 1;
 
     /// Prepare pixel chunk indexes.
     std::vector<uint32_t> pixelChunkIndexArray;
@@ -93,6 +94,7 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
         std::shuffle(pixelChunkIndexArray.begin(), pixelChunkIndexArray.end(), std::default_random_engine(seed));
     }
 
+    int totalScheduled = 0;
     int currentPixelChunkIndex = 0;
     DEBUG_TRACE("m_NX:" << m_NX << ", m_NY:" << m_NY);
     std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
@@ -104,6 +106,9 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
         PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
         for (int hwExecutionThreadId = 0; hwExecutionThreadId < numberOfHwExecutionThreadsForCurrentWorker; ++hwExecutionThreadId)
         {
+            if (totalScheduled >= m_TotalNumPixelsToProduce) {
+                break;
+            }
             currentPixelOffset = pixelChunkIndexArray[currentPixelChunkIndex] * pixelChunkSize;
 
             uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, currentPixelOffset).Y;
@@ -150,10 +155,15 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
 
             m_NumPendingCompletionResponse++;
             currentPixelChunkIndex++;
+            totalScheduled += pixelChunkSize;
         }
 
         /// Send scene production message. Now we will wait for the response.
         p_connection->SendMsg(pixelProduceRequestMsg, ListenerPtr(nullptr));
+
+        if (totalScheduled >= m_TotalNumPixelsToProduce) {
+            break;
+        }
     }
 
     //ResourceTracker::Instance().Dump();

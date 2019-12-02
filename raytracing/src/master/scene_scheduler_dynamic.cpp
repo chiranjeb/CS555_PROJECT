@@ -179,6 +179,9 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
     PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
     for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
     {
+        if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce) {
+            break;
+        }
         uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).Y;
         uint16_t startX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).X;
 
