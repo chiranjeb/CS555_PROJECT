@@ -64,44 +64,44 @@ void Client::Run()
         {
             switch (msgQEntry.m_Msg->GetId())
             {
-               case MsgIdServerConstructResponse:
-                   {
-                       OnCreateServerResponse(msgQEntry.m_Msg);
-                       break;
-                   }
-               case MsgIdConnectionEstablishmentResponse:
-                   {
-                       OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
+                case MsgIdServerConstructResponse:
+                {
+                    OnCreateServerResponse(msgQEntry.m_Msg);
+                    break;
+                }
+                case MsgIdConnectionEstablishmentResponse:
+                {
+                    OnConnectionEstablishmentResponseMsg(msgQEntry.m_Msg);
 
-                       //store current time to determine total scene completion time
-                       start_time = std::chrono::system_clock::now();
-                       break;
-                   }
-               case MsgIdSceneProduceRequestAck:
-                   {
-                       OnSceneProduceRequestAckMsg(msgQEntry.m_Msg);
-                       break;
-                   }
-               case MsgIdSceneSegmentProduceResponse:
-                   {
-                       OnSceneSegmentProduceRespMsg(msgQEntry.m_Msg);
-                       break;
-                   }
+                    //store current time to determine total scene completion time
+                    start_time = std::chrono::system_clock::now();
+                    break;
+                }
+                case MsgIdSceneProduceRequestAck:
+                {
+                    OnSceneProduceRequestAckMsg(msgQEntry.m_Msg);
+                    break;
+                }
+                case MsgIdSceneSegmentProduceResponse:
+                {
+                    OnSceneSegmentProduceRespMsg(msgQEntry.m_Msg);
+                    break;
+                }
 
-               case MsgIdSceneFileCloseResponse:
-                   {
-                       OnSceneFileCloseResponse(msgQEntry.m_Msg);
-                       break;
-                   }
+                case MsgIdSceneFileCloseResponse:
+                {
+                    OnSceneFileCloseResponse(msgQEntry.m_Msg);
+                    break;
+                }
 
-               case MsgIdTCPRecv:
-                   {
-                       OnTCPRecvMsg(msgQEntry.m_Msg);
-                       break;
-                   }
+                case MsgIdTCPRecv:
+                {
+                    OnTCPRecvMsg(msgQEntry.m_Msg);
+                    break;
+                }
 
-               default:
-                   break;
+                default:
+                    break;
             }
         }
     }
@@ -121,13 +121,13 @@ void Client::OnTCPRecvMsg(MsgPtr msg)
 
     switch (wireMsgPtr->GetId())
     {
-       case MsgIdSceneSegmentProduceResponse:
-           {
-               OnSceneSegmentProduceRespMsg(wireMsgPtr);
-               break;
-           }
-       default:
-           break;
+        case MsgIdSceneSegmentProduceResponse:
+        {
+            OnSceneSegmentProduceRespMsg(wireMsgPtr);
+            break;
+        }
+        default:
+            break;
     }
 }
 

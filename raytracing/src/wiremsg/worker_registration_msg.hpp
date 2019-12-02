@@ -9,72 +9,83 @@
 class WorkerRegistrationMsg : public WireMsg
 {
 public:
-   /////////////////////////////////////////////////////////////////////////
-   /// WorkerRegistrationMsg message constructor
-   /////////////////////////////////////////////////////////////////////////
-   WorkerRegistrationMsg(std::string hostname, int port, uint16_t hw_thread_concurrency_level) :
-      WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(hostname), m_Port(port), m_hw_thread_concurrency_level(hw_thread_concurrency_level)
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
-   }
-   WorkerRegistrationMsg() : WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(""), m_Port(0), m_hw_thread_concurrency_level(0)
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
-   }
+    /////////////////////////////////////////////////////////////////////////
+    /// WorkerRegistrationMsg message constructor
+    /////////////////////////////////////////////////////////////////////////
+    WorkerRegistrationMsg(std::string hostname, int port, uint16_t hw_thread_concurrency_level,
+                          uint32_t PixelProductionTimeInSecForKnownScene) :
+        WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(hostname), m_Port(port),
+        m_hw_thread_concurrency_level(hw_thread_concurrency_level),
+        m_PixelProductionTimeInSecForKnownScene(PixelProductionTimeInSecForKnownScene)
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
+    }
+    WorkerRegistrationMsg() : WireMsg(MsgIdWorkerRegistrationRequest), m_hostname(""), m_Port(0), m_hw_thread_concurrency_level(0),
+        m_PixelProductionTimeInSecForKnownScene(0)
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Constructor");
+    }
 
-   uint16_t GetNumHwExecutionThread()
-   {
-      return m_hw_thread_concurrency_level;
-   }
+    uint16_t GetNumHwExecutionThread()
+    {
+        return m_hw_thread_concurrency_level;
+    }
 
-   /// Custom Message serializer
-   void Pack(std::ostream& ostrm);
+    /// get Number  PixelProductionTimeInSecForKnownScene 
+    uint16_t GetPixelProductionTimeInSecForKnownScene()
+    {
+        return m_PixelProductionTimeInSecForKnownScene;
+    }
 
-   ///  Custom message deserializer
-   void Unpack(std::istream& istrm);
+    /// Custom Message serializer
+    void Pack(std::ostream& ostrm);
 
-   ~WorkerRegistrationMsg()
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Destructor");
-   }
+    ///  Custom message deserializer
+    void Unpack(std::istream& istrm);
 
-   std::string m_hostname;   //  server name
-   int m_Port;                // server port
-   uint16_t m_hw_thread_concurrency_level;
+    ~WorkerRegistrationMsg()
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationMsg: Destructor");
+    }
+
+    std::string m_hostname;   //  server name
+    int m_Port;                // server port
+    uint16_t m_hw_thread_concurrency_level;
+    uint32_t m_PixelProductionTimeInSecForKnownScene;
 };
 
 ///@@@ Worker registration response message
 class WorkerRegistrationRespMsg : public WireMsg
 {
 public:
-   /////////////////////////////////////////////////////////////////////////
-   /// WorkerRegistrationRespMsg message constructor
-   /////////////////////////////////////////////////////////////////////////
-   WorkerRegistrationRespMsg(ErrorCode_t errorCode) :
-      WireMsg(MsgIdWorkerRegistrationResponse), m_ErrorCode(errorCode)
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
-   }
+    /////////////////////////////////////////////////////////////////////////
+    /// WorkerRegistrationRespMsg message constructor
+    /////////////////////////////////////////////////////////////////////////
+    WorkerRegistrationRespMsg(ErrorCode_t errorCode) :
+        WireMsg(MsgIdWorkerRegistrationResponse), m_ErrorCode(errorCode)
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
+    }
 
-   WorkerRegistrationRespMsg() :
-      WireMsg(MsgIdWorkerRegistrationResponse)
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
-   }
+    WorkerRegistrationRespMsg() :
+        WireMsg(MsgIdWorkerRegistrationResponse)
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Constructor");
+    }
 
-   /// Custom Message serializer
-   void Pack(std::ostream& ostrm);
+    /// Custom Message serializer
+    void Pack(std::ostream& ostrm);
 
-   ///  Custom message deserializer
-   void Unpack(std::istream& istrm);
+    ///  Custom message deserializer
+    void Unpack(std::istream& istrm);
 
 
-   ~WorkerRegistrationRespMsg()
-   {
-      DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Destructor");
-   }
+    ~WorkerRegistrationRespMsg()
+    {
+        DEBUG_TRACE_WIRE_MSG("WorkerRegistrationRespMsg: Destructor");
+    }
 
-   int m_ErrorCode;  // Error code
+    int m_ErrorCode;  // Error code
 };
 
 

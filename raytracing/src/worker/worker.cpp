@@ -35,7 +35,11 @@ void Worker::Initialize(std::string master_address,
                         int master_port,
                         int worker_cmd_processor_q_depth,
                         int max_advertised_hw_concurrency_level,
-                        int scene_producer_q_depth)
+                        int scene_producer_q_depth,
+                        std::string known_scene_name,
+                        int known_scene_nx,
+                        int known_scene_ny,
+                        int known_scene_ns)
 {
 
     /// define number of scene producer as number of he threads.
@@ -47,6 +51,12 @@ void Worker::Initialize(std::string master_address,
     /// Create and start the worker thread.
     g_pWorker = new Worker(master_address, master_port, worker_cmd_processor_q_depth,
                            numThreads, scene_producer_q_depth);
+
+    g_pWorker->m_known_scene_name = known_scene_name;
+    g_pWorker->m_known_scene_nx = known_scene_nx;
+    g_pWorker->m_known_scene_ny = known_scene_ny;
+    g_pWorker->m_known_scene_ns = known_scene_ns;
+
 
     g_pWorker->Start();
 
@@ -185,22 +195,27 @@ void Worker::OnTCPRecvMsg(MsgPtr msg)
     }
 }
 
-void Worker::DeterminePixelGenerationRateBasedonKnownScene()
+uint32_t Worker::DeterminePixelGenerationTimeBasedonKnownScene()
 {
     RELEASE_TRACE("Pixel generation Start");
-    int nx = 256, ny = 256;
-    int numPixels = nx * ny;
-    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GenerateKnownScene(nx, ny);
+    int numPixels = m_known_scene_nx * m_known_scene_ny;
+    SceneDescriptorPtr sceneDescriptorPtr = SceneFactory::GetScene(m_known_scene_name, m_known_scene_nx, m_known_scene_ny, m_known_scene_ns);
 
     /// Produce pixels
     char *p_buffer = (char *)malloc(sizeof(char) * numPixels);
     PreAllocatedStreamBuffer streambuff(p_buffer, numPixels);
     std::ostream ostrm(&streambuff);
 
-    ProducePixels(ny, 0, nx, 0, sceneDescriptorPtr, ostrm);
+    auto start_time = std::chrono::system_clock::now();
+    ProducePixels(m_known_scene_ny, 0, m_known_scene_nx, 0, sceneDescriptorPtr, ostrm);
     RELEASE_TRACE("Pixel generation End");
-
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time);
+    RELEASE_TRACE("Pixel generation End:"  << elapsed.count());
+    
     free(p_buffer);
+
+    float elapsedTime = (float)elapsed.count()/1000;
+    return (elapsedTime < 1) ? 1: int(elapsedTime);
 }
 
 void Worker::OnCreateServerResponse(MsgPtr msg)
@@ -209,11 +224,11 @@ void Worker::OnCreateServerResponse(MsgPtr msg)
     TCPServerConstructStatusMsg *p_responseMsg =  static_cast<TCPServerConstructStatusMsg *>(msg.get());
     m_listening_port  = p_responseMsg->GetPort();
 
-    //DeterminePixelGenerationRateBasedonKnownScene();
-
     // Let's establish a connection
     m_p_ConnectionToMaster = nullptr;
     TransportMgr::Instance().EstablishNewConnection(m_master_address, m_master_port, GetThrdListener(), true);
+
+    m_PixelProductionTimeForKnownScene = DeterminePixelGenerationTimeBasedonKnownScene();
 }
 
 void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
@@ -228,7 +243,9 @@ void Worker::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
 
         /// We are expecting response, So allocate an apptag and pass our thread listener which will route back the message to us.
         uint16_t advertisedHwThreadConcurrency  = g_WorkerCapabilities.m_max_advertised_hw_concurrency_level;
-        WorkerRegistrationMsgPtr reigstrationMsgPtr =  std::make_shared<WorkerRegistrationMsg>(hostname, m_listening_port, advertisedHwThreadConcurrency);
+        WorkerRegistrationMsgPtr reigstrationMsgPtr =  std::make_shared<WorkerRegistrationMsg>(hostname, m_listening_port, 
+                                                                                               advertisedHwThreadConcurrency, 
+                                                                                               m_PixelProductionTimeForKnownScene);
         reigstrationMsgPtr.get()->SetAppTag(m_p_ConnectionToMaster->AllocateAppTag());
         m_p_ConnectionToMaster->SendMsg(reigstrationMsgPtr, GetThrdListener());
     }

@@ -16,17 +16,17 @@ void SceneSchedulerDynamic::ProcessMsg(MsgPtr msg)
 {
     switch (msg->GetId())
     {
-       case MsgIdSceneProduceRequest:
-           OnSceneProduceRequestMsg(msg);
-           break;
+        case MsgIdSceneProduceRequest:
+            OnSceneProduceRequestMsg(msg);
+            break;
 
-       case MsgIdPixelProduceResponse:
-           OnPixelProduceResponseMsg(msg);
-           break;
+        case MsgIdPixelProduceResponse:
+            OnPixelProduceResponseMsg(msg);
+            break;
 
-       default:
-           SchedulerBase::ProcessMsg(msg);
-           break;
+        default:
+            SchedulerBase::ProcessMsg(msg);
+            break;
     }
 }
 
@@ -179,7 +179,8 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
     PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
     for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
     {
-        if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce) {
+        if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce)
+        {
             break;
         }
         uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).Y;

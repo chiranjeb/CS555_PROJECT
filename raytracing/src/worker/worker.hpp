@@ -8,7 +8,7 @@
 
 struct WorkerCapabilities
 {
-    WorkerCapabilities& Get(); 
+    WorkerCapabilities& Get();
     void UpdateAdvertisedHwConcurrencyLevel(int percentageUsedForSceneProduction);
     int m_max_advertised_hw_concurrency_level;
 };
@@ -24,7 +24,11 @@ public:
                            int master_port,
                            int worker_cmd_processor_q_depth,
                            int max_advertised_hw_concurrency_level,
-                           int scene_producer_q_depth);
+                           int scene_producer_q_depth,
+                           std::string known_scene_name,
+                           int known_scene_nx,
+                           int known_scene_ny,
+                           int known_scene_ns);
 
     /// Debug routine.
     void Dump();
@@ -43,7 +47,7 @@ public:
 
 protected:
     /// Worker constructor
-    Worker(std::string master_address, int master_port, int worker_cmd_processor_q_depth, 
+    Worker(std::string master_address, int master_port, int worker_cmd_processor_q_depth,
            int numPixelProducers, int pixelProducerQDepth);
 
     /// Start the worker thread
@@ -77,7 +81,7 @@ protected:
     void OnSceneProduceDone(MsgPtr msg);
 
     /// Determine pixel generation rate based on known scene
-    void DeterminePixelGenerationRateBasedonKnownScene();
+    uint32_t DeterminePixelGenerationTimeBasedonKnownScene();
 
     TCPIOConnectionPtr m_p_ConnectionToMaster;
     std::string m_master_address;
@@ -90,5 +94,10 @@ protected:
     std::map<std::size_t, std::string> m_SceneId2Client;            /// scene id to client map. A scene could be requested by multiple client
 
     std::multimap<std::size_t, PixelProducerPtr> m_WaitersForConnectionSetup;     /// scene id to connection map.
+    std::string m_known_scene_name;
+    int m_known_scene_nx;
+    int m_known_scene_ny;
+    int m_known_scene_ns;
     WorkerThreadList m_PixelProducerThreads;
+    uint32_t m_PixelProductionTimeForKnownScene;
 };

@@ -21,13 +21,16 @@ struct Pixel2XYMapper
 /// Resource entry
 struct ResourceEntry
 {
-    ResourceEntry(std::string host_name, uint16_t numAvailableHwExecutionThread) :
-        m_UniqueHostName(host_name), m_NumAvailableHwExecutionThread(numAvailableHwExecutionThread)
+    ResourceEntry(std::string host_name, uint16_t numAvailableHwExecutionThread, uint32_t PixelProductionTimeInSecForKnownScene) :
+        m_UniqueHostName(host_name), 
+        m_NumAvailableHwExecutionThread(numAvailableHwExecutionThread), 
+        m_PixelProductionTimeInSecForKnownScene(PixelProductionTimeInSecForKnownScene)
     {
     }
 
     std::string m_UniqueHostName;
     int m_NumAvailableHwExecutionThread;
+    uint32_t m_PixelProductionTimeInSecForKnownScene;
 };
 
 struct HwThreadMgr
@@ -95,7 +98,7 @@ public:
     void GetWorkEstimation(std::string host_name, uint16_t threadId, uint32_t pendingPixels);
 
     /// Add a new worker to the system
-    void AddWorker(std::string host_name, uint16_t numAvailableHwExecutionThread);
+    void AddWorker(std::string host_name, uint16_t numAvailableHwExecutionThread, uint32_t PixelProductionTimeInSecForKnownScene);
 
     /// Track job
     void TrackJob(std::string hostname, uint16_t thread_id, std::size_t sceneId, uint32_t pixelOffset, uint32_t numPixels);

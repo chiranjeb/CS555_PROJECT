@@ -12,6 +12,7 @@ void WorkerRegistrationMsg::Pack(std::ostream& ostrm)
    ostrm << m_hostname << " ";
    ostrm << m_Port << " ";
    ostrm << m_hw_thread_concurrency_level << " ";
+   ostrm << m_PixelProductionTimeInSecForKnownScene << " ";
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -23,7 +24,7 @@ void WorkerRegistrationMsg::Pack(std::ostream& ostrm)
 void WorkerRegistrationMsg::Unpack(std::istream& istrm)
 {
    WireMsg::Unpack(istrm);
-   istrm >> m_hostname >> m_Port >> m_hw_thread_concurrency_level;
+   istrm >> m_hostname >> m_Port >> m_hw_thread_concurrency_level >> m_PixelProductionTimeInSecForKnownScene;
 }
 
 

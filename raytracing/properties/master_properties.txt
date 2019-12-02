@@ -25,3 +25,11 @@ scheduling_policy=0
 ## random: A worker is assigned to random pixel chunks.
 static_scheduling_policy=0
 
+## Worker should read this value and report time taken to produce known scene..
+## Ideally, it would be best for the master to send down the request. But we are
+## doing it this way to help ease things out a bit
+known_scene_name="random"
+known_scene_nx=256
+known_scene_ny=256
+known_scene_ns=20
+

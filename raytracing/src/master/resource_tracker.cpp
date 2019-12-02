@@ -74,10 +74,10 @@ uint32_t ResourceTracker::GetWorkEstimationForNewScene(uint32_t totalNumOfPixels
 }
 
 /// Add a new worker. Create context for all hw execution threads.
-void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwExecutionThread)
+void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwExecutionThread, uint32_t PixelProductionTimeInSecForKnownScene)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-    m_HostWorkers.push_back(std::make_shared<ResourceEntry>(host_name, numAvailableHwExecutionThread));
+    m_HostWorkers.push_back(std::make_shared<ResourceEntry>(host_name, numAvailableHwExecutionThread, PixelProductionTimeInSecForKnownScene));
 
     /// Add total number of hardware threads.
     m_total_num_hw_threads += numAvailableHwExecutionThread;
@@ -93,7 +93,9 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
     DEBUG_TRACE_APPLICATION("worker list: " << m_HostWorkers.size());
     for (std::vector<ResourceEntryPtr>::iterator iter = m_HostWorkers.begin(); iter != m_HostWorkers.end(); iter++)
     {
-        DEBUG_TRACE_APPLICATION("worker: " << (*iter)->m_UniqueHostName);
+        DEBUG_TRACE_APPLICATION("worker: " << (*iter)->m_UniqueHostName << ", num logical threads:" 
+                                << (*iter)->m_NumAvailableHwExecutionThread << ", m_PixelProductionTimeInSecForKnownScene: " 
+                                << (*iter)->m_PixelProductionTimeInSecForKnownScene);
     }
 
     Dump();

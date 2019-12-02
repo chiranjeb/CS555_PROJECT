@@ -110,7 +110,8 @@ void MasterSchedulerThread::OnWorkerRegistrationRequest(WireMsgPtr wireMsgPtr)
     /// We are not expecting any response back. So, pass a nullptr.
     registrationMsgPtr->GetConnection()->SendMsg(reigstrationRespMsgPtr, ListenerPtr(nullptr));
 
-    ResourceTracker::Instance().AddWorker(unique_hostname, registrationMsgPtr->GetNumHwExecutionThread());
+    ResourceTracker::Instance().AddWorker(unique_hostname, registrationMsgPtr->GetNumHwExecutionThread(),
+                                          registrationMsgPtr->GetPixelProductionTimeInSecForKnownScene());
 }
 
 

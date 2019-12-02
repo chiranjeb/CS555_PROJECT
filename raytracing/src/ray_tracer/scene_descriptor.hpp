@@ -107,7 +107,7 @@ public:
 
       /// Finally return the scene descriptor pointer.
       return sceneDescriptorPtr;
-   }
+   }   
 };
 
 
