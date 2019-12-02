@@ -77,10 +77,17 @@ void SceneSchedulerDynamic::KickOffSceneScheduling()
 
     uint32_t totalAvailableHwThreads = ResourceTracker::Instance().GetTotalNumberOfHwThreads();
     uint32_t numPixelsTobeSchehduled = ResourceTracker::Instance().GetWorkEstimationForNewScene(m_TotalNumPixelsToProduce);
-    m_workload = (numPixelsTobeSchehduled + totalAvailableHwThreads - 1) / totalAvailableHwThreads;
+
+    if (numPixelsTobeSchehduled < totalAvailableHwThreads)
+    {
+        m_workload = 1;
+    }
+    else
+    {
+        m_workload = numPixelsTobeSchehduled / totalAvailableHwThreads;
+    }
 
     /// Prepare pixel chunk indexes.
-
     int currentPixelChunkIndex = 0;
     DEBUG_TRACE("m_NX:" << m_NX << ", m_NY:" << m_NY);
     std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
@@ -116,7 +123,15 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
                                               m_SceneId,
                                               pRespMsg->GetScenePixelOffset());
 
-    m_NumPendingCompletionResponse--;
+    if (pRespMsg->GetNumPixels() != 0)
+    {
+        /// To simply the underrun condition on the workload which is way smaller than
+        /// the cluster's capcity, we do send some messages without work....Just to 
+        /// go through the normal path. However, we don't track those jobs which is tied to
+        /// the number of responses we are expecting. Now, we can't count those response 
+        /// messages w/o work.
+        m_NumPendingCompletionResponse--; 
+    }
 
     if (m_TotalNumPixelsToProduce == m_CurrentPixelOffset)
     {
@@ -174,9 +189,21 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
 
 void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endThread)
 {
+    if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce)
+    {
+        return;
+    }
     uint32_t numThread = endThread - startThread;
     uint32_t numberOfHwExecutionThreadsForCurrentWorker = endThread - startThread;
     PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
+    for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
+    {
+        int appTag = p_connection->AllocateAppTag();
+        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetupAppTag(appTag);
+        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetThreadId(hwExecutionThreadId);
+        p_connection->RegisterNotification(appTag, m_MyLisPtr);
+    }
+
     for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
     {
         if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce)
@@ -195,22 +222,15 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
         uint16_t startY = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).Y;
         uint16_t endX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).X;
 
-
         RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(hwExecutionThreadId))
                       << ", Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
                       << ", endX:" << endX << "Num Pixels:" << workload);
 
 
-        int appTag = p_connection->AllocateAppTag();
-
         /// Update work set
         pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->GenerateWork(startY, startX,  endY, endX);
         pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetPixelDomain(m_CurrentPixelOffset, workload);
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetupAppTag(appTag);
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetThreadId(hwExecutionThreadId);
 
-
-        p_connection->RegisterNotification(appTag, m_MyLisPtr);
 
         /// Track the job
         ResourceTracker::Instance().TrackJob(p_connection->GetUniqueHostName(), hwExecutionThreadId, m_SceneId, m_CurrentPixelOffset, workload);

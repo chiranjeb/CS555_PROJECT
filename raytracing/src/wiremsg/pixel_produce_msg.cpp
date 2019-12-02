@@ -43,6 +43,14 @@ PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkL
    m_NextRequestIndex = 0;
    for (uint16_t index = 0; index < m_NumRequest; ++index)
    {
+       m_pPixelProduceRequest[index].m_startY = 0;
+       m_pPixelProduceRequest[index].m_startX = 0;
+       m_pPixelProduceRequest[index].m_endY = 0;
+       m_pPixelProduceRequest[index].m_endX = 0;
+       m_pPixelProduceRequest[index].m_NumPixels = 0;
+       m_pPixelProduceRequest[index].m_ScenePixelOffset = 0;
+       m_pPixelProduceRequest[index].m_ScenePixelOffset = 0;
+       m_pPixelProduceRequest[index].m_AppTag = 0;
        m_pPixelProduceRequest[index].m_ThreadId = index;
    }
    DEBUG_TRACE_WIRE_MSG("PixelProduceRequestMsg: Constructor");
