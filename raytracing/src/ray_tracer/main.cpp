@@ -558,6 +558,40 @@ void rotate_y::Unpack(std::istream& is)
    is >> sinTheta >> cosTheta >> hasbox >> bbox;
 }
 
+/// Custom Message serializer
+void rotate_x::Pack(std::ostream &os)
+{
+    os << ptr->GetType() << " ";
+    ptr->Pack(os);
+    os << sinTheta << " "  << cosTheta << " " << hasbox << " " << bbox << " ";
+}
+
+/// Custom message deserializer
+void rotate_x::Unpack(std::istream &is)
+{
+    char type;
+    is >> type;
+    ptr = ConstructHitable(is, type);
+    is >> sinTheta >> cosTheta >> hasbox >> bbox;
+}
+
+
+/// Custom Message serializer
+void rotate_z::Pack(std::ostream &os)
+{
+    os << ptr->GetType() << " ";
+    ptr->Pack(os);
+    os << sinTheta << " "  << cosTheta << " " << hasbox << " " << bbox << " ";
+}
+
+/// Custom message deserializer
+void rotate_z::Unpack(std::istream &is)
+{
+    char type;
+    is >> type;
+    ptr = ConstructHitable(is, type);
+    is >> sinTheta >> cosTheta >> hasbox >> bbox;
+}
 
 /// Custom Message serializer
 void translate::Pack(std::ostream& os)
