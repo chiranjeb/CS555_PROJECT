@@ -132,7 +132,7 @@ public:
   marble(vec3 c, float sc = 1.0): color(c), scale(sc), m_type(TEXTURE_TYPE_MARBLE){}
   virtual vec3 value(float u, float v, const vec3& p) const
   {
-    return color*vec3(1,1,1)*0.5*(1+sin(scale*p.x() + 10*noise.turb(p)));
+    return color*vec3(1,1,1)*0.5*(1+sin(scale*p.x() + 5*noise.turb(scale*p)));
   }
 
   /// Return type
