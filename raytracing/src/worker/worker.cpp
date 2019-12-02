@@ -187,7 +187,6 @@ void Worker::OnTCPRecvMsg(MsgPtr msg)
 
 void Worker::DeterminePixelGenerationRateBasedonKnownScene()
 {
-    /*
     RELEASE_TRACE("Pixel generation Start");
     int nx = 256, ny = 256;
     int numPixels = nx * ny;
@@ -202,7 +201,6 @@ void Worker::DeterminePixelGenerationRateBasedonKnownScene()
     RELEASE_TRACE("Pixel generation End");
 
     free(p_buffer);
-    */
 }
 
 void Worker::OnCreateServerResponse(MsgPtr msg)
