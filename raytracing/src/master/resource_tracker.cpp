@@ -67,9 +67,17 @@ uint32_t ResourceTracker::GetWorkEstimationForNewScene(uint32_t totalNumOfPixels
     }
     else
     {
-        /// todo : for dynamic schedule, we can evaluate based on the current load about how much to schedule.
-        /// Let's give a flat 4096 number of pixels to begin with and then we will adjust.
-        return 2048 * m_total_num_hw_threads;
+        uint32_t totalNumPixelsTobeScheduled;
+        uint32_t minPixelChunkSize = SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin;
+        do
+        {
+            totalNumPixelsTobeScheduled = minPixelChunkSize * m_total_num_hw_threads;
+            minPixelChunkSize *= 2;
+        }
+        while ((totalNumOfPixels > (minPixelChunkSize * 2 * m_total_num_hw_threads)) && (minPixelChunkSize <= SchedulingPolicyParam::Get().m_DynamicScheduleInitialPixelChunkMax));
+
+        DEBUG_TRACE_APPLICATION("\t" << "ResourceTracker:GetWorkEstimationForNewScene (initial pixels per thread): " << std::min(totalNumPixelsTobeScheduled, totalNumOfPixels)/m_total_num_hw_threads);
+        return std::min(totalNumPixelsTobeScheduled, totalNumOfPixels) ; 
     }
 }
 
@@ -93,8 +101,8 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
     DEBUG_TRACE_APPLICATION("worker list: " << m_HostWorkers.size());
     for (std::vector<ResourceEntryPtr>::iterator iter = m_HostWorkers.begin(); iter != m_HostWorkers.end(); iter++)
     {
-        DEBUG_TRACE_APPLICATION("worker: " << (*iter)->m_UniqueHostName << ", num logical threads:" 
-                                << (*iter)->m_NumAvailableHwExecutionThread << ", m_PixelProductionTimeInSecForKnownScene: " 
+        DEBUG_TRACE_APPLICATION("worker: " << (*iter)->m_UniqueHostName << ", num logical threads:"
+                                << (*iter)->m_NumAvailableHwExecutionThread << ", m_PixelProductionTimeInSecForKnownScene: "
                                 << (*iter)->m_PixelProductionTimeInSecForKnownScene);
     }
 

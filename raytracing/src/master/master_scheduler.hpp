@@ -31,6 +31,26 @@ struct SchedulingPolicyParam
         m_StaticSchedulePolicy = staticSchedulePolicy;
     }
 
+    void SetDynamicScheduleInitialPixelChunkMax(int dynamicScheduleInitialPixelChunkMax)
+    {
+        m_DynamicScheduleInitialPixelChunkMax = dynamicScheduleInitialPixelChunkMax;
+    }
+
+    void SetDynamicScheduleInitialPixelChunkMaxThrottleFactor(int dynamicScheduleInitialPixelChunkMaxThrottleFactor)
+    {
+        m_DynamicScheduleInitialPixelChunkMaxThrottleFactor = dynamicScheduleInitialPixelChunkMaxThrottleFactor;
+    }
+
+    void SetDynamicSchedulePixelChunkDecay(int dynamicSchedulePixelChunkDecay)
+    {
+        m_DynamicSchedulePixelChunkDecay = dynamicSchedulePixelChunkDecay;
+    }
+
+    void SetDynamicSchedulePixelChunkMin(int dynamicSchedulePixelChunkMin)
+    {
+        m_DynamicSchedulePixelChunkMin = dynamicSchedulePixelChunkMin;
+    }
+
     bool ConfiguredAsStaticScheduler()
     {
         return (m_Policy == 0);
@@ -38,6 +58,11 @@ struct SchedulingPolicyParam
 
     int m_Policy; /// Scheduling policy. 0 - for static scheduler. 1 - for dynamic schedule
     int m_StaticSchedulePolicy;
+    int m_DynamicScheduleInitialPixelChunkMax;
+    int m_DynamicScheduleInitialPixelChunkMaxThrottleFactor;
+    int m_DynamicSchedulePixelChunkDecay;
+    int m_DynamicSchedulePixelChunkMin;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////////
