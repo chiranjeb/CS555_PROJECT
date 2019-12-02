@@ -384,6 +384,8 @@ bool triangle::hit(const ray&r, float t0, float t1, hitRecord &rec) const
 
 }
 
+
+// This hitable is unimplemented.  
 class trianglemesh : public hitable
 {
 public:
@@ -403,13 +405,13 @@ public:
   /// Custom Message serializer
   virtual void Pack(std::ostream &os)
   {
-     //@@@ TODO: ask Matt about this.
+     //This hitable is unimplemented at the moment.
   }
 
   /// Custom message deserializer
   virtual void Unpack(std::istream &is)
   {
-     //@@@ TODO: ask Matt about this.
+     //This hitable is unimplemented at the moment.
   }
 
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const {return false;}
