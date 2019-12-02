@@ -28,7 +28,7 @@ static_scheduling_policy=0
 
 dynamic_schedule_initial_pixel_chunk_max=2048
 dynamic_schedule_initial_pixel_chunk_max_throttle_factor=2
-dynamic_schedule_pixel_chunk_decay=99
+dynamic_schedule_pixel_chunk_decay=10000
 dynamic_schedule_pixel_chunk_min=128
 
 

@@ -180,6 +180,12 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
         }
         else
         {
+            /// Decay the workload a bit until we hit SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin
+            m_workload = (m_workload * SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkDecay)/10000;
+            if (m_workload < SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin)
+            {
+                m_workload = SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin;
+            }
             /// Send some more to the thread.
             SendNextJob(pConnection, pRespMsg->GetThreadId(), pRespMsg->GetThreadId() + 1);
         }
