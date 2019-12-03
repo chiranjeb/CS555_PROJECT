@@ -152,7 +152,31 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
             SendNextJob(pConnection, pRespMsg->GetPipelineId(), pRespMsg->GetPipelineId() + 1);
         }
     }
+}
 
+
+uint32_t SceneSchedulerDynamic::ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOConnectionPtr p_connection)
+{
+    if (SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkRefillAllocationPolicy == 0)
+    {
+        /// Each pipeline will get same amount.
+        int workload = m_workload;
+        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
+        {
+            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
+        }
+        return workload;
+    }
+    else
+    {
+        /// Each pipeline will get amount based on its capability for now
+        int workload = m_workload;
+        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
+        {
+            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
+        }
+        return workload;    
+    }
 }
 
 void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startPixelProductionPipelineId, uint16_t endPixelProductionPipelineId)
@@ -181,11 +205,7 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
         uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).Y;
         uint16_t startX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).X;
 
-        int workload = m_workload;
-        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
-        {
-            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
-        }
+        int workload =  ComputeRefillWorkLoadBasedOnCurrentPolicy(p_connection);
 
         uint16_t startY = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).Y;
         uint16_t endX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).X;

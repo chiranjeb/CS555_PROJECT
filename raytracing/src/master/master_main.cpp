@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
    int scheduling_policy = std::stoi(properties["scheduling_policy"]);
    int static_schedule_policy = std::stoi(properties["static_scheduling_policy"]);
 
+   int dynamic_schedule_pixel_chunk_refill_allocation_policy = std::stoi(properties["dynamic_schedule_pixel_chunk_refill_allocation_policy"]);
    int dynamic_schedule_initial_pixel_chunk_max = std::stoi(properties["dynamic_schedule_initial_pixel_chunk_max"]);
    int dynamic_schedule_initial_pixel_chunk_max_throttle_factor = std::stoi(properties["dynamic_schedule_initial_pixel_chunk_max_throttle_factor"]);
    int dynamic_schedule_pixel_chunk_decay = std::stoi(properties["dynamic_schedule_pixel_chunk_decay"]);
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
    RELEASE_TRACE("[Master Properties] Master scheduling policy(static-0, dynamic-1): " << scheduling_policy);
    RELEASE_TRACE("[Master Properties] Master static schedule policy: " << static_schedule_policy);
 
+   RELEASE_TRACE("[Master Properties] dynamic schedule pixel chunk refill allocation policy: " << dynamic_schedule_pixel_chunk_refill_allocation_policy);
    RELEASE_TRACE("[Master Properties] dynamic schedule initial pixel chunk_maxx: " << dynamic_schedule_initial_pixel_chunk_max);
    RELEASE_TRACE("[Master Properties] dynamic schedule initial pixel chunk_max_throttle_factor: " << dynamic_schedule_initial_pixel_chunk_max_throttle_factor);
    RELEASE_TRACE("[Master Properties] dynamic schedule pixel chunk decay: " << dynamic_schedule_pixel_chunk_decay);
@@ -40,6 +42,7 @@ int main(int argc, char *argv[])
    /// Update scheduling policy.
    SchedulingPolicyParam::Get().SetSchedulingPolicy(scheduling_policy);
    SchedulingPolicyParam::Get().SetStaticSchedulingPolicy(static_schedule_policy);
+   SchedulingPolicyParam::Get().SetDynamicSchedulePixelChunkRefillAllocationPolicy(dynamic_schedule_pixel_chunk_refill_allocation_policy);
    SchedulingPolicyParam::Get().SetDynamicScheduleInitialPixelChunkMax(dynamic_schedule_initial_pixel_chunk_max);
    SchedulingPolicyParam::Get().SetDynamicScheduleInitialPixelChunkMaxThrottleFactor(dynamic_schedule_initial_pixel_chunk_max_throttle_factor);
    SchedulingPolicyParam::Get().SetDynamicSchedulePixelChunkDecay(dynamic_schedule_pixel_chunk_decay);

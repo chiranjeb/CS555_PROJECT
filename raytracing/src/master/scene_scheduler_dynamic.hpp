@@ -27,14 +27,14 @@ protected:
     /// Pixel produce response message.
     void OnPixelProduceResponseMsg(MsgPtr msg);
 
-    /// Handle xmit status.
-    void OnXmitStatus(MsgPtr msg);
-
     /// Different chunking of the work.
     void KickOffSceneScheduling();
 
     /// Send next job
     void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endPixelProductionPipelineId);
+
+    /// Compute workload based on policy
+    uint32_t ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOConnectionPtr p_connection); 
 
     /// attributes
     uint32_t m_CurrentPixelOffset;

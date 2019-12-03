@@ -26,6 +26,12 @@ scheduling_policy=0
 static_scheduling_policy=0
 
 
+## different dynamic schedule pixel chunk refill allocation policy after the each pipeline
+## completes first iteration, fixed  => 0, worker capability driven  => 1,
+## fixed chunk: Each will be getting same pixel chunk size.
+## worker capability driven :  Pipelines of a slow worker will get less, pipelines of a fast worker will get more
+dynamic_schedule_pixel_chunk_refill_allocation_policy=0
+
 dynamic_schedule_initial_pixel_chunk_max=2048
 dynamic_schedule_initial_pixel_chunk_max_throttle_factor=2
 dynamic_schedule_pixel_chunk_decay=10000
