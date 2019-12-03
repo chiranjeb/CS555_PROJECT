@@ -34,7 +34,7 @@ protected:
     void KickOffSceneScheduling();
 
     /// Send next job
-    void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endThread);
+    void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endPixelProductionPipelineId);
 
     /// attributes
     uint32_t m_CurrentPixelOffset;

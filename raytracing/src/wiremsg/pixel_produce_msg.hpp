@@ -13,9 +13,9 @@ struct PixelProduceRequest
    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset; }
    int GetAppTag() { return m_AppTag; }
    void SetupAppTag(int appTag) { m_AppTag = appTag;}
-   void SetThreadId(uint16_t threadId) { m_ThreadId = threadId; }
+   void SetPipelineId(uint16_t pipelineId) { m_PipelineId = pipelineId; }
 
-   uint16_t m_ThreadId;
+   uint16_t m_PipelineId;
    uint16_t m_startY;
    uint16_t m_startX;
    uint16_t m_endY;
@@ -91,8 +91,8 @@ class PixelProduceResponseMsg : public WireMsg
 {
 public:
    /// PixelProduceRequestMsg message constructor
-   PixelProduceResponseMsg(std::size_t sceneId, uint32_t numPixels, uint32_t scenePixelOffset, uint16_t  threadId):
-       WireMsg(MsgIdPixelProduceResponse), m_SceneId(sceneId), m_NumPixels(numPixels), m_ScenePixelOffset(scenePixelOffset), m_ThreadId(threadId)
+   PixelProduceResponseMsg(std::size_t sceneId, uint32_t numPixels, uint32_t scenePixelOffset, uint16_t  pipelineId):
+       WireMsg(MsgIdPixelProduceResponse), m_SceneId(sceneId), m_NumPixels(numPixels), m_ScenePixelOffset(scenePixelOffset), m_PipelineId(pipelineId)
    {
    }
 
@@ -116,11 +116,11 @@ public:
    void Dump()
    {
        DEBUG_TRACE_WIRE_MSG("PixelProduceResponseMsg::Dump - " << ", m_AppTag:" << m_ApplicationTag 
-                   <<  ", m_SceneId:" << m_SceneId << ", m_ThreadId:" << m_ThreadId << ", m_ScenePixelOffset: " << m_ScenePixelOffset);
+                   <<  ", m_SceneId:" << m_SceneId << ", m_PipelineId:" << m_PipelineId << ", m_ScenePixelOffset: " << m_ScenePixelOffset);
    }
 
    std::size_t GetSceneId() { return m_SceneId;}
-   uint16_t GetThreadId()   { return m_ThreadId;}
+   uint16_t GetPipelineId()   { return m_PipelineId;}
    uint32_t GetNumPixels()  { return m_NumPixels;}
    uint32_t GetScenePixelOffset() { return m_ScenePixelOffset;}
 
@@ -128,7 +128,7 @@ protected:
    std::size_t m_SceneId;
    uint32_t m_NumPixels;
    uint32_t m_ScenePixelOffset;
-   uint16_t m_ThreadId;
+   uint16_t m_PipelineId;
    PixelProduceRequest *m_pPixelProduceRequest;
 };
 

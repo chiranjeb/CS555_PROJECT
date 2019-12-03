@@ -59,10 +59,10 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
     for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
     {
         TCPIOConnectionPtr p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
-        uint32_t numberOfHwExecutionThreadsForCurrentWorker = workerList[workerIndex]->m_NumAvailableHwExecutionThread;
+        uint32_t numberOfPixelProductionPipelinesForCurrentWorker = workerList[workerIndex]->m_NumAvailablePixelProductionPipelines;
 
-        PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
-        for (int hwExecutionThreadId = 0; hwExecutionThreadId < numberOfHwExecutionThreadsForCurrentWorker; ++hwExecutionThreadId)
+        PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfPixelProductionPipelinesForCurrentWorker);
+        for (int pixelProductionPipelineId = 0; pixelProductionPipelineId < numberOfPixelProductionPipelinesForCurrentWorker; ++pixelProductionPipelineId)
         {
             if (totalScheduled >= m_TotalNumPixelsToProduce)
             {
@@ -95,21 +95,21 @@ void SceneSchedulerStatic::KickOffSceneScheduling()
             uint16_t endX = Pixel2XYMapper(m_NY, m_NX, currentPixelOffset + workload - 1).X;
 
 
-            RELEASE_TRACE("Submitting Job to: " << (workerList[workerIndex]->m_UniqueHostName + ":" + std::to_string(hwExecutionThreadId))
+            RELEASE_TRACE("Submitting Job to: " << (workerList[workerIndex]->m_UniqueHostName + ":" + std::to_string(pixelProductionPipelineId))
                           << "Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
                           << ", endX:" << endX << "Num Pixels:" << workload);
 
             /// Update work set
             int appTag = p_connection->AllocateAppTag();
-            pixelProduceRequestMsg->Request(hwExecutionThreadId)->GenerateWork(startY, startX,  endY, endX);
-            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetPixelDomain(currentPixelOffset, workload);
-            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetupAppTag(appTag);
-            pixelProduceRequestMsg->Request(hwExecutionThreadId)->SetThreadId(hwExecutionThreadId);
+            pixelProduceRequestMsg->Request(pixelProductionPipelineId)->GenerateWork(startY, startX,  endY, endX);
+            pixelProduceRequestMsg->Request(pixelProductionPipelineId)->SetPixelDomain(currentPixelOffset, workload);
+            pixelProduceRequestMsg->Request(pixelProductionPipelineId)->SetupAppTag(appTag);
+            pixelProduceRequestMsg->Request(pixelProductionPipelineId)->SetPipelineId(pixelProductionPipelineId);
 
             p_connection->RegisterNotification(appTag, m_MyLisPtr);
 
             /// Track the job
-            ResourceTracker::Instance().TrackJob(workerList[workerIndex]->m_UniqueHostName, hwExecutionThreadId,
+            ResourceTracker::Instance().TrackJob(workerList[workerIndex]->m_UniqueHostName, pixelProductionPipelineId,
                                                  m_SceneId, currentPixelOffset, workload);
 
             m_NumPendingCompletionResponse++;
@@ -143,7 +143,7 @@ void SceneSchedulerStatic::OnPixelProduceResponseMsg(MsgPtr msg)
 
     /// Notify that the job is done
     ResourceTracker::Instance().NotifyJobDone(pConnection->GetUniqueHostName(),
-                                              pRespMsg->GetThreadId(),
+                                              pRespMsg->GetPipelineId(),
                                               m_SceneId,
                                               pRespMsg->GetScenePixelOffset());
 
@@ -153,7 +153,7 @@ void SceneSchedulerStatic::OnPixelProduceResponseMsg(MsgPtr msg)
     if (!m_FailedJobs.empty())
     {
         auto failedPixelOffset2Count = m_FailedJobs.begin();
-        SendNextFailedJob(pConnection, pRespMsg->GetThreadId(),
+        SendNextFailedJob(pConnection, pRespMsg->GetPipelineId(),
                           failedPixelOffset2Count->first, failedPixelOffset2Count->second);
         m_FailedJobs.erase(failedPixelOffset2Count);
     }

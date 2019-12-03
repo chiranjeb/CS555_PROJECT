@@ -327,8 +327,8 @@ void Worker::OnPixelProduceRequestMsg(MsgPtr msg)
     for (int index = 0; index < requestMsgPtr->GetNumRequests(); ++index)
     {
         PixelProduceRequest *pRequest = requestMsgPtr->GetRequest(index);
-        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_PixelProducerThreads.GetListeningQ(pRequest->m_ThreadId), pConnection, m_p_ConnectionToMaster, index);
-        m_PixelProducerThreads.Send(pRequest->m_ThreadId, MsgQEntry(requestMsgPtr, cmdPtr));
+        PixelProducerPtr cmdPtr = std::make_shared<PixelProducer>(m_PixelProducerThreads.GetListeningQ(pRequest->m_PipelineId), pConnection, m_p_ConnectionToMaster, index);
+        m_PixelProducerThreads.Send(pRequest->m_PipelineId, MsgQEntry(requestMsgPtr, cmdPtr));
         if (pConnection == nullptr)
         {
             m_WaitersForConnectionSetup.insert(std::pair<std::size_t, PixelProducerPtr>(requestMsgPtr->GetSceneId(), cmdPtr));

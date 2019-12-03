@@ -65,7 +65,7 @@ void SchedulerBase::OnTCPConnectionException(MsgPtr msg)
 
 
 
-void SchedulerBase::SendNextFailedJob(TCPIOConnectionPtr p_connection, uint32_t threadId, uint32_t failedPixelOffset, uint32_t workload)
+void SchedulerBase::SendNextFailedJob(TCPIOConnectionPtr p_connection, uint32_t pipelineId, uint32_t failedPixelOffset, uint32_t workload)
 {
     PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, 1);
     uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, failedPixelOffset).Y;
@@ -75,7 +75,7 @@ void SchedulerBase::SendNextFailedJob(TCPIOConnectionPtr p_connection, uint32_t 
     uint16_t endX = Pixel2XYMapper(m_NY, m_NX, failedPixelOffset + workload - 1).X;
 
 
-    RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(threadId))
+    RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(pipelineId))
                   << ", Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
                   << ", endX:" << endX << "Num Pixels:" << workload);
 
@@ -86,14 +86,14 @@ void SchedulerBase::SendNextFailedJob(TCPIOConnectionPtr p_connection, uint32_t 
     pixelProduceRequestMsg->Request(0)->GenerateWork(startY, startX,  endY, endX);
     pixelProduceRequestMsg->Request(0)->SetPixelDomain(failedPixelOffset, workload);
     pixelProduceRequestMsg->Request(0)->SetupAppTag(appTag);
-    pixelProduceRequestMsg->Request(0)->SetThreadId(threadId);
+    pixelProduceRequestMsg->Request(0)->SetPipelineId(pipelineId);
 
 
     p_connection->RegisterNotification(appTag, m_MyLisPtr);
     m_NumPendingCompletionResponse++;
 
     /// Track the job
-    ResourceTracker::Instance().TrackJob(p_connection->GetUniqueHostName(), threadId, m_SceneId, failedPixelOffset, workload);
+    ResourceTracker::Instance().TrackJob(p_connection->GetUniqueHostName(), pipelineId, m_SceneId, failedPixelOffset, workload);
 
     /// Send scene production message. Now we will wait for the response.
     p_connection->SendMsg(pixelProduceRequestMsg, ListenerPtr(nullptr));
