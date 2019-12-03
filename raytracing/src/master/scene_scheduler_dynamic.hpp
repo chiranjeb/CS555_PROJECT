@@ -24,10 +24,6 @@ public:
     }
 
 protected:
-
-    /// Scene produce request message handler.
-    void OnSceneProduceRequestMsg(MsgPtr msg);
-
     /// Pixel produce response message.
     void OnPixelProduceResponseMsg(MsgPtr msg);
 
@@ -39,10 +35,6 @@ protected:
 
     /// Send next job
     void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endThread);
-
-
-    /// TCP Connection exception message handler.
-    void OnTCPConnectionException(MsgPtr msg);
 
     /// attributes
     uint32_t m_CurrentPixelOffset;

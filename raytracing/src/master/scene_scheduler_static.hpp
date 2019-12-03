@@ -25,21 +25,15 @@ public:
     }
 
 protected:
-
-    /// Scene produce request message handler.
-    void OnSceneProduceRequestMsg(MsgPtr msg);
-
     /// Pixel produce response message.
     void OnPixelProduceResponseMsg(MsgPtr msg);
 
     /// Different chunking of the work.
-    void KickOffSceneScheduling();
+    virtual void KickOffSceneScheduling();
 
     /// Handle xmit status.
     void OnXmitStatus(MsgPtr msg);
 
-    /// TCP Connection exception message handler.
-    void OnTCPConnectionException(MsgPtr msg);
 };
 
 typedef std::shared_ptr<SceneSchedulerStatic> SceneSchedulerStaticPtr;

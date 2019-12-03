@@ -25,6 +25,12 @@ public:
     /// Send next failed job
     void SendNextFailedJob(TCPIOConnectionPtr p_connection, uint32_t threadId, uint32_t failedPixelOffset, uint32_t workload);
 
+    /// 
+    void OnSceneProduceRequestMsg(MsgPtr msg);
+
+    /// Different chunking of the work.
+    virtual void KickOffSceneScheduling(){}
+
 protected:
     /// attributes
     uint32_t m_TotalNumPixelsToProduce;

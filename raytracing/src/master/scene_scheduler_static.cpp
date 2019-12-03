@@ -16,10 +16,6 @@ void SceneSchedulerStatic::ProcessMsg(MsgPtr msg)
 {
     switch (msg->GetId())
     {
-        case MsgIdSceneProduceRequest:
-            OnSceneProduceRequestMsg(msg);
-            break;
-
         case MsgIdPixelProduceResponse:
             OnPixelProduceResponseMsg(msg);
             break;
@@ -29,48 +25,6 @@ void SceneSchedulerStatic::ProcessMsg(MsgPtr msg)
             break;
     }
 }
-
-
-void SceneSchedulerStatic::OnSceneProduceRequestMsg(MsgPtr msg)
-{
-    SceneProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<SceneProduceRequestMsg>(msg);
-    std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
-    ErrorCode_t status = ERR_CLUSTER_INIT_IN_POGRESS;
-    int appTag = pRequestMsg->GetAppTag();
-    if (workerList.size() != 0)
-    {
-        m_NX = pRequestMsg->GetNX();
-        m_NY = pRequestMsg->GetNY();
-        m_RPP = pRequestMsg->GetRPP();
-        //NOW! Edit RPP...
-        m_SceneId = pRequestMsg->GetSceneId();
-
-        DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << workerList.size());
-        m_p_client_connection = pRequestMsg->GetConnection();
-
-        pRequestMsg->SetAppTag(0);
-
-        ///We need to reserialize the first few bytes....
-        pRequestMsg->Repack();
-
-        /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
-        for (int index = 0; index < workerList.size(); ++index)
-        {
-            TransportMgr::Instance().FindConnection(workerList[index]->m_UniqueHostName)->SendMsg(pRequestMsg, ListenerPtr(nullptr));
-        }
-
-        /// Let's first generate sequential pixel workload
-        KickOffSceneScheduling();
-
-        status = STATUS_SUCCESS;
-    }
-    /// all the tasks are scheduled. Send the acknowledgement to the client that the request has been accepted.
-    SceneProduceRequestAckMsgPtr sceneProduceRequestAckMsgPtr = std::make_shared<SceneProduceRequestAckMsg>(appTag, status);
-
-    /// Send the response back to the client.
-    pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, ListenerPtr(nullptr));
-}
-
 
 
 void SceneSchedulerStatic::KickOffSceneScheduling()
