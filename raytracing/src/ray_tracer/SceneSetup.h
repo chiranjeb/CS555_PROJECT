@@ -51,7 +51,7 @@ SceneSetup::SceneSetup(string fileName)
     parseFileLines(fileLines);
    }
 
-void SceneSetup::readFileLines(string fileName)
+void SceneSetup::readFileLines(string fileName, vector<string>& fileLines)
    {
     ifstream fin;
     string line;
@@ -69,7 +69,7 @@ void SceneSetup::readFileLines(string fileName)
     fin.close();
    }
 
-void SceneSetup::parseFileLines(vector<string>& fileLines);
+void SceneSetup::parseFileLines(vector<string>& fileLines)
    { 
     for(int i = 0; i < fileLines.size(); i++) 
        {
@@ -123,7 +123,7 @@ void SceneSetup::setupTexture(string token, texture *tex)
     string type = token.substr(0,pos), subToken;
     token.erase(0, pos+delimiter.length());
 
-    if(type.compare("constantTexture"))
+    if(type.compare("constantTexture") == 0)
        {
         // remove initial '('
         string delimiter = "(";
@@ -148,7 +148,7 @@ void SceneSetup::setupTexture(string token, texture *tex)
         b = stof(subToken);
         tex = new constantTexture(vec3(r,g,b));
        }         
-    else if(type.compare("checkerTexture"))
+    else if(type.compare("checkerTexture") == 0)
        {
 	    texture *one, *other;
  	    int parenCount = 0;
@@ -173,10 +173,10 @@ void SceneSetup::setupTexture(string token, texture *tex)
             i++;
            }
 	    setupTexture(token.substr(0, i), one);
-        setupTexture(token.substr(i,token.length()));
+        setupTexture(token.substr(i,token.length()), other);
 
        }
-    else if(type.compare("checkerNoise") || type.compare("camo") || type.compare("marble"))
+    else if(type.compare("checkerNoise") == 0 || type.compare("camo") == 0 || type.compare("marble") == 0)
        {
         // remove initial '('
         string delimiter = "(";
@@ -213,27 +213,27 @@ void SceneSetup::setupTexture(string token, texture *tex)
             sc = stof(token.substr(0, pos));
         }
 
-        if(type.compare("checkerNose"))
+        if(type.compare("checkerNoise") == 0)
             tex = new checkerNoise(vec3(r,g,b), sc);
-        else if (type.comparte("camo"))
+        else if (type.compare("camo") == 0)
             tex = new camo(vec3(r,g,b), sc);
-        else if (type.comparte("marble"))
+        else if (type.compare("marble") == 0)
             tex = new marble(vec3(r,g,b), sc);
        }
    }
 
-void SceneSetup::setupMaterial(string token, materail *mat, texture *tex)
+void SceneSetup::setupMaterial(string token, material *mat, texture *tex)
    {
     string delimiter = "(";
     int pos = token.find(delimiter);
     string type = token.substr(0,pos), subToken;
     token.erase(0, pos+delimiter.length());
 
-    if(type.compare("diffuse"))
+    if(type.compare("diffuse") == 0)
        {
-        mat = new lambertian(tex):
+        mat = new lambertian(tex);
        }
-    else if(type.compare("metal"))
+    else if(type.compare("metal") == 0)
        {
         delimiter = ")";
         pos = token.find(delimiter);
@@ -241,69 +241,100 @@ void SceneSetup::setupMaterial(string token, materail *mat, texture *tex)
         mat = new metal(tex, f);
        }
 
-    else if(type.compare("diffuseLight"))
+    else if(type.compare("diffuseLight") == 0)
        {
         mat = new diffuseLight(tex);
        }
-    else if(type.compare("dielectric"))
+    else if(type.compare("dielectric") == 0)
        {
         delimiter = ")";
         pos = token.find(delimiter);
-        float f stof(token.substr(0,pos));
+        float f = stof(token.substr(0,pos));
         mat = new dielectric(tex, f);
        }
    }
-void SceneSetup::setupSurface(string surfaceInfo, hitable *surface, material *mat)
+void SceneSetup::setupSurface(string token, hitable *surface, material *mat)
    {
     string delimiter = "(";
     int pos = token.find(delimiter);
-    string type = token.substr(0,pos), subToken:
+    string type = token.substr(0,pos), subToken;
     token.erase(0, pos + delimiter.length());
 
-    if(type.compare("sphere"))
+    if(type.compare("sphere") == 0)
     {
         vec3 center;
-        float radius;
+        float radius, x, y, z;
 
         //remove initial '('
         pos = token.find(delimiter);
         token.erase(0, pos + delimiter.length());
 
-        float x,y,z;
         delimiter = ")";
         pos = token.find(delimiter);
         subToken = token.substr(0,pos);
+        token.erase(0, pos + delimiter.length());
 
         delimiter = ",";
 
         pos = subToken.find(delimiter);
-        r = stof(subToken.substr(0, pos));
+        x = stof(subToken.substr(0, pos));
         subToken.erase(0, pos+delimiter.length());
 
         pos = subToken.find(delimiter);
-        g = stof(subToken.substr(0, pos));
+        y = stof(subToken.substr(0, pos));
         subToken.erase(0, pos+delimiter.length());
 
-        b = stof(subToken);
+        z = stof(subToken);
+
+        // remove comma
+        pos = token.find(delimiter);
+        token.erase(0, pos + delimiter.length());
+
+        delimiter = ")";
+        pos = token.find(delimiter);
+        radius = stof(token.substr(0, pos));
+
+        surface = new sphere(vec3(x,y,z), radius, mat);
+    }
+    else if(type.compare("xy_rect") == 0 || type.compare("xz_rect") == 0 || type.compare("yz_rect") == 0)
+    {
+        // check for flip normals
+        float v0, v1, u0, u1, k;
+        string flipNormals;
+        delimiter = ")";
+
+        pos = token.find(delimiter);
+        subToken = token.substr(0,pos);
+        token.erase(0, pos + delimiter.length());
+
+        delimiter = ",";
+
+        pos = subToken.find(delimiter);
+        v0 = stof(subToken.substr(0, pos));
+        subToken.erase(0, pos+delimiter.length());
+
+        pos = subToken.find(delimiter);
+        v1 = stof(subToken.substr(0, pos));
+        subToken.erase(0, pos+delimiter.length());
+
+        pos = subToken.find(delimiter);
+        v1 = stof(subToken.substr(0, pos));
+        subToken.erase(0, pos+delimiter.length());
+
+        // remove comma
+        pos = token.find(delimiter);
+        token.erase(0, pos + delimiter.length());
+
+        delimiter = ")";
+        pos = token.find(delimiter);
+        radius = stof(token.substr(0, pos));
 
     }
-    else if(type.compare("xy_rect"))
-    {
-        // check for flip normals
-    }
-    else if(type.compare("xz_rect"))
-    {
-        // check for flip normals
-    }
-    else if(type.compare("yz_rect"))
-    {
-        // check for flip normals
-    }
-    else if(type.compare("box"))
+    else if(type.compare("box") == 0)
     {
 
     }
-    else if(type.compare("triangle"))
+    else if(type.compare("triangle") == 0)
     {
 
     }
