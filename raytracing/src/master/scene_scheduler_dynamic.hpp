@@ -28,7 +28,7 @@ protected:
     void OnPixelProduceResponseMsg(MsgPtr msg);
 
     /// Different chunking of the work.
-    void KickOffSceneScheduling();
+    virtual void KickOffSceneScheduling();
 
     /// Send next job
     void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endPixelProductionPipelineId);

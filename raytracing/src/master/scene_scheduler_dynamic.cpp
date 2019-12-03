@@ -157,25 +157,24 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
 
 uint32_t SceneSchedulerDynamic::ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOConnectionPtr p_connection)
 {
+    int workload = m_workload;
+    if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
+    {
+        workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
+    }
     if (SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkRefillAllocationPolicy == 0)
     {
         /// Each pipeline will get same amount.
-        int workload = m_workload;
-        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
-        {
-            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
-        }
         return workload;
     }
     else
     {
         /// Each pipeline will get amount based on its capability for now
-        int workload = m_workload;
-        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
-        {
-            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
-        }
-        return workload;    
+        uint32_t maxPixelProductionRate = ResourceTracker::Instance().GetMaximumPixelProductionRate();
+        ResourceEntryPtr workerInfo = ResourceTracker::Instance().GetWorkerInfo(p_connection->GetUniqueHostName());
+        int assignedWorkLoad = int(workload * ((float)maxPixelProductionRate/workerInfo->m_PixelProductionTimeInSecForKnownScene));    
+        RELEASE_TRACE("********* assignedWorkLoad: " << assignedWorkLoad);
+        return assignedWorkLoad;
     }
 }
 

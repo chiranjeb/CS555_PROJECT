@@ -85,7 +85,15 @@ uint32_t ResourceTracker::GetWorkEstimationForNewScene(uint32_t totalNumOfPixels
 void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwExecutionThread, uint32_t PixelProductionTimeInSecForKnownScene)
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-    m_HostWorkers.push_back(std::make_shared<ResourceEntry>(host_name, numAvailableHwExecutionThread, PixelProductionTimeInSecForKnownScene));
+    ResourceEntryPtr resourceEntryPtr = std::make_shared<ResourceEntry>(host_name, numAvailableHwExecutionThread, PixelProductionTimeInSecForKnownScene);
+    m_HostWorkers.push_back(resourceEntryPtr);
+
+    m_WorkerLookupTable.insert(std::pair<std::string, ResourceEntryPtr>(host_name, resourceEntryPtr));
+
+    if (PixelProductionTimeInSecForKnownScene < m_MaxPixelProductionRate)
+    {
+        m_MaxPixelProductionRate = PixelProductionTimeInSecForKnownScene;
+    }
 
     /// Add total number of hardware pipelines.
     m_TotalNumPixelProductionPipelines += numAvailableHwExecutionThread;
@@ -105,6 +113,10 @@ void ResourceTracker::AddWorker(std::string host_name, uint16_t numAvailableHwEx
                                 << (*iter)->m_NumAvailablePixelProductionPipelines << ", m_PixelProductionTimeInSecForKnownScene: "
                                 << (*iter)->m_PixelProductionTimeInSecForKnownScene);
     }
+
+
+
+    DEBUG_TRACE_APPLICATION(" ResourceTracker::AddWorker max pixel production rate" << m_MaxPixelProductionRate);
 
     Dump();
 
@@ -179,6 +191,7 @@ void ResourceTracker::RemoveFailedJobs(std::string hostname, std::size_t sceneId
         if (totalNumEntries == 0 || (totalNumEntries ==  totalNumEntriesRemoved))
         {
             m_HostWorkers.erase(iter);
+            m_WorkerLookupTable.erase(iter->get()->m_UniqueHostName);
         }
     }
 

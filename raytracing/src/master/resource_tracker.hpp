@@ -72,6 +72,7 @@ public:
     ResourceTracker()
     {
         m_TotalNumPixelProductionPipelines = 0;
+        m_MaxPixelProductionRate = 1;
     }
 
     /// Get resoource tracker instance
@@ -87,6 +88,11 @@ public:
     std::vector<ResourceEntryPtr>& GetHostWorkers()
     {
         return m_HostWorkers;
+    }
+
+    ResourceEntryPtr GetWorkerInfo(std::string &worker_name)
+    {
+        return m_WorkerLookupTable.find(worker_name)->second;
     }
 
 
@@ -112,6 +118,13 @@ public:
     /// Recompute number of active threads
     void NotifyHostFailure(std::string hostname);
 
+    uint32_t GetMaximumPixelProductionRate()
+    {
+        return m_MaxPixelProductionRate;
+    }
+
+
+
     void Dump();
 
 protected:
@@ -119,6 +132,11 @@ protected:
     std::mutex m_Mutex;   /// We can be much more smarter of not using this lock too much. 
     std::vector<ResourceEntryPtr> m_HostWorkers;
 
+    /// Worker look up table
+    std::map<std::string,  ResourceEntryPtr> m_WorkerLookupTable;
+
     /// <worker-name, thread Id> <=> PixelProductionPipelineMgr*
     std::map<std::string, PixelProductionPipelineMgr *> m_WorkerToPixelProductionPipelineMgr;
+
+    uint32_t m_MaxPixelProductionRate;
 };
