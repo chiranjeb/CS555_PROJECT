@@ -6,7 +6,7 @@ include_directories(src)
 find_package (Threads)
 
 set(CMAKE_CXX_STANDARD 11)
-SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -Ofast")
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 ")
 
 include(src/framework/CMakeLists.txt)
 include(src/transport/CMakeLists.txt)

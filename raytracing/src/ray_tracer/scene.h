@@ -34,8 +34,10 @@ hitable *cornellBox()
   list[i++] = new sphere(vec3(182.5, 240, 147.5), 75, new dielectric(new constantTexture(vec3(1.0, 1.0, 1.0)), 1.3));
   list[i++] = new sphere(vec3(367.5, 405, 407.5), 75, cam);
   list[i++] = new sphere(vec3(460, 75, 75), 75, new lambertian(new marble(vec3(0.4, 0.1, 0.7),10)));
-  list[i++] = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18), vec3(130, 0, 65));
-  list[i++] = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 330, 165), whiteMetal), 15), vec3(265, 0, 295));
+  auto t1 = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18), vec3(130, 0, 65));
+  list[i++] = t1;
+  auto t2 = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 330, 165), whiteMetal), 15), vec3(265, 0, 295));
+  list[i++] = t2;
   return new bvh(list, i, 0, 1);
 }
 
@@ -84,11 +86,16 @@ hitable* myScene(camera& cam, int& nx, int& ny, std::string scene_name)
 {
   float distToFocus = 10; //(lookfrom - lookat).length();
   float aperture = 0.1;
-  
-  vec3 lookfrom(13, 2,3);
-  vec3 lookat(0, 0, 0);
-  cam = camera(lookfrom, lookat, vec3(0,1, 0), 20, float(nx)/float(ny), aperture, distToFocus);
-  if (scene_name == "cornell")
-    return cornellBox();
-  return random_scene();
+
+  if (scene_name == "cornell") {
+      vec3 lookfrom(278, 278, -800);
+      vec3 lookat(278, 278, 0);
+      cam = camera(lookfrom, lookat, vec3(0, 1, 0), 20, float(nx) / float(ny), aperture, distToFocus);
+      return cornellBox();
+  } else {
+      vec3 lookfrom(13, 2, 3);
+      vec3 lookat(0, 0, 0);
+      cam = camera(lookfrom, lookat, vec3(0, 1, 0), 20, float(nx) / float(ny), aperture, distToFocus);
+      return random_scene();
+  }
 }

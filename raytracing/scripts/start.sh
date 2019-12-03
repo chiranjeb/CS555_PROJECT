@@ -25,8 +25,8 @@ done < "scripts/275machines.txt"
 tmux select-layout -t cs555proj even-vertical
 tmux split-window -t cs555proj
 echo "Starting client@$(hostname)"
-sleep 10
+#sleep 10
 tmux send-keys -t cs555proj "ssh -t $(hostname).cs.colostate.edu 'cd $(pwd); \
-  ./build/client properties/master_properties.txt properties/client_properties.txt random $2 $3 $4'" Enter
+  ./build/client properties/master_properties.txt properties/client_properties.txt $5 $2 $3 $4'" #Enter
 tmux select-layout -t cs555proj even-vertical
 tmux attach -t cs555proj

@@ -13,8 +13,8 @@ float det(const vec3 col0, const vec3 col1, const vec3 col2);
 class sphere: public hitable
 {
 public:
-  sphere():m_type(HITABLE_TYPE_SPEHERE) {}
-  sphere(vec3 cen, float r, material *ptr): m_type(HITABLE_TYPE_SPEHERE), center(cen), radius(r), matPtr(ptr) {};
+  sphere():m_type(HITABLE_TYPE_SPHERE) {}
+  sphere(vec3 cen, float r, material *ptr): m_type(HITABLE_TYPE_SPHERE), center(cen), radius(r), matPtr(ptr) {};
   virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const;
   bool boundingBox(float t0, float t1, aabb& box) const;
   vec3 getPointOn()const

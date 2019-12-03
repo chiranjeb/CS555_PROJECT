@@ -311,7 +311,7 @@ hitable* ConstructHitable(std::istream& is, char type)
             break;
          }
 
-      case HITABLE_TYPE_SPEHERE:
+      case HITABLE_TYPE_SPHERE:
          {
             ptr =  new sphere();
             break;
