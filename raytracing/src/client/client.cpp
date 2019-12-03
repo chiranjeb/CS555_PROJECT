@@ -222,7 +222,7 @@ void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
 void Client::OnSceneSegmentProduceRespMsg(MsgPtr msg)
 {
     SceneSegmentProduceResponseMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneSegmentProduceResponseMsg>(msg);
-    RELEASE_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
+    DEBUG_TRACE("Client::Received a scene produce response message, respMsgPtr->GetScenePixelOffset():" << respMsgPtr->GetScenePixelOffset());
 
     if (m_CurrentPixelToWrite == respMsgPtr->GetScenePixelOffset())
     {

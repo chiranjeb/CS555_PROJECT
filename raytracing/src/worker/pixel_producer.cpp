@@ -8,7 +8,7 @@
 
 void PixelProducer::ProcessMsg(MsgPtr msg)
 {
-    RELEASE_TRACE("PixelProducer::ReceivedMsg: " << msg->GetId());
+    DEBUG_TRACE_APPLICATION("PixelProducer::ReceivedMsg: " << msg->GetId());
     switch (msg->GetId())
     {
         case MsgIdPixelProduceRequest:
@@ -23,7 +23,6 @@ void PixelProducer::ProcessMsg(MsgPtr msg)
 
 void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
 {
-    RELEASE_TRACE("Start Pixel Production( Obj:" << std::hex << this << ")");
     PixelProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<PixelProduceRequestMsg>(msg);
 
     if (pRequestMsg->GetNumPixels(m_requestIndex) != 0)
@@ -32,24 +31,29 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
                                                                                                         pRequestMsg->GetNumPixels(m_requestIndex),
                                                                                                         pRequestMsg->GetScenePixelOffset(m_requestIndex));
 
+
+
         /// Stream through so that we don't have to worry about serializing it later.
         PreAllocatedStreamBuffer streambuff(reinterpret_cast<char *>(respMsgPtr->GetPixelBufferStart()), respMsgPtr->GetPixelBufferMaxLimit());
         std::ostream ostrm(&streambuff);
 
 
-        DEBUG_TRACE("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
+        DEBUG_TRACE_APPLICATION("Worker::OnPixelProduceRequestMsg: GetScene Descriptor:" << streambuff.Tellp());
         SceneDescriptorPtr sceneDescriptorPtr = Worker::Instance().GetSceneDescriptor(pRequestMsg->GetSceneId());
 
         /// Produce pixels
         PixelProduceRequest *pRequest = pRequestMsg->GetRequest(m_requestIndex);
-        ProducePixels(pRequest->m_endY, pRequest->m_startY, pRequest->m_endX, pRequest->m_startX,
-                      sceneDescriptorPtr, ostrm);
+
+        RELEASE_TRACE("Start Pixel Production Obj:" << std::hex << this << ", Tid: " << std::hex << std::this_thread::get_id() << std::dec
+                      << ", endY:" << pRequest->m_endY << ", startY:" << pRequest->m_startY << ", startX:" << pRequest->m_startX
+                      << ", endX:" << pRequest->m_endX << ", Num Pixels: " << pRequest->m_NumPixels);
+
+        ProducePixels(pRequest->m_endY, pRequest->m_startY, pRequest->m_endX, pRequest->m_startX, sceneDescriptorPtr, ostrm);
 
         /// Update valid buffer
         respMsgPtr->UpdateValidBuffer(streambuff.Tellp());
 
-
-        RELEASE_TRACE("Pixel Production( Obj: " << std::hex << this << ") Done....Produced Buffer size: " << streambuff.Tellp());
+        RELEASE_TRACE("Pixel Production Obj: " << std::hex << this <<  ", Tid: " << std::hex << std::this_thread::get_id() <<", Done....Produced Buffer size: " << streambuff.Tellp());
 
         /// Pack partial stuff.
         respMsgPtr->PackPartial();

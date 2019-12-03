@@ -127,7 +127,7 @@ void Worker::Run()
     while (1)
     {
         MsgQEntry msgQEntry = TakeNext();
-        RELEASE_TRACE("Worker::Run("<< std::hex << this << ") - Received MsgId: " << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
+        DEBUG_TRACE_APPLICATION("Worker::Run("<< std::hex << this << ") - Received MsgId: " << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
         MsgPtr msgPtr = msgQEntry.m_Msg;
         if (msgQEntry.m_Cmd.get() != nullptr)
         {

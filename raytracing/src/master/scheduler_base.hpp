@@ -11,6 +11,9 @@ public:
     /// Constructor
     SchedulerBase(BlockingMsgQPtr pQ) : Command(pQ)
     {
+        m_TotalNumPixelsToProduce = 0;
+        m_SceneId = 0;
+        m_p_client_connection = nullptr;
     }
 
     /// Process message

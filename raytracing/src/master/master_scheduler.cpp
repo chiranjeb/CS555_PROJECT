@@ -36,7 +36,7 @@ void MasterSchedulerThread::Run()
     while (1)
     {
         MsgQEntry msgQEntry = TakeNext();
-        RELEASE_TRACE("Tid: " << std::hex << std::this_thread::get_id() << ", MasterSchedulerThread::Run(" << std::hex << this << ") - Received MsgId: "
+        DEBUG_TRACE_APPLICATION("Tid: " << std::hex << std::this_thread::get_id() << ", MasterSchedulerThread::Run(" << std::hex << this << ") - Received MsgId: "
                       << msgQEntry.m_Msg->GetId() << ", Cmd: " << msgQEntry.m_Cmd.get());
         MsgPtr msgPtr = msgQEntry.m_Msg;
         if (msgQEntry.m_Cmd.get() != nullptr)
