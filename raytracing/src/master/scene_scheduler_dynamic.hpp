@@ -24,25 +24,17 @@ public:
     }
 
 protected:
-
-    /// Scene produce request message handler.
-    void OnSceneProduceRequestMsg(MsgPtr msg);
-
     /// Pixel produce response message.
     void OnPixelProduceResponseMsg(MsgPtr msg);
 
-    /// Handle xmit status.
-    void OnXmitStatus(MsgPtr msg);
-
     /// Different chunking of the work.
-    void KickOffSceneScheduling();
+    virtual void KickOffSceneScheduling();
 
     /// Send next job
-    void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endThread);
+    void SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endPixelProductionPipelineId);
 
-
-    /// TCP Connection exception message handler.
-    void OnTCPConnectionException(MsgPtr msg);
+    /// Compute workload based on policy
+    uint32_t ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOConnectionPtr p_connection); 
 
     /// attributes
     uint32_t m_CurrentPixelOffset;

@@ -204,8 +204,13 @@ void Client::OnConnectionEstablishmentResponseMsg(MsgPtr msg)
 void Client::OnSceneProduceRequestAckMsg(MsgPtr msg)
 {
     DEBUG_TRACE("Client::OnSceneProduceRequestAckMsg");
-    WireMsgPtr respMsgPtr = std::dynamic_pointer_cast<WireMsg>(msg);
+    SceneProduceRequestAckMsgPtr respMsgPtr = std::dynamic_pointer_cast<SceneProduceRequestAckMsg>(msg);
     respMsgPtr->GetConnection()->FreeAppTag(respMsgPtr->GetAppTag());
+    if ( respMsgPtr->GetErrorCode() != STATUS_SUCCESS)
+    {
+       RELEASE_TRACE("Master Rejected the scene produce request(No workers in the cluster!!!!)...");
+       exit(0);
+    }
 }
 
 

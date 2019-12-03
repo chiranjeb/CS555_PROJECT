@@ -16,10 +16,6 @@ void SceneSchedulerDynamic::ProcessMsg(MsgPtr msg)
 {
     switch (msg->GetId())
     {
-        case MsgIdSceneProduceRequest:
-            OnSceneProduceRequestMsg(msg);
-            break;
-
         case MsgIdPixelProduceResponse:
             OnPixelProduceResponseMsg(msg);
             break;
@@ -31,40 +27,6 @@ void SceneSchedulerDynamic::ProcessMsg(MsgPtr msg)
 }
 
 
-void SceneSchedulerDynamic::OnSceneProduceRequestMsg(MsgPtr msg)
-{
-    SceneProduceRequestMsgPtr pRequestMsg = std::dynamic_pointer_cast<SceneProduceRequestMsg>(msg);
-    std::vector<ResourceEntryPtr> & workerList = ResourceTracker::Instance().GetHostWorkers();
-
-    m_NX = pRequestMsg->GetNX();
-    m_NY = pRequestMsg->GetNY();
-    m_RPP = pRequestMsg->GetRPP();
-    m_SceneId = pRequestMsg->GetSceneId();
-
-    DEBUG_TRACE("sceneDescriptorPtr->GetNY(): " << m_NX << ", sceneDescriptorPtr->GetNX():" << m_NY << ", m_workerList.size()" << workerList.size());
-    m_p_client_connection = pRequestMsg->GetConnection();
-
-    int appTag = pRequestMsg->GetAppTag();
-    pRequestMsg->SetAppTag(0);
-
-    ///We need to reserialize the first few bytes....
-    pRequestMsg->Repack();
-
-    /// Let's distribute the scene file. This also helps us not doing any serialization/deserialization of the message.
-    for (int index = 0; index < workerList.size(); ++index)
-    {
-        TransportMgr::Instance().FindConnection(workerList[index]->m_UniqueHostName)->SendMsg(pRequestMsg, ListenerPtr(m_MyLisPtr));
-    }
-
-    /// Let's first generate sequential pixel workload
-    KickOffSceneScheduling();
-
-    /// all the tasks are scheduled. Send the acknowledgement to the client that the request has been accepted.
-    SceneProduceRequestAckMsgPtr sceneProduceRequestAckMsgPtr = std::make_shared<SceneProduceRequestAckMsg>(appTag, STATUS_SUCCESS);
-
-    /// Send the response back to the client.
-    pRequestMsg->GetConnection()->SendMsg(sceneProduceRequestAckMsgPtr, ListenerPtr(nullptr));
-}
 
 
 
@@ -94,14 +56,14 @@ void SceneSchedulerDynamic::KickOffSceneScheduling()
     for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
     {
         TCPIOConnectionPtr p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
-        uint32_t numberOfHwExecutionThreadsForCurrentWorker = workerList[workerIndex]->m_NumAvailableHwExecutionThread;
-        SendNextJob(p_connection, 0, numberOfHwExecutionThreadsForCurrentWorker);
+        uint32_t numberOfPixelProductionPipelinesForCurrentWorker = workerList[workerIndex]->m_NumAvailablePixelProductionPipelines;
+        SendNextJob(p_connection, 0, numberOfPixelProductionPipelinesForCurrentWorker);
     }
     for (int workerIndex = 0; workerIndex < workerList.size(); ++workerIndex)
     {
         TCPIOConnectionPtr p_connection = TransportMgr::Instance().FindConnection(workerList[workerIndex]->m_UniqueHostName);
-        uint32_t numberOfHwExecutionThreadsForCurrentWorker = workerList[workerIndex]->m_NumAvailableHwExecutionThread;
-        SendNextJob(p_connection, 0, numberOfHwExecutionThreadsForCurrentWorker);
+        uint32_t numberOfPixelProductionPipelinesForCurrentWorker = workerList[workerIndex]->m_NumAvailablePixelProductionPipelines;
+        SendNextJob(p_connection, 0, numberOfPixelProductionPipelinesForCurrentWorker);
     }
     //ResourceTracker::Instance().Dump();
 }
@@ -119,18 +81,18 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
 
     /// Notify that the job is done
     ResourceTracker::Instance().NotifyJobDone(pConnection->GetUniqueHostName(),
-                                              pRespMsg->GetThreadId(),
+                                              pRespMsg->GetPipelineId(),
                                               m_SceneId,
                                               pRespMsg->GetScenePixelOffset());
 
     if (pRespMsg->GetNumPixels() != 0)
     {
         /// To simply the underrun condition on the workload which is way smaller than
-        /// the cluster's capcity, we do send some messages without work....Just to 
+        /// the cluster's capcity, we do send some messages without work....Just to
         /// go through the normal path. However, we don't track those jobs which is tied to
-        /// the number of responses we are expecting. Now, we can't count those response 
+        /// the number of responses we are expecting. Now, we can't count those response
         /// messages w/o work.
-        m_NumPendingCompletionResponse--; 
+        m_NumPendingCompletionResponse--;
     }
 
     if (m_TotalNumPixelsToProduce == m_CurrentPixelOffset)
@@ -138,7 +100,7 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
         if (!m_FailedJobs.empty())
         {
             auto failedPixelOffset2Count = m_FailedJobs.begin();
-            SendNextFailedJob(pConnection, pRespMsg->GetThreadId(),
+            SendNextFailedJob(pConnection, pRespMsg->GetPipelineId(),
                               failedPixelOffset2Count->first, failedPixelOffset2Count->second);
             m_FailedJobs.erase(failedPixelOffset2Count);
         }
@@ -174,43 +136,66 @@ void SceneSchedulerDynamic::OnPixelProduceResponseMsg(MsgPtr msg)
         if (!m_FailedJobs.empty())
         {
             auto failedPixelOffset2Count = m_FailedJobs.begin();
-            SendNextFailedJob(pConnection, pRespMsg->GetThreadId(),
+            SendNextFailedJob(pConnection, pRespMsg->GetPipelineId(),
                               failedPixelOffset2Count->first, failedPixelOffset2Count->second);
             m_FailedJobs.erase(failedPixelOffset2Count);
         }
         else
         {
             /// Decay the workload a bit until we hit SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin
-            m_workload = (m_workload * SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkDecay)/10000;
+            m_workload = (m_workload * SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkDecay) / 10000;
             if (m_workload < SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin)
             {
                 m_workload = SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin;
             }
             /// Send some more to the thread.
-            SendNextJob(pConnection, pRespMsg->GetThreadId(), pRespMsg->GetThreadId() + 1);
+            SendNextJob(pConnection, pRespMsg->GetPipelineId(), pRespMsg->GetPipelineId() + 1);
         }
     }
-
 }
 
-void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startThread, uint16_t endThread)
+
+uint32_t SceneSchedulerDynamic::ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOConnectionPtr p_connection)
+{
+    int workload = m_workload;
+    if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
+    {
+        workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
+    }
+    if (SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkRefillAllocationPolicy == 0)
+    {
+        /// Each pipeline will get same amount.
+        return workload;
+    }
+    else
+    {
+        /// Each pipeline will get amount based on its capability for now
+        uint32_t maxPixelProductionRate = ResourceTracker::Instance().GetMaximumPixelProductionRate();
+        ResourceEntryPtr workerInfo = ResourceTracker::Instance().GetWorkerInfo(p_connection->GetUniqueHostName());
+        int assignedWorkLoad = int(workload * ((float)maxPixelProductionRate/workerInfo->m_PixelProductionTimeInSecForKnownScene));    
+        RELEASE_TRACE("********* assignedWorkLoad: " << assignedWorkLoad);
+        return assignedWorkLoad;
+    }
+}
+
+void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_t startPixelProductionPipelineId, uint16_t endPixelProductionPipelineId)
 {
     if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce)
     {
         return;
     }
-    uint32_t numThread = endThread - startThread;
-    uint32_t numberOfHwExecutionThreadsForCurrentWorker = endThread - startThread;
-    PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfHwExecutionThreadsForCurrentWorker);
-    for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
+    uint32_t numThread = endPixelProductionPipelineId - startPixelProductionPipelineId;
+    uint32_t numberOfPixelProductionPipelinesForCurrentWorker = endPixelProductionPipelineId - startPixelProductionPipelineId;
+    PixelProduceRequestMsgPtr pixelProduceRequestMsg = std::make_shared<PixelProduceRequestMsg>(m_SceneId, numberOfPixelProductionPipelinesForCurrentWorker);
+    for (int pixelProductionPipelineId = startPixelProductionPipelineId; pixelProductionPipelineId < endPixelProductionPipelineId; ++pixelProductionPipelineId)
     {
         int appTag = p_connection->AllocateAppTag();
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetupAppTag(appTag);
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetThreadId(hwExecutionThreadId);
+        pixelProduceRequestMsg->Request(pixelProductionPipelineId - startPixelProductionPipelineId)->SetupAppTag(appTag);
+        pixelProduceRequestMsg->Request(pixelProductionPipelineId - startPixelProductionPipelineId)->SetPipelineId(pixelProductionPipelineId);
         p_connection->RegisterNotification(appTag, m_MyLisPtr);
     }
 
-    for (int hwExecutionThreadId = startThread; hwExecutionThreadId < endThread; ++hwExecutionThreadId)
+    for (int pixelProductionPipelineId = startPixelProductionPipelineId; pixelProductionPipelineId < endPixelProductionPipelineId; ++pixelProductionPipelineId)
     {
         if (m_CurrentPixelOffset >= m_TotalNumPixelsToProduce)
         {
@@ -219,27 +204,23 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
         uint16_t endY  =  Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).Y;
         uint16_t startX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset).X;
 
-        int workload = m_workload;
-        if ((m_TotalNumPixelsToProduce - m_CurrentPixelOffset) <= m_workload)
-        {
-            workload = m_TotalNumPixelsToProduce - m_CurrentPixelOffset;
-        }
+        int workload =  ComputeRefillWorkLoadBasedOnCurrentPolicy(p_connection);
 
         uint16_t startY = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).Y;
         uint16_t endX = Pixel2XYMapper(m_NY, m_NX, m_CurrentPixelOffset + workload - 1).X;
 
-        RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(hwExecutionThreadId))
+        RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(pixelProductionPipelineId))
                       << ", Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
                       << ", endX:" << endX << "Num Pixels:" << workload);
 
 
         /// Update work set
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->GenerateWork(startY, startX,  endY, endX);
-        pixelProduceRequestMsg->Request(hwExecutionThreadId - startThread)->SetPixelDomain(m_CurrentPixelOffset, workload);
+        pixelProduceRequestMsg->Request(pixelProductionPipelineId - startPixelProductionPipelineId)->GenerateWork(startY, startX,  endY, endX);
+        pixelProduceRequestMsg->Request(pixelProductionPipelineId - startPixelProductionPipelineId)->SetPixelDomain(m_CurrentPixelOffset, workload);
 
 
         /// Track the job
-        ResourceTracker::Instance().TrackJob(p_connection->GetUniqueHostName(), hwExecutionThreadId, m_SceneId, m_CurrentPixelOffset, workload);
+        ResourceTracker::Instance().TrackJob(p_connection->GetUniqueHostName(), pixelProductionPipelineId, m_SceneId, m_CurrentPixelOffset, workload);
 
         m_NumPendingCompletionResponse++;
         m_CurrentPixelOffset += workload;

@@ -97,7 +97,9 @@ enum HitableType_t
    HITABLE_TYPE_TRIANGLE,
    HITABLE_TYPE_TRIANGLE_MESH,
    HITABLE_TYPE_TRANSLATE,
-   HITABLE_TYPE_ROTATE_Y
+   HITABLE_TYPE_ROTATE_Y,
+   HITABLE_TYPE_ROTATE_X,
+   HITABLE_TYPE_ROTATE_Z
 };
 
 class hitable
@@ -154,7 +156,7 @@ inline bvh::bvh(hitable **l, int n, float time0, float time1):m_type(HITABLE_TYP
   else
     qsort(l, n, sizeof(hitable*), box_z_compare);
 
-  for(int i = 1; i < n; i++)
+  for(int i = 0; i < n; i++)
     bool dummy = l[i] -> boundingBox(time0, time1, boxes[i]);
   left_area[0] = boxes[0].surfaceArea();
   aabb left_box = boxes[0];

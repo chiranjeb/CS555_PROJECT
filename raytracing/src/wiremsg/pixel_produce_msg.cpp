@@ -23,7 +23,7 @@ void PixelProduceRequest::Pack(std::ostream& ostrm)
    ostrm << m_endX << " ";
    ostrm << m_NumPixels << " ";
    ostrm << m_ScenePixelOffset << " ";
-   ostrm << m_ThreadId << " ";
+   ostrm << m_PipelineId << " ";
    ostrm << m_AppTag << " ";
 }
 
@@ -31,7 +31,7 @@ void PixelProduceRequest::Unpack(std::istream& istrm)
 {
    istrm >> m_startY >> m_startX >> m_endY 
          >> m_endX >> m_NumPixels
-         >> m_ScenePixelOffset >> m_ThreadId >> m_AppTag;
+         >> m_ScenePixelOffset >> m_PipelineId >> m_AppTag;
 }
 
 /// PixelProduceRequestMsg message constructor
@@ -51,7 +51,7 @@ PixelProduceRequestMsg::PixelProduceRequestMsg(std::size_t sceneId, int numWorkL
        m_pPixelProduceRequest[index].m_ScenePixelOffset = 0;
        m_pPixelProduceRequest[index].m_ScenePixelOffset = 0;
        m_pPixelProduceRequest[index].m_AppTag = 0;
-       m_pPixelProduceRequest[index].m_ThreadId = index;
+       m_pPixelProduceRequest[index].m_PipelineId = index;
    }
    DEBUG_TRACE_WIRE_MSG("PixelProduceRequestMsg: Constructor");
 }
@@ -115,7 +115,7 @@ void PixelProduceResponseMsg::Pack(std::ostream& ostrm)
    ostrm << m_SceneId << " ";
    ostrm << m_NumPixels << " ";
    ostrm << m_ScenePixelOffset << " ";
-   ostrm << m_ThreadId << " ";
+   ostrm << m_PipelineId << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -129,7 +129,7 @@ void PixelProduceResponseMsg::Unpack(std::istream& istrm)
 {
    WireMsg::Unpack(istrm);
    istrm >> m_SceneId >> m_NumPixels 
-         >> m_ScenePixelOffset >> m_ThreadId ;
+         >> m_ScenePixelOffset >> m_PipelineId ;
 }
 
 

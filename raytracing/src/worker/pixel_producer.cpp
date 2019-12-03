@@ -61,7 +61,7 @@ void PixelProducer::OnPixelProduceRequestMsg(MsgPtr msg)
         PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(),
                                                                                        pRequestMsg->GetNumPixels(m_requestIndex),
                                                                                        pRequestMsg->GetScenePixelOffset(m_requestIndex),
-                                                                                       pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
+                                                                                       pRequestMsg->GetRequest(m_requestIndex)->m_PipelineId);
         respMsg->SetAppTag(pRequestMsg->GetRequest(m_requestIndex)->m_AppTag);
         m_pConnectionToMaster->SendMsg(respMsg, ListenerPtr(nullptr));
     }
@@ -106,7 +106,7 @@ void PixelProducer::DoCommandComplete(PixelProduceRequestMsgPtr pRequestMsg, Sce
     PixelProduceResponseMsgPtr respMsg = std::make_shared<PixelProduceResponseMsg>(pRequestMsg->GetSceneId(),
                                                                                    pRequestMsg->GetNumPixels(m_requestIndex),
                                                                                    pRequestMsg->GetScenePixelOffset(m_requestIndex),
-                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_ThreadId);
+                                                                                   pRequestMsg->GetRequest(m_requestIndex)->m_PipelineId);
     respMsg->SetAppTag(pRequestMsg->GetRequest(m_requestIndex)->m_AppTag);
     m_pConnectionToMaster->SendMsg(respMsg, ListenerPtr(nullptr));
 }
