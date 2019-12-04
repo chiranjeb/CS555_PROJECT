@@ -108,6 +108,7 @@ void SchedulerBase::OnSceneProduceRequestMsg(MsgPtr msg)
     int appTag = pRequestMsg->GetAppTag();
     if (workerList.size() != 0)
     {
+        m_NumPendingCompletionResponse = 0;
         m_NX = pRequestMsg->GetNX();
         m_NY = pRequestMsg->GetNY();
         m_RPP = pRequestMsg->GetRPP();

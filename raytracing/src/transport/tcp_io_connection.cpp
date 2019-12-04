@@ -91,7 +91,7 @@ void TCPIOConnection::SendMsg(MsgPtr msg, ListenerPtr p_lis)
     std::unique_lock<std::mutex> lck(m_Mutex);
     if (m_Closed == false)
     {
-        RELEASE_TRACE("Sending TCP IP message: " << wireMsg->GetId() << ", AppTag: " << wireMsg->GetAppTag());
+        DEBUG_TRACE_TRANSPORT("Sending TCP IP message: " << wireMsg->GetId() << ", AppTag: " << wireMsg->GetAppTag());
         if ((p_lis.get() != nullptr) && wireMsg->ExpectingRecvRecvResponse())
         {
             RegisterNotification_nolock(wireMsg->GetAppTag(), p_lis);
