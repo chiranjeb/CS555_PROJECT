@@ -38,7 +38,7 @@ hitable *cornellBox()
   list[i++] = t1;
   auto t2 = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 330, 165), whiteMetal), 15), vec3(265, 0, 295));
   list[i++] = t2;
-  return new bvh(list, i, 0, 1);
+  return new hitableList(list, i);//, 0, 1);
 }
 
 hitable *random_scene() {
@@ -85,12 +85,12 @@ hitable *random_scene() {
 hitable* myScene(camera& cam, int& nx, int& ny, std::string scene_name)
 {
   float distToFocus = 10; //(lookfrom - lookat).length();
-  float aperture = 0.1;
+  float aperture = 0.01;
 
   if (scene_name == "cornell") {
       vec3 lookfrom(278, 278, -800);
       vec3 lookat(278, 278, 0);
-      cam = camera(lookfrom, lookat, vec3(0, 1, 0), 20, float(nx) / float(ny), aperture, distToFocus);
+      cam = camera(lookfrom, lookat, vec3(0, 1, 0), 40, float(nx) / float(ny), aperture, distToFocus);
       return cornellBox();
   } else {
       vec3 lookfrom(13, 2, 3);
