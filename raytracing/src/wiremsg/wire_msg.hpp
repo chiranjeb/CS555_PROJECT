@@ -65,7 +65,7 @@ public:
        m_PackedMsgBufferLength = size;
     }
 
-    ~WireMsg()
+    virtual ~WireMsg()
     {
         if (m_PackedMsgBuffer != nullptr)
         {

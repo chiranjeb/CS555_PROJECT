@@ -43,7 +43,7 @@ struct PacketLength
 class TCPIOSender : public Thread
 {
 public:
-    TCPIOSender(TCPIOConnectionPtr p_connection, int socket, BlockingQueue<MsgPtr> &sendQ) :
+    TCPIOSender(TCPIOConnectionPtr p_connection, int socket, BlockingQueue<MsgPtr>& sendQ) :
         m_socket(socket), m_p_connection(p_connection),  m_SendQ(sendQ)
     {
     }
@@ -73,7 +73,7 @@ protected:
 
     int m_socket;
     TCPIOConnectionPtr m_p_connection;
-    BlockingQueue<MsgPtr> &m_SendQ;
+    BlockingQueue<MsgPtr>& m_SendQ;
     bool m_Stop;
     State m_State;
     uint8_t m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
@@ -95,6 +95,9 @@ public:
 protected:
     void Run();
     void HandleException();
+
+    int KeepReceiving(uint8_t *xfer_buffer, int expectedLength);
+    
     uint8_t m_MsgBuffer[MAX_MSG_BUFFER_SIZE_IN_BYTES];
 
     int m_socket;

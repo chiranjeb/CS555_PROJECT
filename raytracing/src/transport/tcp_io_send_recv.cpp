@@ -17,30 +17,30 @@ void TCPIOSender::Run()
         MsgPtr msgPtr = m_SendQ.Take();
         switch (msgPtr->GetId())
         {
-           case MsgIdTCPSend:
-               {
-                   OnTCPSendMsg(msgPtr);
-                   break;
-               }
+            case MsgIdTCPSend:
+            {
+                OnTCPSendMsg(msgPtr);
+                break;
+            }
 
-           case MsgIdTCPShutDownSender:
-               {
-                   m_State = STATE_EXCEPTION;
-                   m_Stop = true;
-                   break;
-               }
+            case MsgIdTCPShutDownSender:
+            {
+                m_State = STATE_EXCEPTION;
+                m_Stop = true;
+                break;
+            }
 
-           default:
-               {
-                   DEBUG_TRACE("Received an unknown Message, MsgId: " << msgPtr.get()->GetId());
-                   break;
-               }
+            default:
+            {
+                DEBUG_TRACE("Received an unknown Message, MsgId: " << msgPtr.get()->GetId());
+                break;
+            }
         }
         //Go back and see if there is anything to send out.
     }
 
 
-    RELEASE_TRACE("!!!!Sender thread Exiting: Connection:(" << std::hex << m_p_connection.get() <<")!!!!!");
+    RELEASE_TRACE("!!!!Sender thread Exiting: Connection:(" << std::hex << m_p_connection.get() << ")!!!!!");
     m_p_connection = nullptr;
 }
 
@@ -92,9 +92,23 @@ void TCPIOSender::OnTCPSendMsg(MsgPtr requestMsgPtr)
     {
         tcpSendMsg->GetLis()->Notify(std::make_shared<TCPSendStatusMsg>(tcpSendMsg->GetWireMsg()->GetId(), errorCode));
     }
+}
 
-    // We are done this message. Just free the shared pointer.
-    msgPtr.reset();
+int TCPIOReceiver::KeepReceiving(uint8_t *xfer_buffer, int expectedLength)
+{
+    int numOfBytesReceived = 0;
+    while (numOfBytesReceived != expectedLength)
+    {
+        // We received the message length. Now, transfer the actual message.
+        int numBytes = recv(m_socket, xfer_buffer + numOfBytesReceived, expectedLength - numOfBytesReceived, 0);
+        numOfBytesReceived += numBytes;
+        if (numBytes < 1)
+        {
+            return -1;
+        }
+        DEBUG_TRACE_TRANSPORT("Successfully received data: " << numOfBytesReceived);
+    }
+    return expectedLength;
 }
 
 void TCPIOReceiver::Run()
@@ -104,40 +118,32 @@ void TCPIOReceiver::Run()
     {
         // transfer the length first
         PacketLength packetLength;
-        int numOfBytesReceived = recv(m_socket, packetLength.Data(), packetLength.Size(), 0);
-        if (numOfBytesReceived < 1)
+
+        if (KeepReceiving(packetLength.Data(), packetLength.Size()) < 1)
         {
             HandleException();
             break;
         }
 
         uint8_t *xfer_buffer = (uint8_t *)malloc(sizeof(uint8_t) * packetLength.Get());
-
-        numOfBytesReceived = 0;
         DEBUG_TRACE_TRANSPORT("Successfully received the data length: " << packetLength.Get());
-        while (packetLength.Get() != numOfBytesReceived)
+
+        if (KeepReceiving(xfer_buffer, packetLength.Get()) < 1)
         {
-            // We received the message length. Now, transfer the actual message.
-            int numBytes = recv(m_socket, xfer_buffer + numOfBytesReceived, packetLength.Get() - numOfBytesReceived, 0);
-            numOfBytesReceived += numBytes;
-            if (numBytes < 1)
-            {
-                HandleException();
-                break;
-            }
-            DEBUG_TRACE_TRANSPORT("Successfully received data: " << numOfBytesReceived);
+            HandleException();
+            break;
         }
 
         // Construct the message and send it to the upper layer.
-        DEBUG_TRACE_TRANSPORT("Successfully received all the data: " << numOfBytesReceived);
-        WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(xfer_buffer, numOfBytesReceived);
+        DEBUG_TRACE_TRANSPORT("Successfully received all the data: " <<  packetLength.Get());
+        WireMsgPtr wireMsgPtr = WireMsgFactory::ConstructMsg(xfer_buffer,  packetLength.Get());
         wireMsgPtr->SetBufferContainer(xfer_buffer, packetLength.Get());
         wireMsgPtr->SetConnection(m_p_connection);
         m_p_connection->ProcessReceivedMsg(wireMsgPtr);
     }
-    RELEASE_TRACE("!!!!Receiver thread Exiting: Connection:(" << std::hex << m_p_connection.get() <<")!!!!!");
-
+    RELEASE_TRACE("!!!!Receiver thread Exiting: Connection:(" << std::hex << m_p_connection.get() << ")!!!!!");
 }
+
 
 void TCPIOReceiver::HandleException()
 {
