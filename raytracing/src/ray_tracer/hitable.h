@@ -108,7 +108,7 @@ public:
   virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const = 0;
   virtual bool boundingBox(float t0, float t1, aabb& box) const = 0;
   /// Return type
-  virtual char GetType() =0;
+  virtual int GetType() =0;
   virtual void Pack(std::ostream& os) = 0;
   virtual void Unpack(std::istream& is) = 0;
 };
@@ -122,7 +122,7 @@ public:
   virtual bool boundingBox(float t0, float t1, aabb& box) const;
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack(std::ostream &os);
@@ -133,7 +133,7 @@ public:
   hitable *left;
   hitable *right;
   aabb box;
-  char m_type;
+  int m_type;
 };
 inline bvh::bvh(hitable **l, int n, float time0, float time1):m_type(HITABLE_TYPE_BVH)
 {

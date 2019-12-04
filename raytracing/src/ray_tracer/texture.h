@@ -13,7 +13,7 @@ class texture
 {
 public:
   virtual vec3 value(float u, float v, const vec3 &p) const = 0;
-  virtual char GetType() = 0;
+  virtual int GetType() = 0;
   virtual void Pack (std::ostream &os)=0;
   virtual void Unpack (std::istream &is)=0;
 };
@@ -29,7 +29,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -38,7 +38,7 @@ public:
   virtual void Unpack (std::istream &is);
 
   vec3 color;
-  char m_type;
+  int m_type;
 };
 
 class checkerTexture : public texture
@@ -60,7 +60,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -70,7 +70,7 @@ public:
 
   texture *odd;
   texture *even;
-  char m_type;
+  int m_type;
 };
 
 class checkerNoise : public texture
@@ -84,7 +84,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -96,7 +96,7 @@ public:
   float scale;
   perlin noise;
 
-  char m_type;
+  int m_type;
 };
 
 class camo : public texture
@@ -110,7 +110,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -122,7 +122,7 @@ public:
   float scale;
   perlin noise;
 
-  char m_type;
+  int m_type;
 };
 
 class marble : public texture
@@ -136,7 +136,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -148,5 +148,5 @@ public:
   float scale;
   perlin noise;
 
-  char m_type;
+  int m_type;
 };

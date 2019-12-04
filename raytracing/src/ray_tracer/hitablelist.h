@@ -14,13 +14,13 @@ public:
 
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
   virtual void Pack (std::ostream& os);
   virtual void Unpack(std::istream& is);
 
   hitable **list;
   int listSize;
-  char m_type;
+  int m_type;
 };
 
 bool hitableList::hit(const ray& r, float tMin, float tMax, hitRecord& rec) const

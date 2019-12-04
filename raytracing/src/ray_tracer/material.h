@@ -24,7 +24,7 @@ class material
 public:
    virtual bool scatter(const ray& rIn, const hitRecord& rec, vec3& attenuation, ray& scattered) const { return false;}
    virtual vec3 emitted(float u, float v, const vec3& p) const { return vec3(0, 0, 0);}
-   virtual char GetType()=0;
+   virtual int GetType()=0;
    virtual void Pack(std::ostream& os) = 0;
    virtual void Unpack(std::istream& is) = 0;
 };
@@ -44,7 +44,7 @@ public:
    }
 
    /// Return type
-   virtual char GetType() { return m_type;}
+   virtual int GetType() { return m_type;}
 
    /// Custom Message serializer
    void Pack(std::ostream& os);
@@ -53,7 +53,7 @@ public:
    void Unpack(std::istream& is);
 
 
-   char m_type;
+   int m_type;
    texture *albedo;
 };
 
@@ -72,7 +72,7 @@ public:
    }
 
    /// Return type
-   virtual char GetType() { return m_type;}
+   virtual int GetType() { return m_type;}
 
    /// Custom Message serializer
    virtual void Pack(std::ostream& os);
@@ -80,7 +80,7 @@ public:
    ///  Custom message deserializer
    virtual void Unpack(std::istream& is);
 
-   char m_type;
+   int m_type;
    texture *albedo;
    float fuzz;
 };
@@ -133,7 +133,7 @@ public:
    }
 
    /// Return type
-   virtual char GetType() { return m_type;}
+   virtual int GetType() { return m_type;}
 
    /// Custom Message serializer
    virtual void Pack(std::ostream& os);
@@ -141,7 +141,7 @@ public:
    /// Custom message deserializer
    virtual void Unpack(std::istream& is);
 
-   char m_type;
+   int m_type;
    texture *albedo;
    float refIdx;
 };
@@ -158,7 +158,7 @@ public:
    }
 
    /// Return type
-   virtual char GetType() { return m_type;}
+   virtual int GetType() { return m_type;}
 
    /// Custom Message serializer
    virtual void Pack(std::ostream& os);
@@ -166,7 +166,7 @@ public:
    ///  Custom message deserializer
    virtual void Unpack(std::istream& is); 
 
-   char m_type;
+   int m_type;
    texture *emit;
 };
 

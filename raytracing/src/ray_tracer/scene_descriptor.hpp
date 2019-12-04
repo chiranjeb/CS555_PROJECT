@@ -7,7 +7,7 @@
 typedef std::shared_ptr<camera> CameraPtr;
 typedef std::shared_ptr<hitable> HitablePtr;
 
-hitable* ConstructHitable(std::istream& is, char type);
+hitable* ConstructHitable(std::istream& is, int type);
 
 class SceneFactory;
 class SceneDescriptor
@@ -43,7 +43,7 @@ public:
       is >> (*m_Camera.get());
       DEBUG_TRACE_VERBOSE("Camera:" << (*m_Camera.get()));
 
-      char type;
+      int type;
       is >> type;
       DEBUG_TRACE_VERBOSE("Type:" << std::hex << type << " " << std::endl);
 

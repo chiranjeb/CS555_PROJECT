@@ -24,14 +24,14 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
   /// Custom message deserializer
   virtual void Unpack  (std::istream &is);
 
-  char m_type;
+  int m_type;
   vec3 center;
   float radius;
   material * matPtr;
@@ -110,7 +110,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -120,7 +120,7 @@ public:
 
   material *matPtr;
   float x0, x1, y0, y1, k;
-  char m_type;
+  int m_type;
 };
 
 
@@ -176,7 +176,7 @@ public:
   // }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -186,7 +186,7 @@ public:
 
   material *matPtr;
   float x0, x1, z0, z1, k;
-  char m_type;
+  int m_type;
 };
 
 
@@ -226,7 +226,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack(std::ostream &os);
@@ -236,7 +236,7 @@ public:
 
   material *matPtr;
   float y0, y1, z0, z1, k;
-  char m_type;
+  int m_type;
 };
 
 class flipNormals : public hitable
@@ -261,7 +261,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack(std::ostream &os);
@@ -270,7 +270,7 @@ public:
   virtual void Unpack (std::istream &is);
 
   hitable *ptr;
-  char m_type;
+  int m_type;
 };
 
 class box : public hitable
@@ -286,7 +286,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -296,7 +296,7 @@ public:
 
   vec3 pmin, pmax;
   hitable *listPtr;
-  char m_type;
+  int m_type;
 };
 
 box::box(const vec3& p0, const vec3& p1, material *ptr): m_type(HITABLE_TYPE_BOX)
@@ -338,7 +338,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -348,7 +348,7 @@ public:
 
   vec3 a, b, c, normal = vec3(0,0,0);
   material *matPtr;
-  char m_type;
+  int m_type;
 };
 
 bool triangle::hit(const ray&r, float t0, float t1, hitRecord &rec) const
@@ -401,7 +401,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack(std::ostream &os)
@@ -417,7 +417,7 @@ public:
 
   virtual bool hit(const ray& r, float tmin, float tmax, hitRecord& rec) const {return false;}
   virtual bool boundingBox(float t0, float t1, aabb& box) const {return false;}
-  char m_type;
+  int m_type;
 };
 
 

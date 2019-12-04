@@ -260,7 +260,7 @@ int box_z_compare(const void *a, const void *b)
 //     return curAlbedo*((1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0));
 //   }
 // }
-material* ConstructMaterial(std::istream& is, char type)
+material* ConstructMaterial(std::istream& is, int type)
 {
    material *ptr;
    switch (type)
@@ -295,7 +295,7 @@ material* ConstructMaterial(std::istream& is, char type)
 
 
 
-hitable* ConstructHitable(std::istream& is, char type)
+hitable* ConstructHitable(std::istream& is, int type)
 {
    hitable *ptr;
    switch (type)
@@ -437,7 +437,7 @@ void sphere::Unpack(std::istream& is)
 {
    DEBUG_TRACE_VERBOSE(", sphere::Unpack" << " ");
    is >> center >> radius;
-   char type;
+   int type;
    is >> type;
 
    DEBUG_TRACE_VERBOSE(center << " " << radius << " type: " << std::hex << int(type) << ",");
@@ -457,7 +457,7 @@ void xy_rect::Pack(std::ostream& os)
 void xy_rect::Unpack(std::istream& is)
 {
    is >> x0 >>  x1 >> y0 >> y1 >> k;
-   char type;
+   int type;
    is >> type;
    matPtr = ConstructMaterial(is, type);
 }
@@ -474,7 +474,7 @@ void xz_rect::Pack(std::ostream& os)
 void xz_rect::Unpack(std::istream& is)
 {
    is >> x0 >>  x1 >> z0 >> z1 >> k;
-   char type;
+   int type;
    is >> type;
    matPtr = ConstructMaterial(is, type);
 }
@@ -491,7 +491,7 @@ void yz_rect::Pack(std::ostream& os)
 void yz_rect::Unpack(std::istream& is)
 {
    is >> y0 >>  y1 >> z0 >> z1 >> k;
-   char type;
+   int type;
    is >> type;
    matPtr = ConstructMaterial(is, type);
 }
@@ -507,7 +507,7 @@ void triangle::Pack(std::ostream& os)
 void triangle::Unpack(std::istream& is)
 {
    is >> a >>  b >> c;
-   char type;
+   int type;
    is >> type;
    matPtr = ConstructMaterial(is, type);
 }
@@ -521,7 +521,7 @@ void flipNormals::Pack(std::ostream& os)
 /// Custom message deserializer
 void flipNormals::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
    ptr = ConstructHitable(is, type);
 }
@@ -538,7 +538,7 @@ void box::Pack(std::ostream& os)
 void box::Unpack(std::istream& is)
 {
    is >> pmin >> pmax;
-   char type;
+   int type;
    is >> type;
    listPtr = ConstructHitable(is, type);
 }
@@ -554,7 +554,7 @@ void rotate_y::Pack(std::ostream& os)
 /// Custom message deserializer
 void rotate_y::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
    ptr = ConstructHitable(is, type);
    is >> sinTheta >> cosTheta >> hasbox >> bbox;
@@ -571,7 +571,7 @@ void rotate_x::Pack(std::ostream &os)
 /// Custom message deserializer
 void rotate_x::Unpack(std::istream &is)
 {
-    char type;
+    int type;
     is >> type;
     ptr = ConstructHitable(is, type);
     is >> sinTheta >> cosTheta >> hasbox >> bbox;
@@ -589,7 +589,7 @@ void rotate_z::Pack(std::ostream &os)
 /// Custom message deserializer
 void rotate_z::Unpack(std::istream &is)
 {
-    char type;
+    int type;
     is >> type;
     ptr = ConstructHitable(is, type);
     is >> sinTheta >> cosTheta >> hasbox >> bbox;
@@ -608,7 +608,7 @@ void translate::Pack(std::ostream& os)
 void translate::Unpack(std::istream& is)
 {
    is >> offset;
-   char type;
+   int type;
    is >> type;
     DEBUG_TRACE_VERBOSE(", translate::Unpack:" << " offset: " << offset << " type: " << int(type));
    ptr = ConstructHitable(is, type);
@@ -616,7 +616,7 @@ void translate::Unpack(std::istream& is)
 
 void hitableList::Pack(std::ostream& os)
 {
-   os << listSize;
+   os << listSize << " ";
    DEBUG_TRACE_VERBOSE("hitableList::Pack, listSize: " << listSize << std::endl);
    for (int index = 0; index < listSize; ++index)
    {
@@ -634,9 +634,9 @@ void hitableList::Unpack(std::istream& is)
    list = new hitable *[listSize + 1];
    for (int index = 0; index < listSize; ++index)
    {
-      char type;
+      int type;
       is >> type;
-       DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, listSize: " << listSize << ", index:" << index << ", type: " << int(type));
+      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, listSize: " << listSize << ", index:" << index << ", type: " << int(type));
       list[index] = ConstructHitable(is, type);
    }
    DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, done: ");
@@ -655,7 +655,7 @@ void bvh::Pack(std::ostream& os)
 ///  Custom message deserializer
 void bvh::Unpack(std::istream& is)
 {
-   char type1, type2;
+   int type1, type2;
    is >> type1;
    left = ConstructHitable(is, type1);
 
@@ -668,6 +668,7 @@ void bvh::Unpack(std::istream& is)
 /// Custom Message serializer
 void lambertian::Pack(std::ostream& os)
 {
+   DEBUG_TRACE_VERBOSE(std::endl << "lambertian::Pack, GetType: " << albedo->GetType());
    os << albedo->GetType() << " ";
    albedo->Pack(os);
 }
@@ -675,8 +676,10 @@ void lambertian::Pack(std::ostream& os)
 /// Custom message deserializer
 void lambertian::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
+
+   DEBUG_TRACE_VERBOSE(std::endl << "lambertian::Unpack, type: " << type);
    albedo = ConstructTexture(is, type);
 }
 
@@ -691,7 +694,7 @@ void metal::Pack(std::ostream& os)
 ///  Custom message deserializer
 void metal::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
    albedo = ConstructTexture(is, type);
    is >> fuzz;
@@ -709,7 +712,7 @@ void dielectric::Pack(std::ostream& os)
 /// Custom message deserializer
 void dielectric::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
    albedo = ConstructTexture(is, type);
    is  >> refIdx;
@@ -726,7 +729,7 @@ void diffuseLight::Pack(std::ostream& os)
 ///  Custom message deserializer
 void diffuseLight::Unpack(std::istream& is)
 {
-   char type;
+   int type;
    is >> type;
    emit = ConstructTexture(is, type);
 }
@@ -760,7 +763,7 @@ void checkerTexture::Pack(std::ostream& os)
 /// Custom message deserializer
 void checkerTexture::Unpack(std::istream& is)
 {
-   char oddType, evenType;
+   int oddType, evenType;
 
    is >> oddType;
    odd = ConstructTexture(is, oddType);

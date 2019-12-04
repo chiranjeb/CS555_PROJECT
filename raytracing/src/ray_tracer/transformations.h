@@ -9,7 +9,7 @@ public:
   virtual bool boundingBox(float t0, float t1, aabb& box) const ;
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -19,7 +19,7 @@ public:
 
   hitable *ptr;
   vec3 offset;
-  char m_type;
+  int m_type;
 };
 
 bool translate::hit(const ray&r, float tmin, float tmax, hitRecord& rec) const
@@ -55,7 +55,7 @@ public:
   }
 
   /// Return type
-  virtual char GetType() { return m_type;}
+  virtual int GetType() { return m_type;}
 
   /// Custom Message serializer
   virtual void Pack (std::ostream &os);
@@ -68,7 +68,7 @@ public:
   float cosTheta;
   bool hasbox;
   aabb bbox;
-  char m_type;
+  int m_type;
 };
 
 rotate_y::rotate_y(hitable *p, float angle) : ptr(p), m_type(HITABLE_TYPE_ROTATE_Y)
@@ -140,7 +140,7 @@ public:
     }
 
     /// Return type
-    virtual char GetType() { return m_type;}
+    virtual int GetType() { return m_type;}
 
     /// Custom Message serializer
     virtual void Pack (std::ostream &os);
@@ -153,7 +153,7 @@ public:
     float cosTheta;
     bool hasbox;
     aabb bbox;
-    char m_type;
+    int m_type;
 };
 
 rotate_x::rotate_x(hitable *p, float angle) : ptr(p), m_type(HITABLE_TYPE_ROTATE_Y)
@@ -225,7 +225,7 @@ public:
     }
 
     /// Return type
-    virtual char GetType() { return m_type;}
+    virtual int GetType() { return m_type;}
 
     /// Custom Message serializer
     virtual void Pack (std::ostream &os);
@@ -238,7 +238,7 @@ public:
     float cosTheta;
     bool hasbox;
     aabb bbox;
-    char m_type;
+    int m_type;
 };
 
 rotate_z::rotate_z(hitable *p, float angle) : ptr(p), m_type(HITABLE_TYPE_ROTATE_Y)
