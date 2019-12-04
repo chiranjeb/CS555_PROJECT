@@ -1,22 +1,34 @@
 #include "messaging_framework.hpp"
 #include <memory>
 
+/////////////////////////////////////////////////////////////////////////
+///
+/// Constructor
+/// @param q Message Q where the command notification will be posted.
+/// 
+/////////////////////////////////////////////////////////////////////////
 Command::Command(BlockingMsgQPtr q)
 {
     m_RequestQ = q;
 }
 
-
+/////////////////////////////////////////////////////////////////////////
+///
+/// Notify the waiting thread. 
+/// @param msg Notification message 
+/// 
+/////////////////////////////////////////////////////////////////////////
 void Command::Notify(MsgPtr msg)
 {
     m_RequestQ->Put(MsgQEntry(msg, std::dynamic_pointer_cast<Command>(m_MyLisPtr) ));
 }
 
-/** 
-* virtual Process Msg function 
-* @param msg notification message
-*  
-*/
+/////////////////////////////////////////////////////////////////////////
+///
+/// virtual Process Msg function 
+/// @param msg notification message
+///  
+/////////////////////////////////////////////////////////////////////////
 void Command::ProcessMsg(MsgPtr msg)
 {
     switch (msg.get()->GetId())
@@ -25,10 +37,13 @@ void Command::ProcessMsg(MsgPtr msg)
            break;
     }
 }
-/**
-* Notify the waiting thread. 
-* @param msg Notification message 
-*/
+
+/////////////////////////////////////////////////////////////////////////
+///
+/// Notify the waiting thread. 
+/// @param msg Notification message 
+/// 
+/////////////////////////////////////////////////////////////////////////
 void MsgQListener::Notify(MsgPtr msgPtr)
 {
     m_MsgQ.get()->Put(MsgQEntry(msgPtr, CommandPtr(nullptr)));
@@ -43,12 +58,26 @@ MsgQThread::MsgQThread(std::string threadName, int threadMsgQDepth) :  Thread(th
 {
 }
 
+
+/////////////////////////////////////////////////////////////////////////
+///
+/// Notify the waiting thread. 
+/// @param msgQEntry Notification message 
+/// 
+/////////////////////////////////////////////////////////////////////////
 void MsgQThread::Send(MsgQEntry msgQEntry)
 {
     m_RequestQ.get()->Put(msgQEntry);
 }
 
 
+
+/////////////////////////////////////////////////////////////////////////
+///
+/// Unhandled message handler
+/// @param msg Notification message 
+/// 
+/////////////////////////////////////////////////////////////////////////
 void MsgQThread::ProcessUnHandledMsg(MsgPtr msg)
 {
     switch (msg.get()->GetId())
@@ -58,20 +87,29 @@ void MsgQThread::ProcessUnHandledMsg(MsgPtr msg)
     }
 }
 
-
-
-
-// Actual Scheduler thread
+/////////////////////////////////////////////////////////////////////////
+///
+/// Worker thread entry
+/// @param none
+/// 
+/////////////////////////////////////////////////////////////////////////
 void WorkerThread::Run()
 {
     while (true)
     {
-        //Wait for a message to process.
+        /// Wait for a message to process.
         MsgQEntry entry = m_RequestQ->Take();
         entry.m_Cmd->ProcessMsg(entry.m_Msg);
     }
 }
 
+/////////////////////////////////////////////////////////////////////////
+///
+/// Constructor
+/// @param numThreads Nunber of threads
+/// @param qD Queue on which all the threads will be waiting on
+/// 
+/////////////////////////////////////////////////////////////////////////
 WorkerThreadList::WorkerThreadList(int numThreads, int qD)
 {
     for (int index = 0; index < numThreads; ++index)
@@ -82,7 +120,12 @@ WorkerThreadList::WorkerThreadList(int numThreads, int qD)
     }
 }
 
-
+/////////////////////////////////////////////////////////////////////////
+///
+/// Start all worker threads
+/// @param none
+/// 
+/////////////////////////////////////////////////////////////////////////
 void WorkerThreadList::Start()
 {
     for (int index = 0; index < m_WorkerThreads.size(); ++index)
@@ -91,21 +134,4 @@ void WorkerThreadList::Start()
     }
 }
 
-ThreadPoolManager::ThreadPoolManager(int numThreads, BlockingMsgQPtr blockingQ)
-{
-    m_RequestQ = blockingQ;
-    for (int index = 0; index < numThreads; ++index)
-    {
-        //Create a worker thread.
-        m_WorkerThreads.push_back(new WorkerThread("WORKER-THREAD-" + std::to_string(index) + ": ", m_RequestQ));
-    }
-}
-
-void ThreadPoolManager::Start()
-{
-    for (int index = 0; index < m_WorkerThreads.size(); ++index)
-    {
-        m_WorkerThreads[index]->Start();
-    }
-}
 

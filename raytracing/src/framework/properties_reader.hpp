@@ -5,10 +5,15 @@
 #include <map>
 #include <bits/stdc++.h>
 
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// This class is responsible for reading a properties file.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class PropertiesReader
 {
 public:
+    /// Constructor
     PropertiesReader(std::string& filename)
     {
         std::ifstream file(filename);
@@ -28,11 +33,11 @@ public:
         }
     }
 
+    /// Returns value of a key
     std::string operator[](std::string key)
     {
         return m_PropertiesVsValue[key];
     }
-
 
 protected:
     std::map<std::string, std::string> m_PropertiesVsValue;

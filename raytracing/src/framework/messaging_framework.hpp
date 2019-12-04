@@ -5,8 +5,17 @@
 #include <memory>
 #include <vector>
 
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Classes responsible for messaging and threading framework:
+///
+///////////////////////////////////////////////////////////////////////////////////////
 
-/// Base Listener class
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Listener - The observer interface.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class Listener
 {
 public:
@@ -17,6 +26,12 @@ typedef std::shared_ptr<Listener> ListenerPtr;
 
 class MsgQThread;
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// CommandBase - An interface that extends the observer interface.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class CommandBase : public Listener
 {
 
@@ -24,11 +39,13 @@ public:
     virtual void Notify(MsgPtr msg) = 0;
     virtual void ProcessMsg(MsgPtr msg) = 0;
 };
-
-
 typedef std::shared_ptr<CommandBase> CommandBasePtr;
 
-/// Message Queue entry
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  MsgQEntry -  A pair of Command based and message. Primariliy used as a communication message between threads.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class MsgQEntry
 {
 public:
@@ -48,10 +65,13 @@ public:
     /// message queue entry with a value of null command.
     CommandBasePtr m_Cmd;
 };
-
 typedef std::shared_ptr<BlockingQueue<MsgQEntry> > BlockingMsgQPtr;
 
-/// Command class
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  Command - Base implementation for all the commands. 
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class Command : public CommandBase
 {
 public:
@@ -64,6 +84,7 @@ public:
     /// Process Msg
     virtual void ProcessMsg(MsgPtr msg);
 
+    /// Save memento
     void SaveMemento(ListenerPtr context)
     {
         m_MyLisPtr = context;
@@ -73,12 +94,14 @@ protected:
     ListenerPtr        m_MyLisPtr;
     BlockingMsgQPtr    m_RequestQ;
 };
-
-
 typedef std::shared_ptr<Command> CommandPtr;
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  MsgQListener -  A type of listener that can be notified to send a message other thread using a blocking Q.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class MsgQListener : public Listener
 {
 public:
@@ -94,12 +117,13 @@ public:
 private:
     BlockingMsgQPtr   m_MsgQ;
 };
-
-
 typedef std::shared_ptr<MsgQListener> MsgQListenerPtr;
 
-
-/// Thread base
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  Thread -  Thread wrapper.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class Thread
 {
 public:
@@ -113,7 +137,11 @@ protected:
     std::thread *m_thread;
 };
 
-/// Message Q Thread
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  MsgQThread - A thread that listens to a message Q.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class MsgQThread : public Thread
 {
 public:
@@ -129,11 +157,13 @@ public:
         return m_ThrdLis;
     }
 
+    /// Return listening q
     BlockingMsgQPtr GetListeningQ()
     {
         return m_RequestQ;
     }
 
+    /// Return the next element
     MsgQEntry TakeNext()
     {
         return m_RequestQ->Take();
@@ -150,8 +180,11 @@ protected:
 };
 
 
-
-/// Message Q Thread
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  MsgQThreadPoolLis -  A listener for multiple producer and multiple MsgThread as a consumer.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 template<class T>
 class MsgQThreadPoolLis : public Listener
 {
@@ -162,6 +195,7 @@ public:
         Construct(threadPoolPtr, N);
     }
 
+    /// Construct a pool.
     void Construct(T **threadPoolPtr, int N)
     {
         m_ThreadsPtr = threadPoolPtr;
@@ -169,6 +203,7 @@ public:
         m_NumThreads = N;
     }
 
+    /// Sends notifucation. One of the free thread will be pulling the message from the Q.
     virtual void Notify(MsgPtr msg)
     {
         std::mutex m_Mutex;
@@ -186,79 +221,67 @@ protected:
 };
 
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  WorkerThread - Worker thread
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class WorkerThread : public Thread
 {
 public:
     BlockingMsgQPtr  m_RequestQ;
 
-    // Constructor
+    /// Constructor
     WorkerThread(std::string threadname, BlockingMsgQPtr  requestQ) : Thread(threadname)
     {
         m_RequestQ = requestQ;
     }
 
-
-    // Start the scheduler thread
+    /// Start the scheduler thread
     void Start()
     {
         m_thread = new std::thread(&WorkerThread::Run, *this);
     }
 
 private:
-    // Actual Scheduler thread
+    /// Actual Scheduler thread
     void Run();
 };
 
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  WorkerThreadList -  List of worker threads.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class WorkerThreadList
 {
 public:
-    // This class defines a message queue entry
+    /// Constructor
     WorkerThreadList(int numThreads, int qD);
 
+    /// Start all worker threads
     void Start();
 
+    /// Send message to a thread
     void Send(int threadId, MsgQEntry msgQEntry)
     {
         m_RequestQ[threadId]->Put(msgQEntry);
     }
 
+    /// Return the reference to the listening queue.
     BlockingMsgQPtr GetListeningQ(int threadId)
     {
         return m_RequestQ[threadId];
     }
 
 protected :
+    /// Request q on which all the threads will be waiting on.
     std::vector<BlockingMsgQPtr> m_RequestQ;
+
+    /// Pointer to all the worker threads.
     std::vector<WorkerThread *>  m_WorkerThreads;
 };
 
-
-
-class ThreadPoolManager
-{
-public:
-    // This class defines a message queue entry
-    ThreadPoolManager(int numThreads, BlockingMsgQPtr blockingQ);
-
-    void Start();
-
-    void Send(MsgQEntry msgQEntry)
-    {
-        m_RequestQ->Put(msgQEntry);
-    }
-
-    BlockingMsgQPtr GetListeningQ()
-    {
-        return m_RequestQ;
-    }
-
-protected :
-    BlockingMsgQPtr   m_RequestQ;
-    std::vector<WorkerThread *>  m_WorkerThreads;
-};
 
 
 

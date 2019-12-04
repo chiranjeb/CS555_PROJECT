@@ -6,7 +6,11 @@
 #include "defines/error_codes.hpp"
 #include "framework/trace_logger.hpp"
 
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Msg  :  message base class
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class Msg
 {
 public:
@@ -20,6 +24,9 @@ public:
    }
 
 protected:
+
+   /////////////////////////////////////////////////////////////////////
+   ///
    /// Unpack will not do anything. It's expected that the message
    /// type has been unpacked or determined first before
    /// constructing a message. Thus when the Unpack gets called,
@@ -29,22 +36,34 @@ protected:
    ///
    /// @param istrm Input stream from the message is being recreated.
    ///
+   /////////////////////////////////////////////////////////////////////
    virtual void Unpack(std::istream &istrm)
    {
       // This has been unpacked very first to identify the message id
    }
 
+   /////////////////////////////////////////////////////////////////////
+   ///
    /// Pack the message to a output stream.
    /// @param ostrm Output stream where the message is being packed to.
-   ///
+   /// 
+   /////////////////////////////////////////////////////////////////////
    virtual void Pack(std::ostream &ostrm)
    {
       ostrm << m_id << " ";
    }
 
+   /// message Id
    int m_id;
 };
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// StatusMsg  :  Status message
+///
+///////////////////////////////////////////////////////////////////////////////////////
 class StatusMsg : public Msg
 {
 public:

@@ -3,6 +3,13 @@
 #include<mutex>
 #include<condition_variable>
 
+////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Blocking Q :  A Bounded buffer between producers and consumers. This is the building 
+/// block of our ray-tracer code architecture. All threads communicate to each other using 
+/// a bounded buffer.
+///
+///////////////////////////////////////////////////////////////////////////////////////
 template<class T>
 class BlockingQueue : public std::queue<T>
 {

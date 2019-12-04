@@ -2,19 +2,23 @@
 #include <array>
 #include <streambuf>
 
-// Buffer for std::ostream implemented by std::array
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  Buffer for std::ostream implemented by std::array
+///
+////////////////////////////////////////////////////////////////////////////////////////
 template<std::size_t SIZE_IN_BYTES>
 class PreAllocatedStreamArrayBuffer : public std::streambuf
 {
 public:
-   // PreAllocatedStreamArrayBuffer
+   /// PreAllocatedStreamArrayBuffer
    PreAllocatedStreamArrayBuffer()
    {
-      // set std::basic_streambuf
+      /// set std::basic_streambuf
       std::streambuf::setp(m_buffer.begin(), m_buffer.end());
    }
 
-   // Find the size of the buffer
+   /// Find the size of the buffer
    long Tellp()
    {
       return int(std::streambuf::pptr() - &m_buffer[0]);
@@ -24,23 +28,28 @@ private:
    std::array<char, SIZE_IN_BYTES> m_buffer;
 };
 
-
+////////////////////////////////////////////////////////////////////////////////////////
+///
+///  Buffer for std::ostream implemented by external provided buffer
+///
+////////////////////////////////////////////////////////////////////////////////////////
 class PreAllocatedStreamBuffer : public std::streambuf
 {
 public:
    // PreAllocatedStreamBuffer
    PreAllocatedStreamBuffer(char *buffer, int size):m_buffer(buffer), m_size(size)
    {
-      // set std::basic_streambuf
+      /// set std::basic_streambuf
       std::streambuf::setp(buffer, buffer+size);
    }
 
-   // Find the size of the buffer
+   /// Find the size of the buffer
    long Tellp()
    {
       return int(std::streambuf::pptr() - m_buffer);
    }
 
+   /// Update the get pointer
    void Setg(int index)
    {
       setg(m_buffer,m_buffer, m_buffer+index);

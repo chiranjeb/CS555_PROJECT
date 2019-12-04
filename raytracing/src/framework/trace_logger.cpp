@@ -11,6 +11,12 @@ std::ostream& TimeStamp(std::ostream& ostr)
    return ostr;
 }
 
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
+///////// !!!!!!!! This is unit test only code...!!!!!!!!!!!!!!!!
 #if UNIT_TEST
 int main()
 {
