@@ -3,6 +3,7 @@
 
 #include "hitable.h"
 #include "objParser.h"
+#include "hitablelist.h"
 #include <iostream>
 #include <cmath>
 
@@ -309,7 +310,7 @@ box::box(const vec3& p0, const vec3& p1, material *ptr): m_type(HITABLE_TYPE_BOX
   list[3] = new flipNormals(new xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p0.y(), ptr));
   list[4] = new yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), ptr);
   list[5] = new flipNormals(new yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p0.x(), ptr));
-  listPtr = new bvh(list, 6, 0, 1);
+  listPtr = new hitableList(list, 6);
 }
 bool box::hit(const ray& r, float t0, float t1, hitRecord& rec) const
 {
