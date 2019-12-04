@@ -352,6 +352,8 @@ hitable* ConstructHitable(std::istream& is, char type)
             ptr =  new trianglemesh();
             break;
          }
+      //case 49:
+      //case 51:
       case HITABLE_TYPE_TRANSLATE:
          {
             ptr =  new translate();
@@ -596,6 +598,7 @@ void rotate_z::Unpack(std::istream &is)
 /// Custom Message serializer
 void translate::Pack(std::ostream& os)
 {
+   DEBUG_TRACE_VERBOSE(", translate::Pack:" << " offset: " << offset << " type: " << int(ptr->GetType()));
    os << offset << " ";
    os << ptr->GetType() << " ";
    ptr->Pack(os);
@@ -607,6 +610,7 @@ void translate::Unpack(std::istream& is)
    is >> offset;
    char type;
    is >> type;
+    DEBUG_TRACE_VERBOSE(", translate::Unpack:" << " offset: " << offset << " type: " << int(type));
    ptr = ConstructHitable(is, type);
 }
 
@@ -616,7 +620,7 @@ void hitableList::Pack(std::ostream& os)
    DEBUG_TRACE_VERBOSE("hitableList::Pack, listSize: " << listSize << std::endl);
    for (int index = 0; index < listSize; ++index)
    {
-      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Pack, listSize: " << listSize << ", index:" << index);
+      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Pack, listSize: " << listSize << ", index:" << index << ", type: " << int(list[index]->GetType()));
       os << list[index]->GetType() << " ";
       list[index]->Pack(os);
    }
@@ -630,9 +634,9 @@ void hitableList::Unpack(std::istream& is)
    list = new hitable *[listSize + 1];
    for (int index = 0; index < listSize; ++index)
    {
-      DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, listSize: " << listSize << ", index:" << index);
       char type;
       is >> type;
+       DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, listSize: " << listSize << ", index:" << index << ", type: " << int(type));
       list[index] = ConstructHitable(is, type);
    }
    DEBUG_TRACE_VERBOSE(std::endl << "hitableList::Unpack, done: ");
