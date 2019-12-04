@@ -12,6 +12,11 @@ struct Pixel2XYMapper
     {
         Y = Ny - ((pixelPos / Nx) + 1);
         X = pixelPos % Nx;
+
+        if (Y > Ny)
+        {
+            Y = 0;
+        }
     }
     uint16_t X;
     uint16_t Y;
@@ -72,7 +77,7 @@ public:
     ResourceTracker()
     {
         m_TotalNumPixelProductionPipelines = 0;
-        m_MaxPixelProductionRate = 1;
+        m_MaxPixelProductionRate = 9999999;
     }
 
     /// Get resoource tracker instance

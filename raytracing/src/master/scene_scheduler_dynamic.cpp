@@ -173,7 +173,10 @@ uint32_t SceneSchedulerDynamic::ComputeRefillWorkLoadBasedOnCurrentPolicy(TCPIOC
         uint32_t maxPixelProductionRate = ResourceTracker::Instance().GetMaximumPixelProductionRate();
         ResourceEntryPtr workerInfo = ResourceTracker::Instance().GetWorkerInfo(p_connection->GetUniqueHostName());
         int assignedWorkLoad = int(workload * ((float)maxPixelProductionRate/workerInfo->m_PixelProductionTimeInSecForKnownScene));    
-        RELEASE_TRACE("********* assignedWorkLoad: " << assignedWorkLoad);
+        if ( assignedWorkLoad < SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin)
+        {
+            assignedWorkLoad = std::min((uint32_t)SchedulingPolicyParam::Get().m_DynamicSchedulePixelChunkMin, m_TotalNumPixelsToProduce - m_CurrentPixelOffset);
+        }
         return assignedWorkLoad;
     }
 }
@@ -211,7 +214,7 @@ void SceneSchedulerDynamic::SendNextJob(TCPIOConnectionPtr p_connection, uint32_
 
         RELEASE_TRACE("Submitting Job to: " << (p_connection->GetUniqueHostName() + ":" + std::to_string(pixelProductionPipelineId))
                       << ", Job Info: endY:" << endY << ", startY:" << startY << ", startX:" << startX
-                      << ", endX:" << endX << "Num Pixels:" << workload);
+                      << ", endX:" << endX << ", Num Pixels:" << workload);
 
 
         /// Update work set
