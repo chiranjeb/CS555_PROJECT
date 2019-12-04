@@ -28,7 +28,7 @@ To kick off worker(from directory raytracing):
    * ./build/worker properties/master_properties.txt properties/worker_properties.txt
    
 To kick off client(from directory raytracing):
-   * ./build/client properties/master_properties.txt "random_scene"
+   * ./build/client properties/master_properties.txt "random_scene"|"cornell"  <x_dim> <y_dim> <rpp>
   
   
 ## Start Script
