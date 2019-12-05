@@ -1,7 +1,7 @@
 ## This file contains configurable parameters for the master.
 
 ## Machines where master will be running
-master_host=albany
+master_host=rally-king
 
 ## This is the port where master will be listening to
 master_listening_port=8050
@@ -23,7 +23,7 @@ scheduling_policy=0
 ## different static scheduling policy:  sequential => 0, random => 1,
 ## sequential: A worker is assigned to sequential chunk of pixels for all the CPU threads.
 ## random: A worker is assigned to random pixel chunks.
-static_scheduling_policy=0
+static_scheduling_policy=1
 
 
 ## different dynamic schedule pixel chunk refill allocation policy after the each pipeline
