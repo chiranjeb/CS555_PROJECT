@@ -5,9 +5,6 @@ echo "Starting master@$(hostname)"
 tmux send-keys -t cs555proj "ssh -t $(hostname).cs.colostate.edu 'cd $(pwd); \
   ./build/master properties/master_properties.txt'" Enter
 while read machine; do
-  if [ ${machine} == $(hostname) ]; then
-    echo "Skipping master"
-  else
     if [ $totalPanes -eq "8" ]; then
       tmux new-window -t cs555proj
       totalPanes=0
@@ -19,7 +16,6 @@ while read machine; do
     tmux send-keys -t cs555proj "ssh -t ${machine}.cs.colostate.edu 'cd $(pwd); \
   			./build/worker properties/master_properties.txt properties/worker_properties.txt'" Enter
     totalPanes=$((totalPanes + 1))
-  fi
 done < $1
 tmux select-layout -t cs555proj even-vertical
 tmux split-window -t cs555proj
