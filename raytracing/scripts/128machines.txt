@@ -82,7 +82,6 @@ bismarck
 boise
 carson-city
 charleston
-cheyenne
 columbus-oh
 concord
 denver

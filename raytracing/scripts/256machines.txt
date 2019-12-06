@@ -171,7 +171,6 @@ sunlight
 telluride
 vail
 winter-park
-wolf-creek
 earth
 jupiter
 mars
@@ -179,7 +178,6 @@ mercury
 neptune
 saturn
 uranus
-venus
 black-bottle
 coopersmiths
 dc-oakes
@@ -203,7 +201,6 @@ bismarck
 boise
 carson-city
 charleston
-cheyenne
 columbus-oh
 concord
 denver
