@@ -21,7 +21,7 @@ worker_cmd_processor_q_depth=128
 # more work from the master as opposed to waiting for all the threads to be done before asking for 
 # more work. Another way to think of this would be - master doesn't manage a worker, it manages the
 # advertised concurrent execution pipeline.  
-max_advertised_hw_concurrency_level=100
+max_advertised_hw_concurrency_level=90
 
 
 # Scene producer request q depth

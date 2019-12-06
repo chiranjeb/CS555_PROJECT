@@ -18,7 +18,7 @@ scheduling_thread_q_depth=128
 ## Different scheduling policy: static => 0, dynamic => 1
 ## static : The amount of work which will be assigned to each worker are predefined.
 ## dynamic : The amount of work which will be assigned to each worker are dynamic.
-scheduling_policy=1
+scheduling_policy=0
 
 ## different static scheduling policy:  sequential => 0, random => 1,
 ## sequential: A worker is assigned to sequential chunk of pixels for all the CPU threads.
@@ -42,4 +42,4 @@ dynamic_schedule_pixel_chunk_min=128
 known_scene_name="random"
 known_scene_nx=256
 known_scene_ny=256
-known_scene_ns=100
+known_scene_ns=1
